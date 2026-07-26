@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mes évaluations — Carnet+</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar__head">
+        <button class="hamburger" data-action="toggle-sidebar" title="Réduire le menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M3 12h18M3 18h18" />
+          </svg>
+        </button>
+        <div class="logo-mark" style="width:40px;height:40px;background:linear-gradient(135deg,#13b98a,#0d9488);">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+            <path d="M2 21c0-3 1.85-5.36 5.08-6" />
+          </svg>
+        </div>
+        <div class="sidebar__logo">Carnet<span style="color:var(--green-2);">+</span>
+        </div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-link" href="dashboard.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10.5 12 3l9 7.5" />
+            <path d="M5 9.5V21h14V9.5" />
+          </svg>Tableau de bord
+        </a>
+        <a class="nav-link" href="consultations.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="17" rx="2" />
+            <path d="M3 9h18M8 2v4M16 2v4" />
+          </svg>Consultations
+        </a>
+        <a class="nav-link" href="messages.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" />
+          </svg>Messages
+        </a>
+        <a class="nav-link" href="carnet.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12h4l2-7 4 14 2-7h6" />
+          </svg>Carnet de santé
+        </a>
+        <a class="nav-link" href="ordonnances.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+            <path d="M14 2v6h6M9 13h6M9 17h6" />
+          </svg>Ordonnances
+        </a>
+        <a class="nav-link active" href="evaluations.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+          </svg>Mes évaluations
+        </a>
+        <a class="nav-link" href="profil.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" />
+          </svg>Mon profil
+        </a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-row">
+          <div class="avatar avatar-round" style="width:38px;height:38px;background:linear-gradient(135deg,#f59e0b,#f97316);font-size:14px;">FD</div>
+          <div style="flex:1;min-width:0;">
+            <div class="name">Fanta Diallo</div>
+            <div class="mail">fanta.diallo@email.cg</div>
+          </div>
+          <button class="icon-btn" title="Se déconnecter">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+    <button class="hamburger--float" data-action="toggle-sidebar" title="Ouvrir le menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18M3 12h18M3 18h18" />
+      </svg>
+    </button>
+    <main class="main">
+      <div class="fade container-md">
+        <h1 class="h1">Mes évaluations</h1>
+        <p class="subtitle">Notez les médecins qui vous ont consulté et consultez vos avis passés.</p>
+        <div class="banner" style="padding:22px 26px;display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-bottom:24px;">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div style="font-size:46px;font-weight:800;line-height:1;">4.5</div>
+            <div>
+              <div class="stars">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+              </div>
+              <div style="opacity:.85;font-size:13px;margin-top:6px;">Note moyenne donnée</div>
+            </div>
+          </div>
+          <div style="width:1px;height:44px;background:rgba(255,255,255,.28);"></div>
+          <div>
+            <div style="font-size:26px;font-weight:800;">2</div>
+            <div style="opacity:.85;font-size:13px;">Avis publiés</div>
+          </div>
+          <div>
+            <div style="font-size:26px;font-weight:800;">2</div>
+            <div style="opacity:.85;font-size:13px;">En attente d’avis</div>
+          </div>
+        </div>
+        <div class="row" style="gap:9px;margin-bottom:14px;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+          <div class="section-title">À évaluer</div>
+          <span class="badge badge--amber" style="font-weight:800;">2</span>
+        </div>
+        <div class="col" style="gap:14px;margin-bottom:30px;">
+          <div class="card col" style="gap:16px;">
+            <div class="row" style="gap:13px;">
+              <div class="avatar avatar-48" style="background:#f59e0b;">GB</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:16px;">Dr. Gryd Batantou</div>
+                <div style="color:var(--green-text);font-size:13px;font-weight:600;">Médecine générale</div>
+              </div>
+              <span class="chip">12 juil. 2026</span>
+            </div>
+            <div style="color:var(--muted);font-size:13.5px;">Consultation : <strong style="color:var(--slate);">Renouvellement ordonnance</strong>
+            </div>
+            <div class="row" style="gap:14px;">
+              <div class="stars">
+                <button class="star-btn" data-id="e1" data-n="1">
+                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                  </svg>
+                </button>
+                <button class="star-btn" data-id="e1" data-n="2">
+                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                  </svg>
+                </button>
+                <button class="star-btn" data-id="e1" data-n="3">
+                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                  </svg>
+                </button>
+                <button class="star-btn" data-id="e1" data-n="4">
+                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                  </svg>
+                </button>
+                <button class="star-btn" data-id="e1" data-n="5">
+                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                  </svg>
+                </button>
+              </div>
+              <span class="rate-scale">Attribuez une note</span>
+            </div>
+            <textarea class="eval-comment" data-id="e1" placeholder="Partagez votre expérience (accueil, écoute, clarté des explications…) — facultatif"></textarea>
+            <div class="row" style="gap:10px;">
+              <button class="btn btn--primary" data-id="e1">Publier mon avis <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </button>
+              <span style="color:var(--muted-2);font-size:12.5px;">Votre avis aide les autres patients.</span>
+            </div>
+          </div>
+          <div class="card col" style="gap:16px;">
+            <div class="row" style="gap:13px;">
+              <div class="avatar avatar-48" style="background:#10b981;">JI</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:16px;">Dr. Jany Itoua-Issena</div>
+                <div style="color:var(--green-text);font-size:13px;font-weight:600;">Gynécologie</div>
+              </div>
+              <span class="chip">02 juil. 2026</span>
+            </div>
+            <div style="color:var(--muted);font-size:13.5px;">Consultation : <strong style="color:var(--slate);">Suivi de grossesse</strong>
+            </div>
+            <div class="row" style="gap:14px;">
+              <div class="stars">
+                <button class="star-btn" data-id="e2" data-n="1">
+                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                  </svg>
+                </button>
+                <button class="star-btn" data-id="e2" data-n="2">
+                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                  </svg>
+                </button>
+                <button class="star-btn" data-id="e2" data-n="3">
+                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                  </svg>
+                </button>
+                <button class="star-btn" data-id="e2" data-n="4">
+                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                  </svg>
+                </button>
+                <button class="star-btn" data-id="e2" data-n="5">
+                  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                  </svg>
+                </button>
+              </div>
+              <span class="rate-scale">Attribuez une note</span>
+            </div>
+            <textarea class="eval-comment" data-id="e2" placeholder="Partagez votre expérience (accueil, écoute, clarté des explications…) — facultatif"></textarea>
+            <div class="row" style="gap:10px;">
+              <button class="btn btn--primary" data-id="e2">Publier mon avis <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </button>
+              <span style="color:var(--muted-2);font-size:12.5px;">Votre avis aide les autres patients.</span>
+            </div>
+          </div>
+        </div>
+        <div class="row" style="gap:9px;margin-bottom:14px;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+          </svg>
+          <div class="section-title">Vos avis</div>
+        </div>
+        <div class="col" style="gap:14px;">
+          <div class="card col" style="gap:12px;">
+            <div class="row" style="gap:13px;">
+              <div class="avatar avatar-46" style="background:#0ea5e9;">EB</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:15px;">Dr. Eden Bous</div>
+                <div style="color:var(--muted);font-size:12.5px;">Médecine générale · 28 juin 2026</div>
+              </div>
+              <div class="stars">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+              </div>
+            </div>
+            <div style="color:var(--slate);font-size:13.5px;line-height:1.55;background:var(--field);border-radius:11px;padding:12px 14px;">« Médecin à l’écoute et rassurant. Explications claires, je recommande vivement. »</div>
+            <div class="row" style="gap:8px;">
+              <span class="badge badge--green">Avis publié</span>
+              <button class="btn btn--ghost btn--sm" data-id="e3">Modifier</button>
+            </div>
+          </div>
+          <div class="card col" style="gap:12px;">
+            <div class="row" style="gap:13px;">
+              <div class="avatar avatar-46" style="background:#5b6ef5;">RO</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-weight:700;font-size:15px;">Dr. Richedman Onsiala</div>
+                <div style="color:var(--muted);font-size:12.5px;">Cardiologie · 20 juin 2026</div>
+              </div>
+              <div class="stars">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#d3dae0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+                </svg>
+              </div>
+            </div>
+            <div style="color:var(--slate);font-size:13.5px;line-height:1.55;background:var(--field);border-radius:11px;padding:12px 14px;">« Consultation sérieuse, un peu d’attente mais très professionnel. »</div>
+            <div class="row" style="gap:8px;">
+              <span class="badge badge--green">Avis publié</span>
+              <button class="btn btn--ghost btn--sm" data-id="e4">Modifier</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../app.js"></script>
+</body>
+</html>
