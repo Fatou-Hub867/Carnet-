@@ -18,12 +18,14 @@
             <path d="M3 6h18M3 12h18M3 18h18" />
           </svg>
         </button>
-        <div class="logo-mark" style="width:40px;height:40px;background:linear-gradient(135deg,#13b98a,#0d9488);">
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
-            <path d="M2 21c0-3 1.85-5.36 5.08-6" />
-          </svg>
-        </div>
+        <a href="dashboard.html" style="display:inline-flex;text-decoration:none;">
+          <div class="logo-mark" style="width:40px;height:40px;background:linear-gradient(135deg,#13b98a,#0d9488);">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+              <path d="M2 21c0-3 1.85-5.36 5.08-6" />
+            </svg>
+          </div>
+        </a>
         <div class="sidebar__logo">Carnet<span style="color:var(--green-2);">+</span>
         </div>
       </div>
@@ -70,11 +72,11 @@
             <div class="name">Dr. Fatou Malta</div>
             <div class="mail">f.malta@carnetplus.cg</div>
           </div>
-          <button class="icon-btn" title="Se déconnecter">
+          <a class="icon-btn" href="../index.html" title="Se déconnecter">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M5 12h14M13 6l6 6-6 6" />
             </svg>
-          </button>
+          </a>
         </div>
       </div>
     </aside>
@@ -88,16 +90,18 @@
         <div class="between mb-22" style="margin-bottom:24px;">
           <div>
             <h1 class="h1">Dr. Fatou Malta</h1>
-            <p class="subtitle" style="margin:0;">Bienvenue sur votre espace de téléconsultation.</p>
+            <p class="subtitle" style="margin:0;">Bienvenue sur votre espace de gestion médicale.</p>
           </div>
           <div class="row" style="gap:14px;">
-            <div class="row" style="gap:9px;font-weight:700;font-size:14px;">Disponible<span style="width:42px;height:24px;border-radius:20px;background:#10b981;position:relative;display:inline-block;">
-                <span style="position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:#fff;"></span>
+            <div class="row" data-avail-toggle style="gap:9px;font-weight:700;font-size:14px;cursor:pointer;user-select:none;">
+              <span class="avail-label">Disponible</span>
+              <span class="avail-track" style="width:42px;height:24px;border-radius:20px;background:#10b981;position:relative;display:inline-block;transition:background .2s;">
+                <span class="avail-knob" style="position:absolute;top:3px;left:21px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;"></span>
               </span>
             </div>
           </div>
         </div>
-        <div class="grid-4 mb-22">
+        <div class="grid-3 mb-22">
           <div class="stat">
             <div class="avatar avatar-46" style="width:46px;height:46px;border-radius:13px;background:#5b6ef5;">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -133,17 +137,6 @@
               <div class="lbl">Ce mois-ci</div>
             </div>
           </div>
-          <div class="stat">
-            <div class="avatar avatar-46" style="width:46px;height:46px;border-radius:13px;background:#8b5cf6;">
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-              </svg>
-            </div>
-            <div>
-              <div class="num">420 000 FCFA</div>
-              <div class="lbl">Revenus du mois</div>
-            </div>
-          </div>
         </div>
         <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:22px;">
           <div class="card card--pad" style="border-radius:18px;">
@@ -162,8 +155,8 @@
                   <div style="font-weight:700;font-size:14.5px;">Amadou Koné</div>
                   <div style="color:var(--muted);font-size:13px;">Douleurs thoraciques · il y a 8 min</div>
                 </div>
-                <span class="chip">Présentielle</span>
-                <button class="btn btn--primary btn--sm">Accepter</button>
+                <span class="chip">Présentiel</span>
+                <button class="btn btn--primary btn--sm" data-accept>Accepter</button>
               </div>
               <div class="mini-row">
                 <div class="avatar avatar-42" style="background:#ec4899;">LN</div>
@@ -172,14 +165,14 @@
                   <div style="color:var(--muted);font-size:13px;">Renouvellement ordonnance · il y a 22 min</div>
                 </div>
                 <span class="chip">Message</span>
-                <button class="btn btn--primary btn--sm">Accepter</button>
+                <button class="btn btn--primary btn--sm" data-accept>Accepter</button>
               </div>
             </div>
           </div>
           <div class="card card--pad" style="border-radius:18px;">
             <div class="row" style="justify-content:space-between;margin-bottom:16px;">
               <div class="section-title">Aujourd'hui</div>
-              <a href="#" data-view="calendrier" style="font-size:13.5px;font-weight:600;">Voir tout →</a>
+              <a href="calendrier.html" style="font-size:13.5px;font-weight:600;">Voir tout →</a>
             </div>
             <div class="col" style="gap:9px;">
               <div class="row" style="gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;">
@@ -188,7 +181,7 @@
                   <div style="font-weight:700;font-size:14px;">Samuel Obi</div>
                   <div style="color:var(--muted);font-size:12.5px;">Suivi asthme</div>
                 </div>
-                <span class="chip" style="font-size:11.5px;padding:4px 9px;border-radius:14px;">Présentielle</span>
+                <span class="chip" style="font-size:11.5px;padding:4px 9px;border-radius:14px;">Présentiel</span>
               </div>
               <div class="row" style="gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;">
                 <div style="font-weight:800;font-size:14px;color:var(--green-text);width:46px;flex:none;">11:30</div>
@@ -196,7 +189,7 @@
                   <div style="font-weight:700;font-size:14px;">Grace Mbemba</div>
                   <div style="color:var(--muted);font-size:12.5px;">Contrôle tension</div>
                 </div>
-                <span class="chip" style="font-size:11.5px;padding:4px 9px;border-radius:14px;">Cabinet</span>
+                <span class="chip" style="font-size:11.5px;padding:4px 9px;border-radius:14px;">Présentiel</span>
               </div>
               <div class="row" style="gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;">
                 <div style="font-weight:800;font-size:14px;color:var(--green-text);width:46px;flex:none;">14:00</div>
@@ -204,7 +197,7 @@
                   <div style="font-weight:700;font-size:14px;">Josué Bantsimba</div>
                   <div style="color:var(--muted);font-size:12.5px;">Résultats analyses</div>
                 </div>
-                <span class="chip" style="font-size:11.5px;padding:4px 9px;border-radius:14px;">Présentielle</span>
+                <span class="chip" style="font-size:11.5px;padding:4px 9px;border-radius:14px;">Présentiel</span>
               </div>
               <div class="row" style="gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;">
                 <div style="font-weight:800;font-size:14px;color:var(--green-text);width:46px;flex:none;">16:15</div>
@@ -212,7 +205,7 @@
                   <div style="font-weight:700;font-size:14px;">Amadou Koné</div>
                   <div style="color:var(--muted);font-size:12.5px;">Douleurs thoraciques</div>
                 </div>
-                <span class="chip" style="font-size:11.5px;padding:4px 9px;border-radius:14px;">Présentielle</span>
+                <span class="chip" style="font-size:11.5px;padding:4px 9px;border-radius:14px;">Présentiel</span>
               </div>
             </div>
           </div>
@@ -247,6 +240,18 @@
         </div>
       </div>
     </main>
+  </div>
+  <div class="modal__backdrop" id="accept-modal" style="display:none;">
+    <div class="modal" style="max-width:380px;text-align:center;">
+      <div style="width:60px;height:60px;border-radius:16px;background:var(--green-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      </div>
+      <div style="font-size:19px;font-weight:800;margin-bottom:8px;">Demande acceptée</div>
+      <p style="color:var(--muted);font-size:14px;margin:0 0 20px;">La demande de consultation a bien été acceptée. Le patient en sera informé.</p>
+      <button class="btn btn--primary btn--block" data-close>J'ai compris</button>
+    </div>
   </div>
   <script src="../app.js"></script>
 </body>
