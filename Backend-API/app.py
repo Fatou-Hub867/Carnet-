@@ -1,7 +1,9 @@
 import asyncio
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from core.storage import ensure_bucket_exists
 from features.Admin.routes import public_router as reviews_complaints_router
@@ -14,6 +16,9 @@ from features.HealthRecords.routes import router as health_records_router
 from features.Messaging.routes import router as messaging_router
 from features.Patients.routes import router as patients_router
 from features.Prescriptions.routes import router as prescriptions_router
+
+FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -39,3 +44,6 @@ app.include_router(chronic_care_router)
 @app.get("/health")
 async def health_check() -> dict[str, str]:
     return {"status": "ok"}
+
+
+app.mount("/", StaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
