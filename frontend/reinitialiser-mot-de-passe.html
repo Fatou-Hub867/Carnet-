@@ -97,7 +97,7 @@
 
         var password = document.getElementById('reset-password').value;
         var passwordConfirm = document.getElementById('reset-password-confirm').value;
-        if (password !== passwordConfirm) {
+        if (!passwordsMatch(password, passwordConfirm)) {
           errorEl.textContent = 'Les mots de passe ne correspondent pas.';
           errorEl.classList.remove('hidden');
           return;

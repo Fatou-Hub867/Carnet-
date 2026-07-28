@@ -5,6 +5,12 @@
    Nécessite auth.js chargé avant ce fichier.
    ============================================================ */
 
+// Petit utilitaire partagé (inscription patient/médecin, réinitialisation) :
+// évite de dupliquer la comparaison mot de passe / confirmation dans chaque page.
+function passwordsMatch(password, confirmation) {
+  return password === confirmation;
+}
+
 // .detail is FastAPI's raw error body: usually a string, but an array of
 // {msg, loc, type} objects for 422 validation errors. Prefer .message for display.
 function ApiError(status, detail) {
