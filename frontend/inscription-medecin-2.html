@@ -71,54 +71,124 @@
                 </svg>Médecin
               </div>
             </div>
-            <div class="grid-2" style="gap:14px;">
-              <div>
-                <label class="label" style="letter-spacing:0;">SPÉCIALITÉ</label>
-                <input class="input" placeholder="Médecine générale">
-              </div>
-              <div>
-                <label class="label" style="letter-spacing:0;">N° D'ORDRE (ONM)</label>
-                <input class="input" placeholder="SN-00000">
-              </div>
-              <div style="grid-column:1 / -1;">
+            <form id="step3-form">
+              <div class="grid-2" style="gap:14px;">
                 <div>
-                  <label class="label" style="letter-spacing:0;">ÉTABLISSEMENT / CABINET</label>
-                  <input class="input" placeholder="Cabinet Elikia, CHU Brazzaville…">
+                  <label class="label" style="letter-spacing:0;">SPÉCIALITÉ</label>
+                  <input class="input" id="reg-specialty" placeholder="Médecine générale" required>
+                </div>
+                <div>
+                  <label class="label" style="letter-spacing:0;">N° D'ORDRE (ONM)</label>
+                  <input class="input" id="reg-license" placeholder="SN-00000" required>
+                </div>
+                <div style="grid-column:1 / -1;">
+                  <div>
+                    <label class="label" style="letter-spacing:0;">ÉTABLISSEMENT / CABINET</label>
+                    <input class="input" id="reg-practice" placeholder="Cabinet Elikia, CHU Brazzaville…" required>
+                  </div>
+                </div>
+                <div style="grid-column:1 / -1;">
+                  <div>
+                    <label class="label" style="letter-spacing:0;">TARIF DE CONSULTATION (FCFA)</label>
+                    <input class="input" id="reg-fee" type="number" min="0" step="0.01" placeholder="15000" required>
+                  </div>
+                </div>
+                <div style="grid-column:1 / -1;">
+                  <label class="label" style="letter-spacing:0;">DIPLÔME / JUSTIFICATIF</label>
+                  <label for="reg-diploma" style="display:block;border:1.5px dashed #cfd8dd;border-radius:11px;padding:16px;text-align:center;color:var(--muted);font-size:13.5px;background:var(--field);cursor:pointer;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9aa7b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 16V4M6 10l6-6 6 6" />
+                      <path d="M4 20h16" />
+                    </svg>
+                    <div style="margin-top:6px;" id="reg-diploma-label">Téléverser votre diplôme (PDF, JPG)</div>
+                    <input type="file" id="reg-diploma" class="hidden" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" required>
+                  </label>
                 </div>
               </div>
-              <div style="grid-column:1 / -1;">
-                <label class="label" style="letter-spacing:0;">DIPLÔME / JUSTIFICATIF</label>
-                <div style="border:1.5px dashed #cfd8dd;border-radius:11px;padding:16px;text-align:center;color:var(--muted);font-size:13.5px;background:var(--field);cursor:pointer;">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9aa7b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 16V4M6 10l6-6 6 6" />
-                    <path d="M4 20h16" />
-                  </svg>
-                  <div style="margin-top:6px;">Téléverser votre diplôme (PDF, JPG)</div>
-                </div>
+              <div style="display:flex;gap:10px;background:var(--amber-bg);border:1px solid #fed7aa;border-radius:12px;padding:13px 15px;margin-top:18px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ea8a12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 9v4M12 17h.01" />
+                  <path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6A2 2 0 0 0 22 18L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+                </svg>
+                <div style="font-size:13px;color:var(--amber-ink);line-height:1.5;">Le compte médecin doit être <strong>validé par un administrateur</strong> après vérification de vos justificatifs avant d'être activé.</div>
               </div>
-            </div>
-            <div style="display:flex;gap:10px;background:var(--amber-bg);border:1px solid #fed7aa;border-radius:12px;padding:13px 15px;margin-top:18px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ea8a12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 9v4M12 17h.01" />
-                <path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6A2 2 0 0 0 22 18L13.7 3.9a2 2 0 0 0-3.4 0Z" />
-              </svg>
-              <div style="font-size:13px;color:var(--amber-ink);line-height:1.5;">Le compte médecin doit être <strong>validé par un administrateur</strong> après vérification de vos justificatifs avant d'être activé.</div>
-            </div>
-            <label style="display:flex;align-items:center;gap:12px;margin-top:18px;font-size:13.5px;color:var(--slate);cursor:pointer;line-height:1.5;background:var(--field);border:1px solid var(--border-2);border-radius:12px;padding:14px 16px;">
-              <input type="checkbox" style="flex:none;width:18px;height:18px;accent-color:#10b981;cursor:pointer;">
-              <span>J'ai lu et j'accepte la <a href="#">politique de confidentialité</a> de Carnet+.</span>
-            </label>
-            <a href="en-attente.html" style="text-decoration:none;display:block;">
-              <button class="btn btn--primary btn--block" style="margin-top:18px;">Soumettre <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <p class="form-error hidden" id="step3-error"></p>
+              <label style="display:flex;align-items:center;gap:12px;margin-top:18px;font-size:13.5px;color:var(--slate);cursor:pointer;line-height:1.5;background:var(--field);border:1px solid var(--border-2);border-radius:12px;padding:14px 16px;">
+                <input type="checkbox" id="reg-consent" style="flex:none;width:18px;height:18px;accent-color:#10b981;cursor:pointer;" required>
+                <span>J'ai lu et j'accepte la <a href="#">politique de confidentialité</a> de Carnet+.</span>
+              </label>
+              <button type="submit" class="btn btn--primary btn--block" style="margin-top:18px;" id="step3-submit">Soumettre <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M5 12h14M13 6l6 6-6 6" />
                 </svg>
               </button>
-            </a>
+            </form>
           </div>
         </div>
       </div>
     </div>
   </div>
+  <script src="auth.js"></script>
+  <script src="api.js"></script>
   <script src="app.js"></script>
+  <script>
+    (function () {
+      var step2Raw = sessionStorage.getItem('cp_doctor_step2');
+      if (!step2Raw) {
+        window.location.href = 'inscription-medecin.html';
+        return;
+      }
+      var step2Data = JSON.parse(step2Raw);
+
+      document.getElementById('reg-diploma').addEventListener('change', function (e) {
+        var file = e.target.files[0];
+        document.getElementById('reg-diploma-label').textContent = file ? file.name : 'Téléverser votre diplôme (PDF, JPG)';
+      });
+
+      document.getElementById('step3-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errorEl = document.getElementById('step3-error');
+        errorEl.classList.add('hidden');
+        var submitBtn = document.getElementById('step3-submit');
+
+        var diplomaFile = document.getElementById('reg-diploma').files[0];
+        if (!diplomaFile) {
+          errorEl.textContent = 'Le diplôme est obligatoire.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        var payload = Object.assign({}, step2Data, {
+          specialty: document.getElementById('reg-specialty').value,
+          license_number: document.getElementById('reg-license').value,
+          practice_name: document.getElementById('reg-practice').value,
+          consultation_fee: parseFloat(document.getElementById('reg-fee').value),
+        });
+
+        submitBtn.disabled = true;
+        try {
+          await apiPost('/auth/doctors/register', payload);
+          var loginData = await apiPost('/auth/doctors/login', {
+            email: step2Data.email,
+            password: step2Data.password,
+          });
+          CarnetAuth.saveSession(loginData.access_token, 'doctor');
+
+          var formData = new FormData();
+          formData.append('diploma_file', diplomaFile);
+          await apiPostForm('/auth/doctors/me/diploma', formData);
+
+          CarnetAuth.clearSession();
+          sessionStorage.removeItem('cp_doctor_step2');
+          window.location.href = 'en-attente.html';
+        } catch (err) {
+          submitBtn.disabled = false;
+          errorEl.textContent = err.status === 409
+            ? 'Cet email est déjà utilisé.'
+            : 'Une erreur est survenue, réessayez.';
+          errorEl.classList.remove('hidden');
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
