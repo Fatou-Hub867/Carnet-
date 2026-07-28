@@ -120,6 +120,7 @@ input:focus, select:focus, textarea:focus {
 .input-group { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border-2); border-radius: 12px; padding: 0 14px; background: var(--field); }
 .input-group input { flex: 1; border: none; background: transparent; padding: 13px 0; font-size: 15px; color: var(--ink); }
 .input-group input:focus { box-shadow: none; }
+.form-error { color: var(--red); font-size: 13px; font-weight: 600; margin: 8px 0 0; }
 
 /* ---- Avatar / badge / chip ---- */
 .avatar { border-radius: 12px; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
