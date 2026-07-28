@@ -5,13 +5,17 @@
    Nécessite auth.js chargé avant ce fichier.
    ============================================================ */
 
+// .detail is FastAPI's raw error body: usually a string, but an array of
+// {msg, loc, type} objects for 422 validation errors. Prefer .message for display.
 function ApiError(status, detail) {
+  Error.call(this, typeof detail === 'string' ? detail : 'Une erreur est survenue.');
   this.name = 'ApiError';
   this.status = status;
   this.detail = detail;
   this.message = typeof detail === 'string' ? detail : 'Une erreur est survenue.';
 }
 ApiError.prototype = Object.create(Error.prototype);
+ApiError.prototype.constructor = ApiError;
 
 async function apiRequest(method, path, options) {
   options = options || {};
