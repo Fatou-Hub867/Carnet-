@@ -83,7 +83,7 @@ def _patient_payload(email: str) -> dict:
         "address": "1 Analytical St",
         "phone_number": "+33123456789",
         "country_of_residence": "France",
-        "gender": "female",
+        "gender": "femme",
         "city": "Paris",
         "email": email,
         "password": "supersecret1",
@@ -100,7 +100,7 @@ def _doctor_payload(email: str, fee: float = 50.0) -> dict:
         "email": email,
         "phone_number": "+33111111111",
         "country_of_residence": "France",
-        "gender": "male",
+        "gender": "homme",
         "city": "Paris",
         "password": "diagnostics1",
         "password_confirmation": "diagnostics1",
@@ -115,7 +115,9 @@ async def register_and_login_patient(client: AsyncClient, email: str) -> dict:
     resp = await client.post("/auth/patients/register", json=_patient_payload(email))
     assert resp.status_code == 201, resp.text
     patient_id = resp.json()["id"]
-    login = await client.post("/auth/patients/login", json={"email": email, "password": "supersecret1"})
+    login = await client.post(
+        "/auth/patients/login", json={"email": email, "password": "supersecret1"}
+    )
     assert login.status_code == 200, login.text
     return {"id": patient_id, "token": login.json()["access_token"], "email": email}
 
@@ -138,7 +140,8 @@ async def admin_token(client):
         )
         await session.commit()
     login = await client.post(
-        "/auth/admin/login", json={"email": "admin@example.com", "password": "adminpassword1"}
+        "/auth/admin/login",
+        json={"email": "admin@example.com", "password": "adminpassword1"},
     )
     assert login.status_code == 200, login.text
     return login.json()["access_token"]
@@ -152,11 +155,15 @@ async def patient(client):
 @pytest_asyncio.fixture
 async def validated_doctor(client, admin_token):
     email = "doctor@example.com"
-    reg = await client.post("/auth/doctors/register", json=_doctor_payload(email, fee=50.0))
+    reg = await client.post(
+        "/auth/doctors/register", json=_doctor_payload(email, fee=50.0)
+    )
     assert reg.status_code == 201, reg.text
     doctor_id = reg.json()["id"]
 
-    login = await client.post("/auth/doctors/login", json={"email": email, "password": "diagnostics1"})
+    login = await client.post(
+        "/auth/doctors/login", json={"email": email, "password": "diagnostics1"}
+    )
     assert login.status_code == 200, login.text
     token = login.json()["access_token"]
 
@@ -187,7 +194,11 @@ async def completed_appointment(client, patient, validated_doctor):
 
     slot = await client.post(
         "/appointments/availabilities",
-        json={"date": date.today().isoformat(), "start_time": "09:00:00", "end_time": "09:30:00"},
+        json={
+            "date": date.today().isoformat(),
+            "start_time": "09:00:00",
+            "end_time": "09:30:00",
+        },
         headers=doctor_headers,
     )
     assert slot.status_code == 201, slot.text
@@ -208,7 +219,9 @@ async def completed_appointment(client, patient, validated_doctor):
     )
     assert confirm.status_code == 200, confirm.text
 
-    complete = await client.post(f"/appointments/{appointment_id}/complete", headers=doctor_headers)
+    complete = await client.post(
+        f"/appointments/{appointment_id}/complete", headers=doctor_headers
+    )
     assert complete.status_code == 200, complete.text
 
     return {

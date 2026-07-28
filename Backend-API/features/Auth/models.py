@@ -11,8 +11,8 @@ from core.database import Base
 
 
 class Gender(str, enum.Enum):
-    MALE = "male"
-    FEMALE = "female"
+    HOMME = "homme"
+    FEMME = "femme"
 
 
 class PatientStatus(str, enum.Enum):
