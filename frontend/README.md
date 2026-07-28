@@ -1,0 +1,23 @@
+# Carnet+ — Front-end (HTML / CSS / JS)
+
+Interface de gestion de cabinet médical, en pages HTML séparées et lisibles.
+
+## Structure
+- Racine : index.html (connexion), choix-compte.html, inscription-patient.html,
+  inscription-medecin.html, inscription-medecin-2.html, en-attente.html, styles.css, app.js
+- medecin/ : dashboard, calendrier, creer-ordonnance, patients-chroniques, messages, profil
+- patient/ : dashboard, consultations, messages, carnet (+ constantes, vaccins),
+  ordonnances, evaluations, profil
+
+## Interactions (app.js)
+- Inscription en étapes (patient : 2, médecin : 3) avec coches.
+- Pop-ups : Bientôt disponible, Prochaines consultations, Choix du mode de consultation,
+  Demande envoyée (patient), Demande acceptée (médecin).
+- Interrupteur Disponible / Indisponible (dashboard médecin).
+- Logo (menu latéral) -> retour au tableau de bord ; flèche -> déconnexion (index.html).
+- Créer une ordonnance : cliquer un patient affiche la partie 2 ; « Ajouter un
+  médicament » ajoute une ligne.
+
+## Note
+Le front affiche des données d'exemple, sans serveur. Le branchement au back-end
+(API, base de données, authentification) se fera dans un second temps.

@@ -1,0 +1,23 @@
+# Development & test dependencies.
+#
+# Installs the full production runtime (requirements.text) plus the tooling only
+# needed to run the test suite (tests/) and local development. Use this file for
+# dev/CI environments; ship images from requirements.text alone.
+#
+#   uv pip install -r requirements-dev.txt      (or: pip install -r ...)
+#
+# Then run the suite from the repo root:
+#   pytest
+
+-r requirements.text
+
+# Test runner and async support
+pytest==9.0.3
+pytest-asyncio==1.4.0
+
+# ASGI client used by the end-to-end tests (also a transitive dep of resend)
+httpx==0.28.1
+
+# Async SQLite driver: the tests run the app on an in-memory/file SQLite database
+# instead of Postgres, so no external services are required to run them.
+aiosqlite==0.22.1

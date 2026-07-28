@@ -1,0 +1,34 @@
+# Core framework
+fastapi==0.136.3
+uvicorn==0.49.0
+pydantic==2.13.4
+pydantic_core==2.46.4
+pydantic-settings==2.14.1
+email-validator
+python-multipart==0.0.32
+python-dotenv==1.2.2
+
+# Database
+sqlalchemy[asyncio]
+alembic
+asyncpg
+psycopg2-binary
+
+# Auth
+bcrypt==5.0.0
+pyjwt
+
+# Storage (S3/MinIO)
+boto3
+
+# Email (Resend)
+resend
+
+# PDF generation (prescriptions)
+fpdf2
+
+# OCR (doctor diploma/license verification)
+pytesseract==0.3.13
+PyMuPDF==1.27.2.3
+
+# Test/dev tooling lives in requirements-dev.txt (pytest, httpx, aiosqlite, ...).

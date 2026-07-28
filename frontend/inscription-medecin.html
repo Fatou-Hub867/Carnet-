@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inscription médecin — Profil — Carnet+</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="auth">
+    <div class="auth__brand">
+      <div class="auth__blob" style="top:-90px;right:-60px;width:340px;height:340px;"></div>
+      <div class="auth__blob" style="bottom:60px;right:-40px;width:260px;height:260px;background:rgba(255,255,255,.06);"></div>
+      <div class="row" style="gap:13px;position:relative;">
+        <div class="logo-mark" style="width:52px;height:52px;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+            <path d="M2 21c0-3 1.85-5.36 5.08-6" />
+          </svg>
+        </div>
+        <div style="font-size:26px;font-weight:800;letter-spacing:-.02em;">Carnet<span class="brand-accent">+</span>
+        </div>
+      </div>
+      <div style="position:relative;">
+        <h1>Votre santé,
+          <br>
+          <span class="brand-accent">connectée</span> et
+          <br>simplifiée.
+        </h1>
+        <p>Téléconsultation, ordonnances, carnet de santé et suivi médical — tout le cabinet en un seul endroit.</p>
+        <div class="col" style="gap:20px;position:relative;margin-top:34px;max-width:480px;">
+          <div class="row" style="gap:14px;align-items:center;">
+            <div style="width:38px;height:38px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex:none;background:#fff;border-color:#fff;color:#10b981;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </div>
+            <div style="font-size:15.5px;color:#fff;font-weight:700;">Type de compte</div>
+          </div>
+          <div class="row" style="gap:14px;align-items:center;">
+            <div style="width:38px;height:38px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex:none;background:#fff;border-color:#fff;color:#0f9d76;">2</div>
+            <div style="font-size:15.5px;color:#fff;font-weight:700;">Profil</div>
+          </div>
+          <div class="row" style="gap:14px;align-items:center;">
+            <div style="width:38px;height:38px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;flex:none;background:transparent;border-color:rgba(255,255,255,.45);color:rgba(255,255,255,.65);">3</div>
+            <div style="font-size:15.5px;color:rgba(255,255,255,.65);font-weight:600;">Profil pro</div>
+          </div>
+        </div>
+      </div>
+      <div style="position:relative;font-size:13px;color:rgba(255,255,255,.7);">© 2026 Carnet+ — Plateforme de santé numérique</div>
+    </div>
+    <div class="auth__form">
+      <div class="auth__inner">
+        <div class="fade">
+          <h2 style="font-size:30px;font-weight:800;letter-spacing:-.02em;margin:0 0 6px;">Vos informations personnelles</h2>
+          <p class="subtitle" style="margin-bottom:20px;">Étape 2 sur 3 — vos coordonnées.</p>
+          <div class="card" style="border-radius:20px;padding:26px;box-shadow:var(--sh-form);">
+            <div class="row" style="justify-content:space-between;margin-bottom:20px;">
+              <a href="choix-compte.html" style="display:flex;align-items:center;gap:6px;font-weight:600;font-size:14px;color:var(--muted);">← Retour</a>
+              <div class="row" style="gap:8px;background:#eef2ff;color:#5b6ef5;padding:6px 13px;border-radius:20px;font-weight:700;font-size:13px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5b6ef5" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" />
+                </svg>Médecin
+              </div>
+            </div>
+            <div class="grid-2" style="gap:14px;">
+              <div>
+                <label class="label" style="letter-spacing:0;">NOM</label>
+                <input class="input" placeholder="Diallo">
+              </div>
+              <div>
+                <label class="label" style="letter-spacing:0;">PRÉNOM</label>
+                <input class="input" placeholder="Fanta">
+              </div>
+              <div>
+                <label class="label" style="letter-spacing:0;">DATE DE NAISSANCE</label>
+                <input class="input" type="date" placeholder="">
+              </div>
+              <div>
+                <label class="label" style="letter-spacing:0;">LIEU DE NAISSANCE</label>
+                <input class="input" placeholder="Dakar">
+              </div>
+              <div style="grid-column:1 / -1;">
+                <div>
+                  <label class="label" style="letter-spacing:0;">ADRESSE EMAIL</label>
+                  <input class="input" type="email" placeholder="votre@email.com">
+                </div>
+              </div>
+              <div>
+                <label class="label" style="letter-spacing:0;">TÉLÉPHONE</label>
+                <div class="input-group" style="border-radius:11px;">
+                  <span style="font-size:16px;">🇸🇳</span>
+                  <span style="font-weight:600;color:var(--muted);font-size:14px;">+221</span>
+                  <input style="padding:12px 0;font-size:14.5px;">
+                </div>
+              </div>
+              <div>
+                <label class="label" style="letter-spacing:0;">PAYS DE RÉSIDENCE</label>
+                <select class="select">
+                  <option>Sénégal</option>
+                  <option>Congo</option>
+                  <option>RD Congo</option>
+                  <option>Cameroun</option>
+                  <option>Gabon</option>
+                  <option>Côte d'Ivoire</option>
+                  <option>France</option>
+                  <option>Autre</option>
+                </select>
+              </div>
+              <div>
+                <label class="label" style="letter-spacing:0;">SEXE</label>
+                <select class="select">
+                  <option>Femme</option>
+                  <option>Homme</option>
+                  <option>Autre</option>
+                </select>
+              </div>
+              <div>
+                <label class="label" style="letter-spacing:0;">VILLE</label>
+                <input class="input" placeholder="Dakar">
+              </div>
+              <div style="grid-column:1 / -1;">
+                <div>
+                  <label class="label" style="letter-spacing:0;">MOT DE PASSE</label>
+                  <input class="input" type="password" placeholder="Min. 10 caractères">
+                </div>
+              </div>
+              <div style="grid-column:1 / -1;">
+                <div>
+                  <label class="label" style="letter-spacing:0;">CONFIRMER LE MOT DE PASSE</label>
+                  <input class="input" type="password" placeholder="Confirmer">
+                </div>
+              </div>
+            </div>
+            <a href="inscription-medecin-2.html" style="text-decoration:none;display:block;">
+              <button class="btn btn--primary btn--block" style="margin-top:18px;">Continuer <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </button>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Calendrier — Carnet+</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar__head">
+        <button class="hamburger" data-action="toggle-sidebar" title="Réduire le menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M3 12h18M3 18h18" />
+          </svg>
+        </button>
+        <a href="dashboard.html" style="display:inline-flex;text-decoration:none;">
+          <div class="logo-mark" style="width:40px;height:40px;background:linear-gradient(135deg,#13b98a,#0d9488);">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+              <path d="M2 21c0-3 1.85-5.36 5.08-6" />
+            </svg>
+          </div>
+        </a>
+        <div class="sidebar__logo">Carnet<span style="color:var(--green-2);">+</span>
+        </div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-link" href="dashboard.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10.5 12 3l9 7.5" />
+            <path d="M5 9.5V21h14V9.5" />
+          </svg>Tableau de bord
+        </a>
+        <a class="nav-link active" href="calendrier.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="17" rx="2" />
+            <path d="M3 9h18M8 2v4M16 2v4" />
+          </svg>Calendrier
+        </a>
+        <a class="nav-link" href="creer-ordonnance.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+            <path d="M14 2v6h6M12 11v6M9 14h6" />
+          </svg>Créer ordonnance
+        </a>
+        <a class="nav-link" href="patients-chroniques.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 14c1.5-1.6 3-3.5 3-5.5A3.5 3.5 0 0 0 12 6 3.5 3.5 0 0 0 2 8.5c0 2 1.5 3.9 3 5.5l7 7Z" />
+          </svg>Patients chroniques
+        </a>
+        <a class="nav-link" href="messages.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" />
+          </svg>Messages
+        </a>
+        <a class="nav-link" href="profil.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" />
+          </svg>Mon profil
+        </a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-row">
+          <div class="avatar avatar-round" style="width:38px;height:38px;background:linear-gradient(135deg,#f59e0b,#f97316);font-size:14px;">FM</div>
+          <div style="flex:1;min-width:0;">
+            <div class="name">Dr. Fatou Malta</div>
+            <div class="mail">f.malta@carnetplus.cg</div>
+          </div>
+          <a class="icon-btn" href="../index.html" title="Se déconnecter">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </aside>
+    <button class="hamburger--float" data-action="toggle-sidebar" title="Ouvrir le menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18M3 12h18M3 18h18" />
+      </svg>
+    </button>
+    <main class="main">
+      <div class="fade container">
+        <h1 class="h1">Mon calendrier</h1>
+        <p class="subtitle">Gérez vos consultations et disponibilités.</p>
+        <div class="card mb-16" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+          <button class="cal-nav">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 6-6 6 6 6" />
+            </svg>
+          </button>
+          <div style="font-weight:800;font-size:17px;">6 juil. – 12 juil. 2026</div>
+          <button class="cal-nav">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m9 6 6 6-6 6" />
+            </svg>
+          </button>
+        </div>
+        <div class="row" style="gap:10px;margin-bottom:18px;">
+          <div class="week-day" data-index="0">
+            <div class="d">LUN</div>
+            <div class="n">6</div>
+          </div>
+          <div class="week-day" data-index="1">
+            <div class="d">MAR</div>
+            <div class="n">7</div>
+          </div>
+          <div class="week-day" data-index="2">
+            <div class="d">MER</div>
+            <div class="n">8</div>
+          </div>
+          <div class="week-day sel" data-index="3">
+            <div class="d">JEU</div>
+            <div class="n">9</div>
+          </div>
+          <div class="week-day" data-index="4">
+            <div class="d">VEN</div>
+            <div class="n">10</div>
+          </div>
+          <div class="week-day" data-index="5">
+            <div class="d">SAM</div>
+            <div class="n">11</div>
+          </div>
+          <div class="week-day" data-index="6">
+            <div class="d">DIM</div>
+            <div class="n">12</div>
+          </div>
+        </div>
+        <div class="card card--pad" style="border-radius:18px;min-height:280px;">
+          <div class="row" style="gap:9px;margin-bottom:18px;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#0e9f6e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="17" rx="2" />
+              <path d="M3 9h18M8 2v4M16 2v4" />
+            </svg>
+            <div style="font-weight:800;font-size:17px;">jeudi 9 juillet 2026</div>
+          </div>
+          <div class="col" style="gap:10px;">
+            <div class="row" style="gap:15px;border:1px solid var(--border-3);border-radius:14px;padding:15px 17px;">
+              <div style="text-align:center;flex:none;padding-right:15px;border-right:1px solid var(--border-3);">
+                <div style="font-weight:800;font-size:17px;color:var(--green-text);">09:00</div>
+              </div>
+              <div style="flex:1;">
+                <div style="font-weight:700;font-size:15px;">Samuel Obi</div>
+                <div style="color:var(--muted);font-size:13px;">Suivi asthme</div>
+              </div>
+              <span class="chip" style="font-size:12.5px;padding:6px 13px;">Présentiel</span>
+            </div>
+            <div class="row" style="gap:15px;border:1px solid var(--border-3);border-radius:14px;padding:15px 17px;">
+              <div style="text-align:center;flex:none;padding-right:15px;border-right:1px solid var(--border-3);">
+                <div style="font-weight:800;font-size:17px;color:var(--green-text);">11:30</div>
+              </div>
+              <div style="flex:1;">
+                <div style="font-weight:700;font-size:15px;">Grace Mbemba</div>
+                <div style="color:var(--muted);font-size:13px;">Contrôle tension</div>
+              </div>
+              <span class="chip" style="font-size:12.5px;padding:6px 13px;">Présentiel</span>
+            </div>
+            <div class="row" style="gap:15px;border:1px solid var(--border-3);border-radius:14px;padding:15px 17px;">
+              <div style="text-align:center;flex:none;padding-right:15px;border-right:1px solid var(--border-3);">
+                <div style="font-weight:800;font-size:17px;color:var(--green-text);">14:00</div>
+              </div>
+              <div style="flex:1;">
+                <div style="font-weight:700;font-size:15px;">Josué Bantsimba</div>
+                <div style="color:var(--muted);font-size:13px;">Résultats analyses</div>
+              </div>
+              <span class="chip" style="font-size:12.5px;padding:6px 13px;">Présentiel</span>
+            </div>
+            <div class="row" style="gap:15px;border:1px solid var(--border-3);border-radius:14px;padding:15px 17px;">
+              <div style="text-align:center;flex:none;padding-right:15px;border-right:1px solid var(--border-3);">
+                <div style="font-weight:800;font-size:17px;color:var(--green-text);">16:15</div>
+              </div>
+              <div style="flex:1;">
+                <div style="font-weight:700;font-size:15px;">Amadou Koné</div>
+                <div style="color:var(--muted);font-size:13px;">Douleurs thoraciques</div>
+              </div>
+              <span class="chip" style="font-size:12.5px;padding:6px 13px;">Présentiel</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../app.js"></script>
+</body>
+</html>

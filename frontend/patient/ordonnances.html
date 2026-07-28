@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ordonnances — Carnet+</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar__head">
+        <button class="hamburger" data-action="toggle-sidebar" title="Réduire le menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M3 12h18M3 18h18" />
+          </svg>
+        </button>
+        <a href="dashboard.html" style="display:inline-flex;text-decoration:none;">
+          <div class="logo-mark" style="width:40px;height:40px;background:linear-gradient(135deg,#13b98a,#0d9488);">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+              <path d="M2 21c0-3 1.85-5.36 5.08-6" />
+            </svg>
+          </div>
+        </a>
+        <div class="sidebar__logo">Carnet<span style="color:var(--green-2);">+</span>
+        </div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-link" href="dashboard.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10.5 12 3l9 7.5" />
+            <path d="M5 9.5V21h14V9.5" />
+          </svg>Tableau de bord
+        </a>
+        <a class="nav-link" href="consultations.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="17" rx="2" />
+            <path d="M3 9h18M8 2v4M16 2v4" />
+          </svg>Consultations
+        </a>
+        <a class="nav-link" href="messages.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" />
+          </svg>Messages
+        </a>
+        <a class="nav-link" href="carnet.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12h4l2-7 4 14 2-7h6" />
+          </svg>Carnet de santé
+        </a>
+        <a class="nav-link active" href="ordonnances.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+            <path d="M14 2v6h6M9 13h6M9 17h6" />
+          </svg>Ordonnances
+        </a>
+        <a class="nav-link" href="evaluations.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+          </svg>Mes évaluations
+        </a>
+        <a class="nav-link" href="profil.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" />
+          </svg>Mon profil
+        </a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-row">
+          <div class="avatar avatar-round" style="width:38px;height:38px;background:linear-gradient(135deg,#f59e0b,#f97316);font-size:14px;">FD</div>
+          <div style="flex:1;min-width:0;">
+            <div class="name">Fanta Diallo</div>
+            <div class="mail">fanta.diallo@email.cg</div>
+          </div>
+          <a class="icon-btn" href="../index.html" title="Se déconnecter">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </aside>
+    <button class="hamburger--float" data-action="toggle-sidebar" title="Ouvrir le menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18M3 12h18M3 18h18" />
+      </svg>
+    </button>
+    <main class="main">
+      <div class="fade container-md">
+        <h1 class="h1">Mes ordonnances</h1>
+        <p class="subtitle">Retrouvez vos prescriptions et suivez vos traitements.</p>
+        <div class="col" style="gap:14px;">
+          <div class="card">
+            <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+              <div class="row" style="gap:12px;">
+                <div style="width:44px;height:44px;border-radius:12px;background:var(--green-soft);display:flex;align-items:center;justify-content:center;flex:none;">
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m10.5 20.5-7-7a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z" />
+                    <path d="m8.5 8.5 7 7" />
+                  </svg>
+                </div>
+                <div>
+                  <div style="font-weight:700;font-size:15.5px;">Amoxicilline 500mg</div>
+                  <div style="color:var(--muted);font-size:13px;">Dr. Gryd Batantou · 12 juil. 2026</div>
+                </div>
+              </div>
+              <span class="badge badge--green">Active</span>
+            </div>
+            <div style="color:var(--slate);font-size:13.5px;background:var(--field);border-radius:11px;padding:12px 14px;">1 comprimé × 3/jour pendant 7 jours · À prendre pendant les repas.</div>
+            <div class="row" style="gap:10px;margin-top:14px;">
+              <button class="btn btn--disabled">Envoyer à la pharmacie</button>
+              <button class="btn btn--ghost btn--sm" style="padding:10px 16px;">Télécharger PDF</button>
+            </div>
+          </div>
+          <div class="card" style="opacity:.85;">
+            <div class="row" style="justify-content:space-between;align-items:flex-start;">
+              <div class="row" style="gap:12px;">
+                <div style="width:44px;height:44px;border-radius:12px;background:#f1f5f7;display:flex;align-items:center;justify-content:center;flex:none;">
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m10.5 20.5-7-7a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z" />
+                    <path d="m8.5 8.5 7 7" />
+                  </svg>
+                </div>
+                <div>
+                  <div style="font-weight:700;font-size:15.5px;">Paracétamol 1g</div>
+                  <div style="color:var(--muted);font-size:13px;">Dr. Eden Bous · 28 juin 2026</div>
+                </div>
+              </div>
+              <span class="badge badge--muted" style="font-weight:700;">Terminée</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../app.js"></script>
+</body>
+</html>
