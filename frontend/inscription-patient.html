@@ -90,22 +90,22 @@
                 <div>
                   <label class="label" style="letter-spacing:0;">TÉLÉPHONE</label>
                   <div class="input-group" style="border-radius:11px;">
-                    <span style="font-size:16px;">🇸🇳</span>
-                    <span style="font-weight:600;color:var(--muted);font-size:14px;">+221</span>
+                    <span id="reg-phone-flag" style="font-size:16px;">🇸🇳</span>
+                    <span id="reg-phone-code" style="font-weight:600;color:var(--muted);font-size:14px;">+221</span>
                     <input id="reg-phone" style="padding:12px 0;font-size:14.5px;" required>
                   </div>
                 </div>
                 <div>
                   <label class="label" style="letter-spacing:0;">PAYS DE RÉSIDENCE</label>
                   <select class="select" id="reg-country">
-                    <option>Sénégal</option>
-                    <option>Congo</option>
-                    <option>RD Congo</option>
-                    <option>Cameroun</option>
-                    <option>Gabon</option>
-                    <option>Côte d'Ivoire</option>
-                    <option>France</option>
-                    <option>Autre</option>
+                    <option value="Sénégal">Sénégal</option>
+                    <option value="Congo">Congo</option>
+                    <option value="RD Congo">RD Congo</option>
+                    <option value="Cameroun">Cameroun</option>
+                    <option value="Gabon">Gabon</option>
+                    <option value="Côte d'Ivoire">Côte d'Ivoire</option>
+                    <option value="France">France</option>
+                    <option value="Autre">Autre</option>
                   </select>
                 </div>
                 <div>
@@ -162,6 +162,14 @@
   <script src="app.js"></script>
   <script>
     (function () {
+      function updatePhonePrefix() {
+        var prefix = getPhonePrefix(document.getElementById('reg-country').value);
+        document.getElementById('reg-phone-flag').textContent = prefix.flag;
+        document.getElementById('reg-phone-code').textContent = prefix.code;
+      }
+      document.getElementById('reg-country').addEventListener('change', updatePhonePrefix);
+      updatePhonePrefix();
+
       document.getElementById('register-form').addEventListener('submit', async function (e) {
         e.preventDefault();
         var errorEl = document.getElementById('register-error');
@@ -184,7 +192,7 @@
           place_of_birth: placeOfBirth,
           // address: pas de champ dédié dans ce mockup, on réutilise le lieu de naissance (limite connue)
           address: placeOfBirth,
-          phone_number: '+221' + document.getElementById('reg-phone').value,
+          phone_number: getPhonePrefix(document.getElementById('reg-country').value).code + document.getElementById('reg-phone').value,
           country_of_residence: document.getElementById('reg-country').value,
           gender: document.getElementById('reg-gender').value,
           city: document.getElementById('reg-city').value,

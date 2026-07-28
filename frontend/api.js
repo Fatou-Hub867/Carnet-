@@ -11,6 +11,23 @@ function passwordsMatch(password, confirmation) {
   return password === confirmation;
 }
 
+// Indicatifs téléphoniques par pays (inscription patient/médecin) : évite de
+// figer le préfixe sur +221 quel que soit le pays choisi. "Autre" laisse le
+// champ libre (l'utilisateur saisit son numéro complet, indicatif inclus).
+var COUNTRY_PHONE_PREFIXES = {
+  'Sénégal': { flag: '🇸🇳', code: '+221' },
+  'Congo': { flag: '🇨🇬', code: '+242' },
+  'RD Congo': { flag: '🇨🇩', code: '+243' },
+  'Cameroun': { flag: '🇨🇲', code: '+237' },
+  'Gabon': { flag: '🇬🇦', code: '+241' },
+  "Côte d'Ivoire": { flag: '🇨🇮', code: '+225' },
+  'France': { flag: '🇫🇷', code: '+33' },
+  'Autre': { flag: '🌍', code: '' },
+};
+function getPhonePrefix(country) {
+  return COUNTRY_PHONE_PREFIXES[country] || COUNTRY_PHONE_PREFIXES['Autre'];
+}
+
 // .detail is FastAPI's raw error body: usually a string, but an array of
 // {msg, loc, type} objects for 422 validation errors. Prefer .message for display.
 function ApiError(status, detail) {
