@@ -121,6 +121,11 @@ input:focus, select:focus, textarea:focus {
 .input-group input { flex: 1; border: none; background: transparent; padding: 13px 0; font-size: 15px; color: var(--ink); }
 .input-group input:focus { box-shadow: none; }
 .form-error { color: var(--red); font-size: 13px; font-weight: 600; margin: 8px 0 0; }
+.password-toggle { border: none; background: transparent; cursor: pointer; color: var(--muted-3); display: flex; align-items: center; justify-content: center; padding: 2px; flex: none; }
+.password-toggle:hover { color: var(--muted); }
+.password-field { position: relative; }
+.password-field .input { padding-right: 42px; }
+.password-field .password-toggle { position: absolute; top: 50%; right: 10px; transform: translateY(-50%); }
 
 /* ---- Avatar / badge / chip ---- */
 .avatar { border-radius: 12px; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
