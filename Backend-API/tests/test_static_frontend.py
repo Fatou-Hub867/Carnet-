@@ -14,3 +14,8 @@ async def test_api_routes_not_shadowed_by_static_mount(client):
     resp = await client.get("/health")
     assert resp.status_code == 200
     assert resp.json() == {"status": "ok"}
+
+
+async def test_unknown_path_returns_clean_404(client):
+    resp = await client.get("/this-route-does-not-exist")
+    assert resp.status_code == 404
