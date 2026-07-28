@@ -29,7 +29,7 @@ async function apiRequest(method, path, options) {
     fetchOptions.body = options.form; // FormData: le navigateur pose le Content-Type lui-même
   }
 
-  var token = window.CarnetAuth && window.CarnetAuth.getToken();
+  var token = options.token || (window.CarnetAuth && window.CarnetAuth.getToken());
   if (token) headers['Authorization'] = 'Bearer ' + token;
 
   var response = await fetch(path, fetchOptions);
@@ -60,6 +60,6 @@ function apiGet(path) {
 function apiPost(path, json) {
   return apiRequest('POST', path, { json: json });
 }
-function apiPostForm(path, formData) {
-  return apiRequest('POST', path, { form: formData });
+function apiPostForm(path, formData, tokenOverride) {
+  return apiRequest('POST', path, { form: formData, token: tokenOverride });
 }

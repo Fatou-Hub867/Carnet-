@@ -171,17 +171,14 @@
             email: step2Data.email,
             password: step2Data.password,
           });
-          CarnetAuth.saveSession(loginData.access_token, 'doctor');
 
           var formData = new FormData();
           formData.append('diploma_file', diplomaFile);
-          await apiPostForm('/auth/doctors/me/diploma', formData);
+          await apiPostForm('/auth/doctors/me/diploma', formData, loginData.access_token);
 
-          CarnetAuth.clearSession();
           sessionStorage.removeItem('cp_doctor_step2');
           window.location.href = 'en-attente.html';
         } catch (err) {
-          CarnetAuth.clearSession();
           submitBtn.disabled = false;
           errorEl.textContent = err.status === 409
             ? 'Cet email est déjà utilisé.'
