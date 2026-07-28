@@ -101,7 +101,7 @@
                       <path d="M4 20h16" />
                     </svg>
                     <div style="margin-top:6px;" id="reg-diploma-label">Téléverser votre diplôme (PDF, JPG)</div>
-                    <input type="file" id="reg-diploma" class="hidden" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*" required>
+                    <input type="file" id="reg-diploma" class="hidden" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/*">
                   </label>
                 </div>
               </div>
@@ -181,6 +181,7 @@
           sessionStorage.removeItem('cp_doctor_step2');
           window.location.href = 'en-attente.html';
         } catch (err) {
+          CarnetAuth.clearSession();
           submitBtn.disabled = false;
           errorEl.textContent = err.status === 409
             ? 'Cet email est déjà utilisé.'
