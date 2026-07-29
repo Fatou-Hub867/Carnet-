@@ -7,26 +7,44 @@ from core.email import send_email
 from features.Notifications import templates
 
 
-def notify_patient_welcome(to: str, first_name: str) -> None:
-    send_email(to, "Welcome to your patient account", templates.welcome_patient_email(first_name))
+def notify_patient_confirm_email(to: str, first_name: str, confirm_link: str) -> None:
+    send_email(
+        to,
+        "Confirmez votre adresse email",
+        templates.patient_confirm_email_email(first_name, confirm_link),
+    )
 
 
 def notify_admin_new_doctor_request(admin_email: str, doctor_full_name: str) -> None:
     send_email(
-        admin_email, "New doctor validation request", templates.new_doctor_request_admin_email(doctor_full_name)
+        admin_email,
+        "New doctor validation request",
+        templates.new_doctor_request_admin_email(doctor_full_name),
     )
 
 
-def notify_doctor_validated(to: str, first_name: str) -> None:
-    send_email(to, "Your account has been validated", templates.doctor_validated_email(first_name))
+def notify_doctor_validated(to: str, first_name: str, login_link: str) -> None:
+    send_email(
+        to,
+        "Votre compte a été validé",
+        templates.doctor_validated_email(first_name, login_link),
+    )
 
 
 def notify_doctor_rejected(to: str, first_name: str, reason: str) -> None:
-    send_email(to, "Your account request was rejected", templates.doctor_rejected_email(first_name, reason))
+    send_email(
+        to,
+        "Your account request was rejected",
+        templates.doctor_rejected_email(first_name, reason),
+    )
 
 
 def notify_doctor_suspended(to: str, first_name: str, suspended_until: str) -> None:
-    send_email(to, "Your account has been suspended", templates.doctor_suspended_email(first_name, suspended_until))
+    send_email(
+        to,
+        "Your account has been suspended",
+        templates.doctor_suspended_email(first_name, suspended_until),
+    )
 
 
 def notify_password_reset(to: str, reset_link: str) -> None:
