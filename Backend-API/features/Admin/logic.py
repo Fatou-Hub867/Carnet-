@@ -17,9 +17,14 @@ from fastapi import BackgroundTasks, HTTPException, status
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import settings
 from core.storage import get_file_url
 from features.Admin.models import Complaint, ComplaintStatus, Review
-from features.Admin.schemas import ComplaintCreateRequest, PendingDoctorOut, ReviewCreateRequest
+from features.Admin.schemas import (
+    ComplaintCreateRequest,
+    PendingDoctorOut,
+    ReviewCreateRequest,
+)
 from features.Appointments.models import Appointment, AppointmentStatus
 from features.Auth.models import Doctor, DoctorStatus, Patient, PatientStatus
 from features.Notifications import logic as notifications
@@ -28,7 +33,9 @@ COMPLAINT_THRESHOLD_FOR_SUSPENSION = 5
 SUSPENSION_DURATION_DAYS = 30
 
 
-async def submit_review(db: AsyncSession, patient_id: int, data: ReviewCreateRequest) -> None:
+async def submit_review(
+    db: AsyncSession, patient_id: int, data: ReviewCreateRequest
+) -> None:
     appointment = await db.get(Appointment, data.appointment_id)
     if (
         appointment is None
@@ -37,13 +44,19 @@ async def submit_review(db: AsyncSession, patient_id: int, data: ReviewCreateReq
     ):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Appointment not found")
     if appointment.status != AppointmentStatus.COMPLETED:
-        raise HTTPException(status.HTTP_409_CONFLICT, "You can only review a completed consultation")
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, "You can only review a completed consultation"
+        )
 
     already_reviewed = (
-        await db.scalars(select(Review).where(Review.appointment_id == data.appointment_id))
+        await db.scalars(
+            select(Review).where(Review.appointment_id == data.appointment_id)
+        )
     ).first()
     if already_reviewed is not None:
-        raise HTTPException(status.HTTP_409_CONFLICT, "This consultation has already been reviewed")
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, "This consultation has already been reviewed"
+        )
 
     db.add(
         Review(
@@ -58,7 +71,10 @@ async def submit_review(db: AsyncSession, patient_id: int, data: ReviewCreateReq
 
 
 async def submit_complaint(
-    db: AsyncSession, patient_id: int, data: ComplaintCreateRequest, background_tasks: BackgroundTasks
+    db: AsyncSession,
+    patient_id: int,
+    data: ComplaintCreateRequest,
+    background_tasks: BackgroundTasks,
 ) -> None:
     """Records the complaint, then suspends the doctor if the threshold is reached."""
     doctor = await db.get(Doctor, data.doctor_id)
@@ -78,18 +94,29 @@ async def submit_complaint(
     active_count = await db.scalar(
         select(func.count())
         .select_from(Complaint)
-        .where(Complaint.doctor_id == data.doctor_id, Complaint.status == ComplaintStatus.ACTIVE)
+        .where(
+            Complaint.doctor_id == data.doctor_id,
+            Complaint.status == ComplaintStatus.ACTIVE,
+        )
     )
     # Only fire on the transition: a doctor already suspended must not re-trigger
     # on every further complaint.
-    if doctor.status == DoctorStatus.VALIDATED and active_count >= COMPLAINT_THRESHOLD_FOR_SUSPENSION:
-        suspended_until = datetime.now(timezone.utc) + timedelta(days=SUSPENSION_DURATION_DAYS)
+    if (
+        doctor.status == DoctorStatus.VALIDATED
+        and active_count >= COMPLAINT_THRESHOLD_FOR_SUSPENSION
+    ):
+        suspended_until = datetime.now(timezone.utc) + timedelta(
+            days=SUSPENSION_DURATION_DAYS
+        )
         doctor.status = DoctorStatus.SUSPENDED
         doctor.suspended_until = suspended_until
         # Resolve the triggering batch so the next cycle needs a fresh set of 5.
         await db.execute(
             update(Complaint)
-            .where(Complaint.doctor_id == data.doctor_id, Complaint.status == ComplaintStatus.ACTIVE)
+            .where(
+                Complaint.doctor_id == data.doctor_id,
+                Complaint.status == ComplaintStatus.ACTIVE,
+            )
             .values(status=ComplaintStatus.RESOLVED)
         )
         background_tasks.add_task(
@@ -119,7 +146,9 @@ async def list_pending_doctors(db: AsyncSession) -> list[PendingDoctorOut]:
             specialty=doctor.specialty,
             license_number=doctor.license_number,
             practice_name=doctor.practice_name,
-            diploma_url=get_file_url(doctor.diploma_file_key) if doctor.diploma_file_key else None,
+            diploma_url=get_file_url(doctor.diploma_file_key)
+            if doctor.diploma_file_key
+            else None,
         )
         for doctor in doctors
     ]
@@ -130,7 +159,9 @@ async def _get_pending_doctor(db: AsyncSession, doctor_id: int) -> Doctor:
     if doctor is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Doctor not found")
     if doctor.status != DoctorStatus.PENDING_VALIDATION:
-        raise HTTPException(status.HTTP_409_CONFLICT, "This account is not awaiting validation")
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, "This account is not awaiting validation"
+        )
     return doctor
 
 
@@ -141,7 +172,13 @@ async def validate_doctor_account(
     doctor.status = DoctorStatus.VALIDATED
     await db.commit()
     await db.refresh(doctor)
-    background_tasks.add_task(notifications.notify_doctor_validated, doctor.email, doctor.first_name)
+    login_link = f"{settings.frontend_base_url}/index.html"
+    background_tasks.add_task(
+        notifications.notify_doctor_validated,
+        doctor.email,
+        doctor.first_name,
+        login_link,
+    )
     return doctor
 
 
@@ -152,7 +189,9 @@ async def reject_doctor_account(
     doctor.status = DoctorStatus.REJECTED
     await db.commit()
     await db.refresh(doctor)
-    background_tasks.add_task(notifications.notify_doctor_rejected, doctor.email, doctor.first_name, reason)
+    background_tasks.add_task(
+        notifications.notify_doctor_rejected, doctor.email, doctor.first_name, reason
+    )
     return doctor
 
 
@@ -180,7 +219,9 @@ async def delete_account(db: AsyncSession, user_type: str, user_id: int) -> None
         user = await db.get(Doctor, user_id)
         new_status = DoctorStatus.DELETED
     else:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "user_type must be 'patient' or 'doctor'")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "user_type must be 'patient' or 'doctor'"
+        )
 
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Account not found")
