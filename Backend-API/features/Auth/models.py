@@ -57,10 +57,15 @@ class Patient(Base):
     city: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
+    email_verified: Mapped[bool] = mapped_column(default=False)
     blood_type: Mapped[str | None] = mapped_column(String(10), nullable=True)
     allergies: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    status: Mapped[PatientStatus] = mapped_column(Enum(PatientStatus), default=PatientStatus.ACTIVE)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    status: Mapped[PatientStatus] = mapped_column(
+        Enum(PatientStatus), default=PatientStatus.ACTIVE
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
 
 class Doctor(Base):
@@ -84,9 +89,15 @@ class Doctor(Base):
     # (a JSON body and a file upload cannot share a single multipart request cleanly).
     diploma_file_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     consultation_fee: Mapped[Decimal] = mapped_column(Numeric(10, 2))
-    status: Mapped[DoctorStatus] = mapped_column(Enum(DoctorStatus), default=DoctorStatus.PENDING_VALIDATION)
-    suspended_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    status: Mapped[DoctorStatus] = mapped_column(
+        Enum(DoctorStatus), default=DoctorStatus.PENDING_VALIDATION
+    )
+    suspended_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
 
 class Admin(Base):
@@ -97,7 +108,9 @@ class Admin(Base):
     last_name: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
 
 class PasswordResetToken(Base):
@@ -109,4 +122,20 @@ class PasswordResetToken(Base):
     token: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     used: Mapped[bool] = mapped_column(default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class EmailVerificationToken(Base):
+    __tablename__ = "email_verification_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_type: Mapped[UserType] = mapped_column(Enum(UserType))
+    user_id: Mapped[int]
+    token: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
