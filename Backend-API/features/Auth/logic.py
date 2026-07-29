@@ -54,13 +54,12 @@ async def register_patient(
     )
     db.add(patient)
     try:
-        await db.commit()
+        await db.flush()
     except IntegrityError as exc:
         await db.rollback()
         raise HTTPException(
             status.HTTP_409_CONFLICT, "An account with this email already exists"
         ) from exc
-    await db.refresh(patient)
 
     token = secrets.token_urlsafe(_EMAIL_VERIFICATION_TOKEN_BYTES)
     db.add(
@@ -73,6 +72,7 @@ async def register_patient(
         )
     )
     await db.commit()
+    await db.refresh(patient)
 
     confirm_link = f"{settings.frontend_base_url}/confirmer-email.html?token={token}"
     background_tasks.add_task(
