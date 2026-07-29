@@ -78,6 +78,22 @@ function getPhonePrefix(country) {
   return COUNTRY_PHONE_PREFIXES[country] || COUNTRY_PHONE_PREFIXES['Autre'];
 }
 
+// Remplit un <select> (indicatif téléphonique) avec une option par entrée de
+// COUNTRY_PHONE_PREFIXES, affichée "drapeau + indicatif" — indépendant du
+// select "Pays de résidence" : l'utilisateur choisit son indicatif librement,
+// il n'est plus dérivé automatiquement du pays de résidence.
+function populatePhoneCountrySelect(selectId) {
+  var select = document.getElementById(selectId);
+  if (!select) return;
+  Object.keys(COUNTRY_PHONE_PREFIXES).forEach(function (country) {
+    var prefix = COUNTRY_PHONE_PREFIXES[country];
+    var option = document.createElement('option');
+    option.value = country;
+    option.textContent = prefix.code ? (prefix.flag + ' ' + prefix.code) : (prefix.flag + ' Autre');
+    select.appendChild(option);
+  });
+}
+
 // .detail is FastAPI's raw error body: usually a string, but an array of
 // {msg, loc, type} objects for 422 validation errors. Prefer .message for display.
 function ApiError(status, detail) {
