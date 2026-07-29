@@ -17,6 +17,7 @@ from core.storage import upload_file
 from features.Auth import logic
 from features.Auth.models import Doctor
 from features.Auth.schemas import (
+    ConfirmEmailRequest,
     DoctorRegisterRequest,
     DoctorRegisterResponse,
     ForgotPasswordRequest,
@@ -30,7 +31,9 @@ from features.Auth.schemas import (
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/patients/register", response_model=PatientOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/patients/register", response_model=PatientOut, status_code=status.HTTP_201_CREATED
+)
 async def register_patient(
     data: PatientRegisterRequest,
     background_tasks: BackgroundTasks,
@@ -39,8 +42,14 @@ async def register_patient(
     return await logic.register_patient(db, data, background_tasks)
 
 
-@router.post("/doctors/register", response_model=DoctorRegisterResponse, status_code=status.HTTP_201_CREATED)
-async def register_doctor(data: DoctorRegisterRequest, db: AsyncSession = Depends(get_db)):
+@router.post(
+    "/doctors/register",
+    response_model=DoctorRegisterResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def register_doctor(
+    data: DoctorRegisterRequest, db: AsyncSession = Depends(get_db)
+):
     doctor = await logic.register_doctor(db, data)
     return DoctorRegisterResponse(id=doctor.id, status=doctor.status.value)
 
@@ -52,7 +61,9 @@ async def upload_doctor_diploma(
     current_doctor: Doctor = Depends(get_current_doctor),
     db: AsyncSession = Depends(get_db),
 ):
-    file_key = upload_file(await diploma_file.read(), diploma_file.filename, diploma_file.content_type)
+    file_key = upload_file(
+        await diploma_file.read(), diploma_file.filename, diploma_file.content_type
+    )
     await logic.upload_doctor_diploma(db, current_doctor, file_key, background_tasks)
     return {"status": "diploma received, awaiting admin validation"}
 
@@ -86,6 +97,16 @@ async def forgot_password(
 
 
 @router.post("/reset-password")
-async def reset_password(data: ResetPasswordRequest, db: AsyncSession = Depends(get_db)):
+async def reset_password(
+    data: ResetPasswordRequest, db: AsyncSession = Depends(get_db)
+):
     await logic.reset_password(db, data.token, data.new_password)
     return {"status": "password updated"}
+
+
+@router.post("/patients/confirm-email")
+async def confirm_patient_email(
+    data: ConfirmEmailRequest, db: AsyncSession = Depends(get_db)
+):
+    await logic.confirm_patient_email(db, data.token)
+    return {"status": "email confirmed"}

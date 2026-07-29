@@ -24,7 +24,83 @@ async def test_patient_register_and_profile(client):
 async def test_duplicate_email_conflicts(client):
     from tests.conftest import _patient_payload
 
-    first = await client.post("/auth/patients/register", json=_patient_payload("dup@example.com"))
+    first = await client.post(
+        "/auth/patients/register", json=_patient_payload("dup@example.com")
+    )
     assert first.status_code == 201
-    second = await client.post("/auth/patients/register", json=_patient_payload("dup@example.com"))
+    second = await client.post(
+        "/auth/patients/register", json=_patient_payload("dup@example.com")
+    )
     assert second.status_code == 409
+
+
+async def test_unverified_patient_cannot_login(client):
+    from tests.conftest import _patient_payload
+
+    email = "unverified@example.com"
+    resp = await client.post("/auth/patients/register", json=_patient_payload(email))
+    assert resp.status_code == 201
+
+    login = await client.post(
+        "/auth/patients/login", json={"email": email, "password": "supersecret1"}
+    )
+    assert login.status_code == 403
+
+
+async def test_confirm_email_then_login_succeeds(client):
+    from sqlalchemy import select
+
+    from core.database import async_session_factory
+    from features.Auth.models import EmailVerificationToken
+    from tests.conftest import _patient_payload
+
+    email = "confirmable@example.com"
+    resp = await client.post("/auth/patients/register", json=_patient_payload(email))
+    assert resp.status_code == 201
+    patient_id = resp.json()["id"]
+
+    async with async_session_factory() as session:
+        token_row = (
+            await session.scalars(
+                select(EmailVerificationToken).where(
+                    EmailVerificationToken.user_id == patient_id
+                )
+            )
+        ).first()
+
+    confirm = await client.post(
+        "/auth/patients/confirm-email", json={"token": token_row.token}
+    )
+    assert confirm.status_code == 200
+
+    login = await client.post(
+        "/auth/patients/login", json={"email": email, "password": "supersecret1"}
+    )
+    assert login.status_code == 200
+
+
+async def test_confirm_email_invalid_token_returns_400(client):
+    resp = await client.post(
+        "/auth/patients/confirm-email", json={"token": "not-a-real-token"}
+    )
+    assert resp.status_code == 400
+
+
+async def test_register_patient_sends_confirmation_link(client, monkeypatch):
+    import features.Notifications.logic as notifications
+    from tests.conftest import _patient_payload
+
+    captured = {}
+
+    def fake_send_email(to, subject, html):
+        captured["to"] = to
+        captured["html"] = html
+
+    monkeypatch.setattr(notifications, "send_email", fake_send_email)
+
+    email = "confirm-link-check@example.com"
+    resp = await client.post("/auth/patients/register", json=_patient_payload(email))
+    assert resp.status_code == 201
+
+    assert captured["to"] == email
+    assert "confirmer-email.html?token=" in captured["html"]

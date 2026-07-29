@@ -14,6 +14,7 @@ from features.Auth.models import (
     DOCTOR_LOGIN_ALLOWED_STATUSES,
     Admin,
     Doctor,
+    EmailVerificationToken,
     Patient,
     PatientStatus,
     PasswordResetToken,
@@ -23,6 +24,7 @@ from features.Auth.schemas import DoctorRegisterRequest, PatientRegisterRequest
 from features.Notifications import logic as notifications
 
 _PASSWORD_RESET_TOKEN_BYTES = 32
+_EMAIL_VERIFICATION_TOKEN_BYTES = 32
 
 
 def _is_expired(expires_at: datetime) -> bool:
@@ -55,10 +57,30 @@ async def register_patient(
         await db.commit()
     except IntegrityError as exc:
         await db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "An account with this email already exists") from exc
+        raise HTTPException(
+            status.HTTP_409_CONFLICT, "An account with this email already exists"
+        ) from exc
     await db.refresh(patient)
 
-    background_tasks.add_task(notifications.notify_patient_welcome, patient.email, patient.first_name)
+    token = secrets.token_urlsafe(_EMAIL_VERIFICATION_TOKEN_BYTES)
+    db.add(
+        EmailVerificationToken(
+            user_type=UserType.PATIENT,
+            user_id=patient.id,
+            token=token,
+            expires_at=datetime.now(timezone.utc)
+            + timedelta(minutes=settings.email_verification_token_expire_minutes),
+        )
+    )
+    await db.commit()
+
+    confirm_link = f"{settings.frontend_base_url}/confirmer-email.html?token={token}"
+    background_tasks.add_task(
+        notifications.notify_patient_confirm_email,
+        patient.email,
+        patient.first_name,
+        confirm_link,
+    )
     return patient
 
 
@@ -88,14 +110,18 @@ async def register_doctor(db: AsyncSession, data: DoctorRegisterRequest) -> Doct
     except IntegrityError as exc:
         await db.rollback()
         raise HTTPException(
-            status.HTTP_409_CONFLICT, "An account with this email or license number already exists"
+            status.HTTP_409_CONFLICT,
+            "An account with this email or license number already exists",
         ) from exc
     await db.refresh(doctor)
     return doctor
 
 
 async def upload_doctor_diploma(
-    db: AsyncSession, doctor: Doctor, diploma_file_key: str, background_tasks: BackgroundTasks
+    db: AsyncSession,
+    doctor: Doctor,
+    diploma_file_key: str,
+    background_tasks: BackgroundTasks,
 ) -> Doctor:
     doctor.diploma_file_key = diploma_file_key
     await db.commit()
@@ -119,6 +145,11 @@ async def authenticate_patient(db: AsyncSession, email: str, password: str) -> P
         or not verify_password(password, patient.password_hash)
     ):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
+    if not patient.email_verified:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "Veuillez confirmer votre adresse email avant de vous connecter.",
+        )
     return patient
 
 
@@ -145,11 +176,17 @@ async def authenticate_admin(db: AsyncSession, email: str, password: str) -> Adm
     return admin
 
 
-async def request_password_reset(db: AsyncSession, email: str, background_tasks: BackgroundTasks) -> None:
+async def request_password_reset(
+    db: AsyncSession, email: str, background_tasks: BackgroundTasks
+) -> None:
     """Always returns silently, even for an unknown email, so this endpoint
     can't be used to enumerate registered accounts."""
     patient = (await db.scalars(select(Patient).where(Patient.email == email))).first()
-    doctor = None if patient else (await db.scalars(select(Doctor).where(Doctor.email == email))).first()
+    doctor = (
+        None
+        if patient
+        else (await db.scalars(select(Doctor).where(Doctor.email == email))).first()
+    )
     if patient is None and doctor is None:
         return
 
@@ -170,19 +207,56 @@ async def request_password_reset(db: AsyncSession, email: str, background_tasks:
     await db.commit()
 
     reset_link = f"{settings.frontend_base_url}/reset-password?token={token}"
-    background_tasks.add_task(notifications.notify_password_reset, target_email, reset_link)
+    background_tasks.add_task(
+        notifications.notify_password_reset, target_email, reset_link
+    )
 
 
 async def reset_password(db: AsyncSession, token: str, new_password: str) -> None:
-    reset_token = (await db.scalars(select(PasswordResetToken).where(PasswordResetToken.token == token))).first()
+    reset_token = (
+        await db.scalars(
+            select(PasswordResetToken).where(PasswordResetToken.token == token)
+        )
+    ).first()
     if reset_token is None or reset_token.used or _is_expired(reset_token.expires_at):
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid or expired reset token")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Invalid or expired reset token"
+        )
 
     model = Patient if reset_token.user_type == UserType.PATIENT else Doctor
     user = await db.get(model, reset_token.user_id)
     if user is None:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid or expired reset token")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Invalid or expired reset token"
+        )
 
     user.password_hash = hash_password(new_password)
     reset_token.used = True
+    await db.commit()
+
+
+async def confirm_patient_email(db: AsyncSession, token: str) -> None:
+    verification_token = (
+        await db.scalars(
+            select(EmailVerificationToken).where(EmailVerificationToken.token == token)
+        )
+    ).first()
+    if (
+        verification_token is None
+        or verification_token.used
+        or _is_expired(verification_token.expires_at)
+        or verification_token.user_type != UserType.PATIENT
+    ):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Invalid or expired confirmation token"
+        )
+
+    patient = await db.get(Patient, verification_token.user_id)
+    if patient is None:
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Invalid or expired confirmation token"
+        )
+
+    patient.email_verified = True
+    verification_token.used = True
     await db.commit()

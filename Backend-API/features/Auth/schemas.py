@@ -99,3 +99,7 @@ class ResetPasswordRequest(BaseModel):
         if self.new_password != self.new_password_confirmation:
             raise ValueError("new_password and new_password_confirmation must match")
         return self
+
+
+class ConfirmEmailRequest(BaseModel):
+    token: str

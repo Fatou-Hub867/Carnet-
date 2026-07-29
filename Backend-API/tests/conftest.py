@@ -30,13 +30,14 @@ from datetime import date, timedelta  # noqa: E402
 import pytest  # noqa: E402
 import pytest_asyncio  # noqa: E402
 from httpx import ASGITransport, AsyncClient  # noqa: E402
+from sqlalchemy import select  # noqa: E402
 
 import core.storage as storage  # noqa: E402
 import features.Notifications.logic as notifications  # noqa: E402
 from app import app  # noqa: E402
 from core.database import Base, async_session_factory, engine  # noqa: E402
 from core.security import hash_password  # noqa: E402
-from features.Auth.models import Admin  # noqa: E402
+from features.Auth.models import Admin, EmailVerificationToken  # noqa: E402
 
 
 class _FakeS3Client:
@@ -115,6 +116,20 @@ async def register_and_login_patient(client: AsyncClient, email: str) -> dict:
     resp = await client.post("/auth/patients/register", json=_patient_payload(email))
     assert resp.status_code == 201, resp.text
     patient_id = resp.json()["id"]
+
+    async with async_session_factory() as session:
+        token_row = (
+            await session.scalars(
+                select(EmailVerificationToken).where(
+                    EmailVerificationToken.user_id == patient_id
+                )
+            )
+        ).first()
+    confirm = await client.post(
+        "/auth/patients/confirm-email", json={"token": token_row.token}
+    )
+    assert confirm.status_code == 200, confirm.text
+
     login = await client.post(
         "/auth/patients/login", json={"email": email, "password": "supersecret1"}
     )
