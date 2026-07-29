@@ -94,70 +94,14 @@
                 <div>
                   <label class="label" style="letter-spacing:0;">TÉLÉPHONE</label>
                   <div class="input-group" style="border-radius:11px;">
-                    <select id="reg-phone-country" style="border:none;background:transparent;font-weight:600;color:var(--muted);font-size:14px;padding:12px 2px;cursor:pointer;width:96px;flex:none;"></select>
+                    <span style="font-size:16px;">🇸🇳</span>
+                    <span style="font-weight:600;color:var(--muted);font-size:14px;">+221</span>
                     <input id="reg-phone" style="padding:12px 0;font-size:14.5px;" required>
                   </div>
                 </div>
                 <div>
                   <label class="label" style="letter-spacing:0;">PAYS DE RÉSIDENCE</label>
-                  <select class="select" id="reg-country">
-                    <option value="Sénégal">Sénégal</option>
-                    <option value="Afrique du Sud">Afrique du Sud</option>
-                    <option value="Algérie">Algérie</option>
-                    <option value="Angola">Angola</option>
-                    <option value="Bénin">Bénin</option>
-                    <option value="Botswana">Botswana</option>
-                    <option value="Burkina Faso">Burkina Faso</option>
-                    <option value="Burundi">Burundi</option>
-                    <option value="Cameroun">Cameroun</option>
-                    <option value="Cap-Vert">Cap-Vert</option>
-                    <option value="Comores">Comores</option>
-                    <option value="Congo">Congo</option>
-                    <option value="Côte d'Ivoire">Côte d'Ivoire</option>
-                    <option value="Djibouti">Djibouti</option>
-                    <option value="Égypte">Égypte</option>
-                    <option value="Érythrée">Érythrée</option>
-                    <option value="Eswatini">Eswatini</option>
-                    <option value="Éthiopie">Éthiopie</option>
-                    <option value="Gabon">Gabon</option>
-                    <option value="Gambie">Gambie</option>
-                    <option value="Ghana">Ghana</option>
-                    <option value="Guinée">Guinée</option>
-                    <option value="Guinée équatoriale">Guinée équatoriale</option>
-                    <option value="Guinée-Bissau">Guinée-Bissau</option>
-                    <option value="Kenya">Kenya</option>
-                    <option value="Lesotho">Lesotho</option>
-                    <option value="Libéria">Libéria</option>
-                    <option value="Libye">Libye</option>
-                    <option value="Madagascar">Madagascar</option>
-                    <option value="Malawi">Malawi</option>
-                    <option value="Mali">Mali</option>
-                    <option value="Maroc">Maroc</option>
-                    <option value="Maurice">Maurice</option>
-                    <option value="Mauritanie">Mauritanie</option>
-                    <option value="Mozambique">Mozambique</option>
-                    <option value="Namibie">Namibie</option>
-                    <option value="Niger">Niger</option>
-                    <option value="Nigeria">Nigeria</option>
-                    <option value="Ouganda">Ouganda</option>
-                    <option value="RD Congo">RD Congo</option>
-                    <option value="République centrafricaine">République centrafricaine</option>
-                    <option value="Rwanda">Rwanda</option>
-                    <option value="Sao Tomé-et-Principe">Sao Tomé-et-Principe</option>
-                    <option value="Seychelles">Seychelles</option>
-                    <option value="Sierra Leone">Sierra Leone</option>
-                    <option value="Somalie">Somalie</option>
-                    <option value="Soudan">Soudan</option>
-                    <option value="Soudan du Sud">Soudan du Sud</option>
-                    <option value="Tanzanie">Tanzanie</option>
-                    <option value="Tchad">Tchad</option>
-                    <option value="Togo">Togo</option>
-                    <option value="Tunisie">Tunisie</option>
-                    <option value="Zambie">Zambie</option>
-                    <option value="Zimbabwe">Zimbabwe</option>
-                    <option value="France">France</option>
-                    <option value="Autre">Autre</option>
-                  </select>
+                  <input class="input" id="reg-country" value="Sénégal" disabled>
                 </div>
                 <div>
                   <label class="label" style="letter-spacing:0;">SEXE</label>
@@ -209,8 +153,6 @@
   <script src="app.js"></script>
   <script>
     (function () {
-      populatePhoneCountrySelect('reg-phone-country');
-
       document.getElementById('step2-form').addEventListener('submit', function (e) {
         e.preventDefault();
         var errorEl = document.getElementById('step2-error');
@@ -231,7 +173,7 @@
           date_of_birth: document.getElementById('reg-dob').value,
           place_of_birth: placeOfBirth,
           email: document.getElementById('reg-email').value,
-          phone_number: getPhonePrefix(document.getElementById('reg-phone-country').value).code + document.getElementById('reg-phone').value,
+          phone_number: '+221' + document.getElementById('reg-phone').value,
           country_of_residence: document.getElementById('reg-country').value,
           gender: document.getElementById('reg-gender').value,
           city: document.getElementById('reg-city').value,
