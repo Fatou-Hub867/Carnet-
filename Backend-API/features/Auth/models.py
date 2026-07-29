@@ -4,7 +4,7 @@ import enum
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, Enum, Numeric, String, func
+from sqlalchemy import Date, DateTime, Enum, Numeric, String, false, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.database import Base
@@ -57,7 +57,7 @@ class Patient(Base):
     city: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
-    email_verified: Mapped[bool] = mapped_column(default=False)
+    email_verified: Mapped[bool] = mapped_column(default=False, server_default=false())
     blood_type: Mapped[str | None] = mapped_column(String(10), nullable=True)
     allergies: Mapped[str | None] = mapped_column(String(500), nullable=True)
     status: Mapped[PatientStatus] = mapped_column(
