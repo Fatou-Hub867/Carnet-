@@ -114,9 +114,16 @@ input:focus, select:focus, textarea:focus {
 /* ---- Forms ---- */
 .label { display: block; font-size: 12px; font-weight: 700; letter-spacing: .05em; color: var(--muted); margin-bottom: 6px; }
 .input, .select {
-  width: 100%; border: 1px solid var(--border-2); border-radius: 11px;
+  width: 100%; min-width: 0; border: 1px solid var(--border-2); border-radius: 11px;
   padding: 12px 13px; font-size: 14.5px; background: var(--field); color: var(--ink);
 }
+/* Le select "Pays de résidence" (56 options, certaines longues : "République
+   centrafricaine"…) ne doit jamais forcer sa colonne de grille à s'élargir :
+   les éléments de grille/flex ont un min-width:auto par défaut qui, pour un
+   <select>, se cale sur son option la plus large — d'où le min-width:0
+   ci-dessus. On tronque proprement la valeur affichée plutôt que de laisser
+   déborder ou casser la mise en page en grille à deux colonnes. */
+.select { text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
 .input-group { display: flex; align-items: center; gap: 10px; border: 1px solid var(--border-2); border-radius: 12px; padding: 0 14px; background: var(--field); }
 .input-group input { flex: 1; border: none; background: transparent; padding: 13px 0; font-size: 15px; color: var(--ink); }
 .input-group input:focus { box-shadow: none; }
