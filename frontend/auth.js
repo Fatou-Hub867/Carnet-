@@ -31,11 +31,11 @@ var CarnetAuth = (function () {
     window.location.href = '/index.html';
   }
 
-  function requireAuth(expectedRole) {
+  function requireAuth(expectedRole, redirectTo) {
     var token = getToken();
     var role = getRole();
     if (!token || role !== expectedRole) {
-      window.location.href = '/index.html';
+      window.location.href = redirectTo || '/index.html';
     }
   }
 
