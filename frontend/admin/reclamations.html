@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Réclamations — Carnet+</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar__head">
+        <button class="hamburger" data-action="toggle-sidebar" title="Réduire le menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M3 12h18M3 18h18" />
+          </svg>
+        </button>
+        <div class="logo-mark" style="width:40px;height:40px;background:linear-gradient(135deg,#13b98a,#0d9488);">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+            <path d="M2 21c0-3 1.85-5.36 5.08-6" />
+          </svg>
+        </div>
+        <div class="sidebar__logo">Carnet<span style="color:var(--green-2);">+</span>
+        </div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-link" href="dashboard.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10.5 12 3l9 7.5" />
+            <path d="M5 9.5V21h14V9.5" />
+          </svg>Tableau de bord
+        </a>
+        <a class="nav-link" href="demandes-medecins.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 3v5a5 5 0 0 0 10 0V3" />
+            <path d="M10 13v2a6 6 0 0 0 12 0v-2" />
+          </svg>Demandes médecins
+        </a>
+        <a class="nav-link active" href="reclamations.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 9v4M12 17h.01" />
+            <path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6A2 2 0 0 0 22 18L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+          </svg>Réclamations
+        </a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-row">
+          <div class="avatar avatar-round" style="width:38px;height:38px;background:linear-gradient(135deg,#5b6ef5,#7c3aed);">AD</div>
+          <div style="flex:1;min-width:0;">
+            <div class="name">Administrateur</div>
+          </div>
+          <button class="icon-btn" id="logout-btn" title="Se déconnecter" type="button">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+    <button class="hamburger--float" data-action="toggle-sidebar" title="Ouvrir le menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18M3 12h18M3 18h18" />
+      </svg>
+    </button>
+    <main class="main">
+      <div class="fade container">
+        <div class="between mb-22">
+          <div>
+            <h1 class="h1">Réclamations</h1>
+            <p class="subtitle" style="margin:0;">Signalements de patients contre des médecins.</p>
+          </div>
+        </div>
+        <p class="form-error hidden" id="complaints-error"></p>
+        <div class="card card--flush" id="complaints-list"></div>
+        <div class="empty hidden" id="complaints-empty">Aucune réclamation.</div>
+      </div>
+    </main>
+  </div>
+  <div class="modal__backdrop hidden" id="delete-modal">
+    <div class="modal" style="max-width:440px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px;">
+        <div style="font-size:19px;font-weight:800;">Supprimer ce compte médecin</div>
+        <button class="modal__close" id="delete-modal-close" type="button">✕</button>
+      </div>
+      <p style="color:var(--muted);font-size:13.5px;margin:0 0 16px;">Cette action supprime (désactive) le compte du médecin. Indiquez le motif.</p>
+      <label class="label">MOTIF</label>
+      <textarea class="input" id="delete-reason" style="min-height:80px;margin-bottom:16px;" required></textarea>
+      <p class="form-error hidden" id="delete-modal-error"></p>
+      <button class="btn btn--primary btn--block" id="delete-confirm-btn" type="button">Confirmer la suppression</button>
+    </div>
+  </div>
+  <script src="../auth.js"></script>
+  <script src="../api.js"></script>
+  <script src="../app.js"></script>
+  <script>
+    (function () {
+      CarnetAuth.requireAuth('admin', '../admin-connexion.html');
+
+      document.getElementById('logout-btn').addEventListener('click', function () {
+        CarnetAuth.logout();
+      });
+
+      var pendingDeleteDoctorId = null;
+
+      function statusBadge(status) {
+        var labels = { validated: 'Actif', suspended: 'Suspendu', pending_validation: 'En attente', rejected: 'Rejeté', deleted: 'Supprimé' };
+        var classes = { validated: 'badge--green', suspended: 'badge--amber' };
+        var span = document.createElement('span');
+        span.className = 'badge ' + (classes[status] || 'badge--muted');
+        span.textContent = labels[status] || status;
+        return span;
+      }
+
+      function renderRow(complaint) {
+        var row = document.createElement('div');
+        row.className = 'list-row';
+        row.dataset.doctorId = complaint.doctor_id;
+
+        var info = document.createElement('div');
+        info.style.flex = '1';
+
+        var doctorNameEl = document.createElement('div');
+        doctorNameEl.style.fontWeight = '700';
+        doctorNameEl.style.fontSize = '15px';
+        doctorNameEl.textContent = complaint.doctor_name;
+        info.appendChild(doctorNameEl);
+
+        var reasonEl = document.createElement('div');
+        reasonEl.style.color = 'var(--muted)';
+        reasonEl.style.fontSize = '13px';
+        reasonEl.textContent = 'Patient : ' + complaint.patient_name + ' · ' + complaint.reason;
+        info.appendChild(reasonEl);
+
+        var descriptionEl = document.createElement('div');
+        descriptionEl.style.color = 'var(--muted)';
+        descriptionEl.style.fontSize = '13px';
+        descriptionEl.textContent = complaint.description;
+        info.appendChild(descriptionEl);
+
+        row.appendChild(info);
+        row.appendChild(statusBadge(complaint.doctor_status));
+
+        var deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn--ghost btn--sm';
+        deleteBtn.style.marginLeft = '8px';
+        deleteBtn.textContent = 'Supprimer ce compte médecin';
+        deleteBtn.addEventListener('click', function () {
+          pendingDeleteDoctorId = complaint.doctor_id;
+          document.getElementById('delete-reason').value = '';
+          document.getElementById('delete-modal-error').classList.add('hidden');
+          document.getElementById('delete-modal').classList.remove('hidden');
+        });
+        row.appendChild(deleteBtn);
+
+        return row;
+      }
+
+      document.getElementById('delete-modal-close').addEventListener('click', function () {
+        document.getElementById('delete-modal').classList.add('hidden');
+      });
+
+      document.getElementById('delete-confirm-btn').addEventListener('click', async function () {
+        var reason = document.getElementById('delete-reason').value.trim();
+        var errorEl = document.getElementById('delete-modal-error');
+        if (!reason) {
+          errorEl.textContent = 'Le motif est obligatoire.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        try {
+          await apiRequest('DELETE', '/admin/doctor/' + pendingDeleteDoctorId, { json: { reason: reason } });
+          document.getElementById('delete-modal').classList.add('hidden');
+          var rows = document.querySelectorAll('[data-doctor-id="' + pendingDeleteDoctorId + '"]');
+          rows.forEach(function (row) {
+            row.remove();
+          });
+          var list = document.getElementById('complaints-list');
+          if (!list.children.length) {
+            document.getElementById('complaints-empty').classList.remove('hidden');
+          }
+        } catch (err) {
+          errorEl.textContent = 'Une erreur est survenue, réessayez.';
+          errorEl.classList.remove('hidden');
+        }
+      });
+
+      apiGet('/admin/complaints')
+        .then(function (complaints) {
+          var list = document.getElementById('complaints-list');
+          if (!complaints.length) {
+            document.getElementById('complaints-empty').classList.remove('hidden');
+            return;
+          }
+          complaints.forEach(function (complaint) {
+            list.appendChild(renderRow(complaint));
+          });
+        })
+        .catch(function () {
+          document.getElementById('complaints-error').textContent = 'Impossible de charger les réclamations.';
+          document.getElementById('complaints-error').classList.remove('hidden');
+        });
+    })();
+  </script>
+</body>
+</html>
