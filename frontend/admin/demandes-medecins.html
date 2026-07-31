@@ -98,10 +98,25 @@
 
         var info = document.createElement('div');
         info.style.flex = '1';
-        info.innerHTML =
-          '<div style="font-weight:700;font-size:15px;">' + doctor.first_name + ' ' + doctor.last_name + '</div>' +
-          '<div style="color:var(--muted);font-size:13px;">' + doctor.specialty + ' · ' + doctor.practice_name + ' · N° ' + doctor.license_number + '</div>' +
-          '<div style="color:var(--muted);font-size:13px;">' + doctor.email + '</div>';
+
+        var nameEl = document.createElement('div');
+        nameEl.style.fontWeight = '700';
+        nameEl.style.fontSize = '15px';
+        nameEl.textContent = doctor.first_name + ' ' + doctor.last_name;
+        info.appendChild(nameEl);
+
+        var specialtyEl = document.createElement('div');
+        specialtyEl.style.color = 'var(--muted)';
+        specialtyEl.style.fontSize = '13px';
+        specialtyEl.textContent = doctor.specialty + ' · ' + doctor.practice_name + ' · N° ' + doctor.license_number;
+        info.appendChild(specialtyEl);
+
+        var emailEl = document.createElement('div');
+        emailEl.style.color = 'var(--muted)';
+        emailEl.style.fontSize = '13px';
+        emailEl.textContent = doctor.email;
+        info.appendChild(emailEl);
+
         row.appendChild(info);
 
         if (doctor.diploma_url) {
