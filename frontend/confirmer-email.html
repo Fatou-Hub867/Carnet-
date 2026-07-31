@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Confirmation d'email — Carnet+</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="auth">
+    <div class="auth__brand">
+      <div class="auth__blob" style="top:-90px;right:-60px;width:340px;height:340px;"></div>
+      <div class="auth__blob" style="bottom:60px;right:-40px;width:260px;height:260px;background:rgba(255,255,255,.06);"></div>
+      <div class="row" style="gap:13px;position:relative;">
+        <div class="logo-mark" style="width:52px;height:52px;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+            <path d="M2 21c0-3 1.85-5.36 5.08-6" />
+          </svg>
+        </div>
+        <div style="font-size:26px;font-weight:800;letter-spacing:-.02em;">Carnet<span class="brand-accent">+</span>
+        </div>
+      </div>
+      <div style="position:relative;">
+        <h1>Votre santé,
+          <br>
+          <span class="brand-accent">connectée</span> et
+          <br>simplifiée.
+        </h1>
+        <p>Téléconsultation, ordonnances, carnet de santé et suivi médical — tout le cabinet en un seul endroit.</p>
+      </div>
+      <div style="position:relative;font-size:13px;color:rgba(255,255,255,.7);">© 2026 Carnet+ — Plateforme de santé numérique</div>
+    </div>
+    <div class="auth__form">
+      <div class="auth__inner">
+        <div class="fade" id="confirm-loading" style="text-align:center;">
+          <p style="color:var(--muted);font-size:15px;">Confirmation de votre email en cours…</p>
+        </div>
+        <div class="fade hidden" id="confirm-success" style="text-align:center;">
+          <div style="width:84px;height:84px;border-radius:24px;background:var(--green-soft);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </div>
+          <h2 style="font-size:28px;font-weight:800;letter-spacing:-.02em;margin:0 0 12px;">Email confirmé !</h2>
+          <p style="color:var(--muted);font-size:15px;line-height:1.6;margin:0 auto 26px;max-width:360px;">Votre compte est activé. Vous pouvez maintenant vous connecter.</p>
+          <a href="index.html" style="text-decoration:none;display:block;">
+            <button class="btn btn--primary btn--block">Se connecter</button>
+          </a>
+        </div>
+        <div class="fade hidden" id="confirm-error" style="text-align:center;">
+          <div style="width:84px;height:84px;border-radius:24px;background:var(--red-bg);display:flex;align-items:center;justify-content:center;margin:0 auto 24px;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#e5484d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M15 9l-6 6M9 9l6 6" />
+            </svg>
+          </div>
+          <h2 style="font-size:28px;font-weight:800;letter-spacing:-.02em;margin:0 0 12px;">Lien invalide ou expiré</h2>
+          <p style="color:var(--muted);font-size:15px;line-height:1.6;margin:0 auto 26px;max-width:360px;">Ce lien de confirmation n'est plus valide. Réessayez de vous inscrire ou de vous connecter.</p>
+          <a href="index.html" style="text-decoration:none;display:block;">
+            <button class="btn btn--ghost" style="width:100%;padding:15px;font-weight:700;font-size:15px;">Retour à la connexion</button>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="auth.js"></script>
+  <script src="api.js"></script>
+  <script src="app.js"></script>
+  <script>
+    (function () {
+      function showPanel(id) {
+        ['confirm-loading', 'confirm-success', 'confirm-error'].forEach(function (panelId) {
+          document.getElementById(panelId).classList.toggle('hidden', panelId !== id);
+        });
+      }
+
+      var token = new URLSearchParams(window.location.search).get('token');
+      if (!token) {
+        showPanel('confirm-error');
+        return;
+      }
+
+      apiPost('/auth/patients/confirm-email', { token: token })
+        .then(function () {
+          showPanel('confirm-success');
+        })
+        .catch(function () {
+          showPanel('confirm-error');
+        });
+    })();
+  </script>
+</body>
+</html>
