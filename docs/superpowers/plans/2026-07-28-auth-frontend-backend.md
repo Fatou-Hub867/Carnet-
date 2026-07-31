@@ -11,7 +11,8 @@
 **Corrections found during planning vs. the approved spec** (`docs/superpowers/specs/2026-07-28-auth-frontend-backend-design.md`):
 1. The spec assumed step 2 of doctor registration (`inscription-medecin.html`) could call `POST /auth/doctors/register` directly. It can't: `DoctorRegisterRequest` requires `specialty`/`license_number`/`practice_name`/`consultation_fee`, which are only collected in step 3. Fixed here: step 2 stores its fields in `sessionStorage` and only step 3 calls `register` (with the combined payload), then `login`, then diploma upload.
 2. `inscription-medecin-2.html` has no field for `consultation_fee` (required, `float`, no default) — the mockup never included one. Task 7 adds a "Tarif de consultation" number input; without it every doctor registration would 422.
-3. `Gender` only has two values in the backend (`male`/`female` — `features/Auth/models.py:13-15`). The forms currently offer a third "Autre" option. Task 5/6 drop "Autre" from the two registration forms' sex `<select>` (patient and doctor) — keeping it would 422 on submit.
+3. `Gender` only has two values in the backend. The forms currently offer a third "Autre" option. Task 5/6 drop "Autre" from the two registration forms' sex `<select>` (patient and doctor) — keeping it would 422 on submit.
+4. **(Found during Task 4, 2026-07-28)** The user is independently changing the `Gender` enum values in `Backend-API/features/Auth/models.py` from `MALE`/`FEMALE` to `HOMME`/`FEMME` (in progress outside this plan — Alembic migration and tests to be updated by the user, not by this plan). Tasks 5/6 below use `value="homme"`/`value="femme"` on the sex `<select>` accordingly. If that backend change isn't finished yet when Tasks 5/6/7 are verified end-to-end, registration will 500 until it is — that's expected and out of scope for this plan to fix.
 
 **No git repository exists in this project** (verified: `git rev-parse --is-inside-work-tree` fails at the project root). Every task below ends with a "Commit" step per the standard template; since there is nothing to commit to, that step is replaced with a one-line note. If the user initializes git later, these changes can be committed in one pass.
 
@@ -422,7 +423,7 @@ No git repository — skip. (File touched: `frontend/index.html`.)
 | ADRESSE EMAIL | `reg-email` | `email` |
 | TÉLÉPHONE | `reg-phone` | `phone_number` (préfixé `+221` en dur, cohérent avec l'indicatif affiché) |
 | PAYS DE RÉSIDENCE | `reg-country` | `country_of_residence` |
-| SEXE | `reg-gender` | `gender` (`female`/`male` — voir correction n°3 en tête de plan) |
+| SEXE | `reg-gender` | `gender` (`homme`/`femme` — voir correction n°4 en tête de plan) |
 | VILLE | `reg-city` | `city` |
 | MOT DE PASSE | `reg-password` | `password` |
 | CONFIRMER LE MOT DE PASSE | `reg-password-confirm` | `password_confirmation` |
@@ -586,8 +587,8 @@ with (only the `id`/`value` attributes, the "Autre" option removal, the `<form>`
                 <div>
                   <label class="label" style="letter-spacing:0;">SEXE</label>
                   <select class="select" id="reg-gender">
-                    <option value="female">Femme</option>
-                    <option value="male">Homme</option>
+                    <option value="femme">Femme</option>
+                    <option value="homme">Homme</option>
                   </select>
                 </div>
                 <div>
@@ -856,8 +857,8 @@ with:
                 <div>
                   <label class="label" style="letter-spacing:0;">SEXE</label>
                   <select class="select" id="reg-gender">
-                    <option value="female">Femme</option>
-                    <option value="male">Homme</option>
+                    <option value="femme">Femme</option>
+                    <option value="homme">Homme</option>
                   </select>
                 </div>
                 <div>

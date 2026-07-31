@@ -2421,7 +2421,7 @@ shouldn't — this schema hasn't changed all session — but re-verify against
   <script src="../app.js"></script>
   <script>
     (function () {
-      CarnetAuth.requireAuth('admin');
+      CarnetAuth.requireAuth('admin', '../admin-connexion.html');
 
       document.getElementById('logout-btn').addEventListener('click', function () {
         CarnetAuth.logout();
@@ -2445,10 +2445,25 @@ shouldn't — this schema hasn't changed all session — but re-verify against
 
         var info = document.createElement('div');
         info.style.flex = '1';
-        info.innerHTML =
-          '<div style="font-weight:700;font-size:15px;">' + complaint.doctor_name + '</div>' +
-          '<div style="color:var(--muted);font-size:13px;">Patient : ' + complaint.patient_name + ' · ' + complaint.reason + '</div>' +
-          '<div style="color:var(--muted);font-size:13px;">' + complaint.description + '</div>';
+
+        var doctorNameEl = document.createElement('div');
+        doctorNameEl.style.fontWeight = '700';
+        doctorNameEl.style.fontSize = '15px';
+        doctorNameEl.textContent = complaint.doctor_name;
+        info.appendChild(doctorNameEl);
+
+        var reasonEl = document.createElement('div');
+        reasonEl.style.color = 'var(--muted)';
+        reasonEl.style.fontSize = '13px';
+        reasonEl.textContent = 'Patient : ' + complaint.patient_name + ' · ' + complaint.reason;
+        info.appendChild(reasonEl);
+
+        var descriptionEl = document.createElement('div');
+        descriptionEl.style.color = 'var(--muted)';
+        descriptionEl.style.fontSize = '13px';
+        descriptionEl.textContent = complaint.description;
+        info.appendChild(descriptionEl);
+
         row.appendChild(info);
         row.appendChild(statusBadge(complaint.doctor_status));
 
@@ -2526,7 +2541,9 @@ tranche) exposes `apiRequest(method, path, options)` as the underlying function 
 `apiRequest` directly for the one DELETE call in this codebase is the correct, minimal
 choice — don't add a new `apiDelete` wrapper for a single call site. If a backend server
 is reachable with a real admin token, a complaint, and a doctor: confirm
-`DELETE /admin/doctors/{id}` with a JSON body `{"reason": "..."}` returns 204 (per
+`DELETE /admin/doctor/{id}` (singular — the real route is `/admin/{user_type}/{user_id}`,
+and `delete_account` compares `user_type` literally against `"patient"`/`"doctor"`) with a
+JSON body `{"reason": "..."}` returns 204 (per
 `Backend-API/features/Admin/routes.py`'s existing, already-tested implementation) —
 this confirms the exact call this page makes actually works end-to-end.
 
@@ -2636,9 +2653,10 @@ With a backend server reachable:
    monkeypatch-free real DB check, or by re-reading `Backend-API/features/Auth/models.py`'s
    `Doctor.status` for that row) that it's now `validated`.
 5. If at least one complaint exists (submit one via the existing patient complaint flow
-   against a validated doctor, per `completed_appointment`-style test setup patterns if
-   needed), `DELETE /admin/doctors/{id}` with `{"reason": "test cleanup"}`. Confirm 204
-   and that the doctor's status is now `deleted`.
+   against any existing, non-deleted doctor — `submit_complaint` has no appointment
+   prerequisite, only an authenticated patient and a live doctor, confirmed during Task
+   12), `DELETE /admin/doctor/{id}` (singular) with `{"reason": "test cleanup"}`. Confirm
+   204 and that the doctor's status is now `deleted`.
 6. Clean up any test rows created for this walkthrough.
 
 - [ ] **Step 4: Confirm no stack-trace leakage**
