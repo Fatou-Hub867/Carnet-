@@ -22,6 +22,7 @@ from core.storage import get_file_url
 from features.Admin.models import Complaint, ComplaintStatus, Review
 from features.Admin.schemas import (
     ComplaintCreateRequest,
+    ComplaintOut,
     PendingDoctorOut,
     ReviewCreateRequest,
 )
@@ -151,6 +152,32 @@ async def list_pending_doctors(db: AsyncSession) -> list[PendingDoctorOut]:
             else None,
         )
         for doctor in doctors
+    ]
+
+
+async def list_complaints(db: AsyncSession) -> list[ComplaintOut]:
+    rows = (
+        await db.execute(
+            select(Complaint, Patient, Doctor)
+            .join(Patient, Complaint.patient_id == Patient.id)
+            .join(Doctor, Complaint.doctor_id == Doctor.id)
+            .order_by(Complaint.created_at.desc())
+        )
+    ).all()
+    return [
+        ComplaintOut(
+            id=complaint.id,
+            patient_id=complaint.patient_id,
+            patient_name=f"{patient.first_name} {patient.last_name}",
+            doctor_id=complaint.doctor_id,
+            doctor_name=f"{doctor.first_name} {doctor.last_name}",
+            doctor_status=doctor.status.value,
+            reason=complaint.reason,
+            description=complaint.description,
+            status=complaint.status.value,
+            created_at=complaint.created_at,
+        )
+        for complaint, patient, doctor in rows
     ]
 
 

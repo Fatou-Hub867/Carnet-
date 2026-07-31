@@ -15,6 +15,7 @@ from features.Admin import logic
 from features.Admin.schemas import (
     AccountDeletionRequest,
     ComplaintCreateRequest,
+    ComplaintOut,
     DoctorValidationDecision,
     PendingDoctorOut,
     ReviewCreateRequest,
@@ -33,6 +34,14 @@ async def list_pending_doctors(
     return await logic.list_pending_doctors(db)
 
 
+@router.get("/complaints", response_model=list[ComplaintOut])
+async def list_complaints(
+    _admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.list_complaints(db)
+
+
 @router.post("/doctors/{doctor_id}/validate")
 async def validate_doctor(
     doctor_id: int,
@@ -45,7 +54,9 @@ async def validate_doctor(
         doctor = await logic.validate_doctor_account(db, doctor_id, background_tasks)
     else:
         reason = decision.rejection_reason or "No reason provided"
-        doctor = await logic.reject_doctor_account(db, doctor_id, reason, background_tasks)
+        doctor = await logic.reject_doctor_account(
+            db, doctor_id, reason, background_tasks
+        )
     return {"id": doctor.id, "status": doctor.status.value}
 
 
@@ -68,12 +79,16 @@ async def create_review(
     db: AsyncSession = Depends(get_db),
 ):
     if doctor_id != data.doctor_id:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "doctor_id in path and body must match")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "doctor_id in path and body must match"
+        )
     await logic.submit_review(db, current_patient.id, data)
     return {"status": "review recorded"}
 
 
-@public_router.post("/doctors/{doctor_id}/complaints", status_code=status.HTTP_201_CREATED)
+@public_router.post(
+    "/doctors/{doctor_id}/complaints", status_code=status.HTTP_201_CREATED
+)
 async def create_complaint(
     doctor_id: int,
     data: ComplaintCreateRequest,
@@ -82,6 +97,8 @@ async def create_complaint(
     db: AsyncSession = Depends(get_db),
 ):
     if doctor_id != data.doctor_id:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "doctor_id in path and body must match")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "doctor_id in path and body must match"
+        )
     await logic.submit_complaint(db, current_patient.id, data, background_tasks)
     return {"status": "complaint recorded"}

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -37,3 +39,16 @@ class DoctorValidationDecision(BaseModel):
 
 class AccountDeletionRequest(BaseModel):
     reason: str | None = None
+
+
+class ComplaintOut(BaseModel):
+    id: int
+    patient_id: int
+    patient_name: str
+    doctor_id: int
+    doctor_name: str
+    doctor_status: str
+    reason: str
+    description: str
+    status: str
+    created_at: datetime

@@ -205,3 +205,33 @@ async def test_validate_doctor_sends_email_with_login_link(
     assert decision.status_code == 200, decision.text
     assert captured["to"] == email
     assert "index.html" in captured["html"]
+
+
+async def test_admin_lists_complaints_with_names_and_doctor_status(
+    client, admin_token, patient, validated_doctor
+):
+    from tests.conftest import _auth
+
+    complaint = await client.post(
+        f"/doctors/{validated_doctor['id']}/complaints",
+        json={
+            "doctor_id": validated_doctor["id"],
+            "reason": "Retard",
+            "description": "Very late.",
+        },
+        headers=_auth(patient["token"]),
+    )
+    assert complaint.status_code == 201, complaint.text
+
+    listing = await client.get("/admin/complaints", headers=_auth(admin_token))
+    assert listing.status_code == 200, listing.text
+    complaints = listing.json()
+    assert len(complaints) == 1
+    entry = complaints[0]
+    assert entry["patient_id"] == patient["id"]
+    assert entry["doctor_id"] == validated_doctor["id"]
+    assert entry["reason"] == "Retard"
+    assert entry["status"] == "active"
+    assert entry["doctor_status"] == "validated"
+    assert " " in entry["patient_name"]
+    assert " " in entry["doctor_name"]
