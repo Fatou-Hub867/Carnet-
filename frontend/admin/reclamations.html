@@ -152,7 +152,9 @@
           pendingDeleteDoctorId = complaint.doctor_id;
           document.getElementById('delete-reason').value = '';
           document.getElementById('delete-modal-error').classList.add('hidden');
-          document.getElementById('delete-modal').classList.remove('hidden');
+          var modal = document.getElementById('delete-modal');
+          modal.style.display = '';
+          modal.classList.remove('hidden');
         });
         row.appendChild(deleteBtn);
 
