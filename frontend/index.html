@@ -138,7 +138,7 @@
         } catch (err) {
           errorEl.textContent = err.status === 401
             ? 'Email ou mot de passe incorrect.'
-            : err.status === 403
+            : err.status === 403 && selectedRole === 'patient'
             ? 'Veuillez confirmer votre adresse email avant de vous connecter.'
             : 'Une erreur est survenue, réessayez.';
           errorEl.classList.remove('hidden');
