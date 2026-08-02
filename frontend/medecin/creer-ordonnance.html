@@ -90,38 +90,7 @@
         <h1 class="h1">Créer une ordonnance</h1>
         <p class="subtitle">Prescrivez des médicaments à vos patients en consultation.</p>
         <div class="section-title" style="margin-bottom:13px;">1 · Sélectionner une consultation</div>
-        <div class="col" style="gap:10px;margin-bottom:26px;">
-          <div class="select-row" data-selectord>
-            <div class="avatar avatar-44" style="background:#10b981;">SO</div>
-            <div style="flex:1;">
-              <div style="font-weight:700;font-size:15px;">Samuel Obi</div>
-              <div style="color:var(--muted);font-size:13px;">Suivi asthme · Aujourd’hui · 09:00</div>
-            </div>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m9 6 6 6-6 6" />
-            </svg>
-          </div>
-          <div class="select-row" data-selectord>
-            <div class="avatar avatar-44" style="background:#f59e0b;">GM</div>
-            <div style="flex:1;">
-              <div style="font-weight:700;font-size:15px;">Grace Mbemba</div>
-              <div style="color:var(--muted);font-size:13px;">Contrôle tension · Aujourd’hui · 11:30</div>
-            </div>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m9 6 6 6-6 6" />
-            </svg>
-          </div>
-          <div class="select-row" data-selectord>
-            <div class="avatar avatar-44" style="background:#5b6ef5;">AK</div>
-            <div style="flex:1;">
-              <div style="font-weight:700;font-size:15px;">Amadou Koné</div>
-              <div style="color:var(--muted);font-size:13px;">Douleurs thoraciques · Aujourd’hui · 16:15</div>
-            </div>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m9 6 6 6-6 6" />
-            </svg>
-          </div>
-        </div>
+        <div class="col" style="gap:10px;margin-bottom:26px;" id="awaiting-list"></div>
         <div class="fade" id="ordonnance-step2" style="display:none;">
           <div class="section-title" style="margin-bottom:13px;">2 · Médicaments prescrits</div>
           <div class="card">
@@ -152,12 +121,114 @@
                 <path d="M12 5v14M5 12h14" />
               </svg>Ajouter un médicament
             </button>
-            <button class="btn btn--primary" style="margin-top:12px;padding:14px;width:100%;box-shadow:0 6px 16px rgba(13,148,136,.25);">Générer l'ordonnance</button>
+            <button class="btn btn--primary" id="generate-prescription-btn" style="margin-top:12px;padding:14px;width:100%;box-shadow:0 6px 16px rgba(13,148,136,.25);">Générer l'ordonnance</button>
           </div>
         </div>
       </div>
     </main>
   </div>
+  <script src="../auth.js"></script>
+  <script src="../api.js"></script>
   <script src="../app.js"></script>
+  <script>
+    (function () {
+      CarnetAuth.requireAuth('doctor');
+      var selectedAppointmentId = null;
+
+      function initialsFromName(name) {
+        var parts = name.split(' ');
+        return (parts[0][0] || '') + (parts[parts.length - 1][0] || '');
+      }
+
+      function renderAwaiting(list) {
+        var container = document.getElementById('awaiting-list');
+        container.innerHTML = '';
+        list.forEach(function (item) {
+          var row = document.createElement('div');
+          row.className = 'select-row';
+          row.setAttribute('data-selectord', '');
+          row.setAttribute('data-appointment-id', item.appointment_id);
+
+          var avatar = document.createElement('div');
+          avatar.className = 'avatar avatar-44';
+          avatar.style.background = '#10b981';
+          avatar.textContent = initialsFromName(item.patient_name);
+          row.appendChild(avatar);
+
+          var infoDiv = document.createElement('div');
+          infoDiv.style.cssText = 'flex:1;';
+          var nameDiv = document.createElement('div');
+          nameDiv.style.cssText = 'font-weight:700;font-size:15px;';
+          nameDiv.textContent = item.patient_name;
+          var dateDiv = document.createElement('div');
+          dateDiv.style.cssText = 'color:var(--muted);font-size:13px;';
+          dateDiv.textContent = item.date + ' · ' + item.start_time.slice(0, 5);
+          infoDiv.appendChild(nameDiv);
+          infoDiv.appendChild(dateDiv);
+          row.appendChild(infoDiv);
+
+          var chevronWrap = document.createElement('div');
+          chevronWrap.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg>';
+          row.appendChild(chevronWrap.firstElementChild);
+
+          container.appendChild(row);
+        });
+      }
+
+      async function loadAwaiting() {
+        try {
+          var list = await apiGet('/appointments/completed-awaiting-prescription');
+          renderAwaiting(list);
+        } catch (err) {
+          document.getElementById('awaiting-list').textContent = 'Impossible de charger la liste.';
+        }
+      }
+      loadAwaiting();
+
+      // app.js's existing [data-selectord] handler shows step 2 and highlights the
+      // row; this listener (registered after it, same click) just remembers which
+      // appointment was picked.
+      document.addEventListener('click', function (e) {
+        var row = e.target.closest('[data-selectord]');
+        if (row) selectedAppointmentId = parseInt(row.getAttribute('data-appointment-id'), 10);
+      });
+
+      document.getElementById('generate-prescription-btn').addEventListener('click', async function () {
+        if (!selectedAppointmentId) return;
+        var btn = document.getElementById('generate-prescription-btn');
+        var rows = document.querySelectorAll('#med-list .med-row');
+        var treatments = [];
+        rows.forEach(function (row) {
+          var inputs = row.querySelectorAll('.med-input');
+          var name = inputs[0].value;
+          var dosage = inputs[1].value;
+          if (!name) return;
+          var today = new Date().toISOString().slice(0, 10);
+          var durationDays = parseInt(inputs[2].value, 10) || 7;
+          var end = new Date();
+          end.setDate(end.getDate() + durationDays);
+          treatments.push({
+            medication_name: name,
+            dosage: dosage,
+            start_date: today,
+            end_date: end.toISOString().slice(0, 10),
+            intake_times: ['08:00:00'],
+          });
+        });
+        btn.disabled = true;
+        try {
+          await apiPost('/prescriptions', {
+            appointment_id: selectedAppointmentId,
+            notes: null,
+            treatments: treatments,
+          });
+          window.location.reload();
+        } catch (err) {
+          window.alert('Une erreur est survenue, réessayez.');
+          btn.disabled = false;
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
