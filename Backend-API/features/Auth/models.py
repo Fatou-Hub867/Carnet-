@@ -60,6 +60,8 @@ class Patient(Base):
     email_verified: Mapped[bool] = mapped_column(default=False, server_default=false())
     blood_type: Mapped[str | None] = mapped_column(String(10), nullable=True)
     allergies: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    weight_kg: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    photo_file_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     status: Mapped[PatientStatus] = mapped_column(
         Enum(PatientStatus), default=PatientStatus.ACTIVE
     )
@@ -88,6 +90,7 @@ class Doctor(Base):
     # Nullable: the diploma is uploaded in a second call right after registration
     # (a JSON body and a file upload cannot share a single multipart request cleanly).
     diploma_file_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    photo_file_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     consultation_fee: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     status: Mapped[DoctorStatus] = mapped_column(
         Enum(DoctorStatus), default=DoctorStatus.PENDING_VALIDATION
