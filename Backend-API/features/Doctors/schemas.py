@@ -17,6 +17,7 @@ class DoctorPublicOut(BaseModel):
     practice_name: str
     city: str
     consultation_fee: float
+    photo_url: str | None
 
     model_config = {"from_attributes": True}
 

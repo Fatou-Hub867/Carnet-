@@ -31,3 +31,27 @@ async def test_patient_can_upload_a_photo(client, patient):
 
     again = await client.get("/patients/me", headers=_auth(patient["token"]))
     assert again.json()["photo_url"].startswith("https://fake-s3.local/")
+
+
+async def test_doctor_can_upload_a_photo(client, validated_doctor):
+    resp = await client.post(
+        "/doctors/me/photo",
+        files={"photo": ("me.jpg", b"\xff\xd8\xfffake-jpeg", "image/jpeg")},
+        headers=_auth(validated_doctor["token"]),
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["photo_url"].startswith("https://fake-s3.local/")
+
+
+async def test_doctor_photo_visible_in_public_search(client, validated_doctor):
+    await client.post(
+        "/doctors/me/photo",
+        files={"photo": ("me.jpg", b"\xff\xd8\xfffake-jpeg", "image/jpeg")},
+        headers=_auth(validated_doctor["token"]),
+    )
+    search = await client.get("/doctors")
+    assert search.status_code == 200
+    assert search.json()[0]["photo_url"].startswith("https://fake-s3.local/")
+
+    single = await client.get(f"/doctors/{validated_doctor['id']}")
+    assert single.json()["photo_url"].startswith("https://fake-s3.local/")

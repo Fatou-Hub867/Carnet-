@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from core.deps import get_current_doctor
+from core.storage import upload_file
 from features.Auth.models import Doctor
 from features.Doctors import logic
 from features.Doctors.schemas import (
@@ -17,15 +18,16 @@ router = APIRouter(prefix="/doctors", tags=["doctors"])
 
 @router.get("", response_model=list[DoctorPublicOut])
 async def search_doctors(
-    specialty: str | None = None, city: str | None = None, db: AsyncSession = Depends(get_db)
+    specialty: str | None = None,
+    city: str | None = None,
+    db: AsyncSession = Depends(get_db),
 ):
     return await logic.search_doctors(db, specialty, city)
 
 
 @router.get("/me", response_model=DoctorProfileOut)
 async def get_my_profile(current_doctor: Doctor = Depends(get_current_doctor)):
-    # The authenticated doctor is already loaded from the token; no query needed.
-    return current_doctor
+    return logic.build_profile_out(current_doctor)
 
 
 @router.patch("/me", response_model=DoctorProfileOut)
@@ -35,6 +37,16 @@ async def update_my_profile(
     db: AsyncSession = Depends(get_db),
 ):
     return await logic.update_doctor_profile(db, current_doctor, data)
+
+
+@router.post("/me/photo", response_model=DoctorProfileOut)
+async def upload_my_photo(
+    photo: UploadFile,
+    current_doctor: Doctor = Depends(get_current_doctor),
+    db: AsyncSession = Depends(get_db),
+):
+    file_key = upload_file(await photo.read(), photo.filename, photo.content_type)
+    return await logic.update_doctor_photo(db, current_doctor, file_key)
 
 
 @router.get("/me/dashboard", response_model=DoctorDashboardOut)
