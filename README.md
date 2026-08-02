@@ -27,12 +27,14 @@ Pages **HTML/CSS/JS statiques**, sans framework ni build. Depuis le branchement 
 
 ## État d'avancement
 
-Le **backend** (10 modules) est entièrement implémenté et testé (suite `pytest` end-to-end, 37 tests verts). Côté **frontend**, sont branchés à ce jour :
+Le **backend** (10 modules) est entièrement implémenté et testé (suite `pytest` end-to-end, 48 tests verts). Côté **frontend**, sont branchés à ce jour :
 - le module **Auth** complet (inscription patient/médecin, connexion, upload diplôme, mot de passe oublié/réinitialisation) ;
 - la **vérification d'email patient** : l'inscription n'enchaîne plus sur une connexion automatique — un email de confirmation est envoyé (lien vers `confirmer-email.html`), et la connexion est refusée (403) tant que l'email n'est pas confirmé ;
-- l'**espace admin** (`admin-connexion.html` + `admin/`) : validation/rejet des demandes de compte médecin (avec justificatif), consultation des réclamations patients, suppression de compte médecin depuis une réclamation.
+- l'**espace admin** (`admin-connexion.html` + `admin/`) : validation/rejet des demandes de compte médecin (avec justificatif), consultation des réclamations patients, suppression de compte médecin depuis une réclamation ;
+- l'**espace patient** : profil (avec groupe sanguin, poids, photo de profil), carnet de santé (documents, upload, téléchargement), consultations (recherche de médecin, réservation de créneau), ordonnances (liste, téléchargement PDF), messagerie (conversations, envoi de message et pièce jointe, démarrage d'une nouvelle conversation) ;
+- l'**espace médecin** (minimum nécessaire pour produire les données ci-dessus) : profil (avec photo), publication de créneaux de disponibilité, calendrier du jour, acceptation/refus des demandes de RDV, clôture d'une consultation, rédaction d'ordonnance, messagerie.
 
-Les autres pages (dashboards, RDV, messagerie, carnet, ordonnances, patients chroniques) affichent encore des données d'exemple codées en dur ; leur branchement fera l'objet de tranches ultérieures.
+Restent encore à brancher : le tableau de bord patient/médecin (traitements en cours, rappels, chiffres), les évaluations patient, et le suivi des patients chroniques — ces pages affichent toujours des données d'exemple codées en dur.
 
 ---
 
@@ -88,15 +90,13 @@ Avec le serveur lancé, ouvrir http://localhost:8010/index.html dans un navigate
 
 ### 7. Tester l'espace admin
 
-Aucune interface ne permet de créer un premier compte admin (par design — un `Admin` se crée uniquement en base, comme le fait `Backend-API/tests/conftest.py`'s `admin_token` fixture). Pour tester en local :
+Aucune interface ne permet de créer un premier compte admin (par design — un `Admin` se crée uniquement en base, comme le fait `Backend-API/tests/conftest.py`'s `admin_token` fixture). Pour tester en local, un script de seed fait ça directement :
 ```bash
-# depuis un shell Python avec les deps du projet
-python -c "
-from core.security import hash_password
-print(hash_password('un-mot-de-passe-au-moins-10-car'))
-"
-# puis insérer une ligne dans la table admins avec cet email/password_hash
+cd Backend-API
+uv run python scripts/seed_admin.py
 ```
+Crée (ou signale l'existence de) l'admin `admin@carnetplus.dev` / `adminpassword1`. Identifiants personnalisables via les variables d'env `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_FIRST_NAME` / `ADMIN_LAST_NAME` ; relancer avec `--reset-password` pour changer le mot de passe d'un admin déjà créé.
+
 Ensuite, ouvrir http://localhost:8010/admin-connexion.html et se connecter :
 - **Tableau de bord** (`admin/dashboard.html`) : compteurs de demandes médecins en attente et de réclamations.
 - **Demandes médecins** (`admin/demandes-medecins.html`) : liste des comptes en attente, lien vers le diplôme, valider/rejeter.
@@ -105,5 +105,5 @@ Ensuite, ouvrir http://localhost:8010/admin-connexion.html et se connecter :
 ### 8. Tests backend
 ```bash
 cd Backend-API
-uv run pytest -q
+uv run python -m pytest -q
 ```

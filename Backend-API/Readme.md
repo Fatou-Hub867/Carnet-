@@ -116,8 +116,8 @@ uv run uvicorn app:app --port 8010 --reload
 
 ### 6. Tests
 ```bash
-uv run pytest                 # suite end-to-end complète (SQLite async, sans service externe)
-uv run pytest tests/test_appointments_flow.py -q   # un fichier
+uv run python -m pytest                 # suite end-to-end complète (SQLite async, sans service externe)
+uv run python -m pytest tests/test_appointments_flow.py -q   # un fichier
 ```
 
 ---

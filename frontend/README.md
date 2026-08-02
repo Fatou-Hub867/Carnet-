@@ -28,5 +28,19 @@ localStorage) et `api.js` (wrapper fetch). L'inscription patient déclenche dés
 un email de confirmation (`confirmer-email.html`) : la connexion est refusée (403)
 tant que le lien n'a pas été cliqué. L'espace admin (`admin-connexion.html` + `admin/`)
 est également branché : validation/rejet des médecins, réclamations, suppression de
-compte médecin. Le reste des pages (dashboards, RDV, messagerie, carnet, etc.) affiche
-encore des données d'exemple — leur branchement fera l'objet d'une prochaine tranche.
+compte médecin.
+
+Sont également branchés : côté **patient** — `profil.html` (dont groupe sanguin, poids,
+photo de profil), `carnet.html` (documents, upload, téléchargement), `consultations.html`
+(recherche de médecin, réservation de créneau), `ordonnances.html` (liste, téléchargement
+PDF), `messages.html` (conversations, envoi de message/pièce jointe, nouvelle
+conversation) ; côté **médecin** — `profil.html` (dont photo), `calendrier.html`
+(publication de créneaux, vue du jour, clôture de consultation), `dashboard.html`
+(demandes en attente : accepter/refuser), `creer-ordonnance.html`, `messages.html`.
+`app.js` a été étendu avec `renderAvatar()` (affiche la vraie photo de profil quand
+elle existe, sinon les initiales).
+
+Restent encore à brancher : le tableau de bord patient/médecin (traitements en cours,
+rappels, chiffres du jour/mois), `evaluations.html` (patient) et
+`patients-chroniques.html` (médecin) — ces pages affichent toujours des données
+d'exemple codées en dur.
