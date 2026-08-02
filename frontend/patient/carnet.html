@@ -237,7 +237,7 @@
           var docs = await apiGet('/health-records/me/documents');
           renderDocuments(docs);
         } catch (err) {
-          // Silently leave the grid empty; the summary banner's own error state (if any) is the primary signal.
+          document.getElementById('carnet-doc-grid').textContent = 'Impossible de charger les documents.';
         }
       }
 
@@ -271,8 +271,12 @@
       document.addEventListener('click', async function (e) {
         var btn = e.target.closest('[data-download]');
         if (!btn) return;
-        var result = await apiGet('/health-records/me/documents/' + btn.getAttribute('data-download') + '/download');
-        window.open(result.download_url, '_blank');
+        try {
+          var result = await apiGet('/health-records/me/documents/' + btn.getAttribute('data-download') + '/download');
+          window.open(result.download_url, '_blank', 'noopener,noreferrer');
+        } catch (err) {
+          window.alert('Impossible de télécharger ce document, réessayez.');
+        }
       });
     })();
   </script>
