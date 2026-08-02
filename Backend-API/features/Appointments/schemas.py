@@ -66,3 +66,14 @@ class DoctorCalendarEntryOut(BaseModel):
     start_time: time
     mode: AppointmentMode
     status: AppointmentStatus
+
+
+class AwaitingPrescriptionOut(BaseModel):
+    """A completed consultation with no prescription yet — what the doctor
+    picks from on the "créer une ordonnance" page."""
+
+    appointment_id: int
+    patient_id: int
+    patient_name: str
+    date: date
+    start_time: time

@@ -12,6 +12,7 @@ from features.Appointments.schemas import (
     AppointmentOut,
     AvailabilityCreateRequest,
     AvailabilityOut,
+    AwaitingPrescriptionOut,
     DoctorCalendarEntryOut,
     PendingAppointmentOut,
 )
@@ -76,6 +77,16 @@ async def list_pending_appointments(
     db: AsyncSession = Depends(get_db),
 ):
     return await logic.list_pending_appointments(db, current_doctor.id)
+
+
+@router.get(
+    "/completed-awaiting-prescription", response_model=list[AwaitingPrescriptionOut]
+)
+async def list_completed_awaiting_prescription(
+    current_doctor: Doctor = Depends(get_current_doctor),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.list_completed_awaiting_prescription(db, current_doctor.id)
 
 
 @router.get("/calendar", response_model=list[DoctorCalendarEntryOut])

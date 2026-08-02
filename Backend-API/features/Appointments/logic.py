@@ -15,10 +15,12 @@ from features.Appointments.models import (
 from features.Appointments.schemas import (
     AppointmentCreateRequest,
     AvailabilityCreateRequest,
+    AwaitingPrescriptionOut,
     DoctorCalendarEntryOut,
     PendingAppointmentOut,
 )
 from features.Auth.models import Doctor, Patient
+from features.Prescriptions.models import Prescription
 
 
 async def create_availability(
@@ -240,4 +242,40 @@ async def get_doctor_calendar(
             status=appt_status,
         )
         for appt_id, first_name, last_name, appt_date, start_time, mode, appt_status in rows
+    ]
+
+
+async def list_completed_awaiting_prescription(
+    db: AsyncSession, doctor_id: int
+) -> list[AwaitingPrescriptionOut]:
+    rows = (
+        await db.execute(
+            select(
+                Appointment.id,
+                Appointment.patient_id,
+                Patient.first_name,
+                Patient.last_name,
+                Availability.date,
+                Availability.start_time,
+            )
+            .join(Availability, Appointment.availability_id == Availability.id)
+            .join(Patient, Appointment.patient_id == Patient.id)
+            .outerjoin(Prescription, Prescription.appointment_id == Appointment.id)
+            .where(
+                Appointment.doctor_id == doctor_id,
+                Appointment.status == AppointmentStatus.COMPLETED,
+                Prescription.id.is_(None),
+            )
+            .order_by(Availability.date.desc(), Availability.start_time.desc())
+        )
+    ).all()
+    return [
+        AwaitingPrescriptionOut(
+            appointment_id=appt_id,
+            patient_id=patient_id,
+            patient_name=f"{first_name} {last_name}",
+            date=appt_date,
+            start_time=start_time,
+        )
+        for appt_id, patient_id, first_name, last_name, appt_date, start_time in rows
     ]

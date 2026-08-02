@@ -209,3 +209,35 @@ async def test_pending_list_includes_patient_name_and_reason(
     assert entry["patient_name"] == "Ada Lovelace"
     assert entry["reason"] == "Douleurs thoraciques"
     assert entry["mode"] == "in_person"
+
+
+async def test_completed_awaiting_prescription_excludes_already_prescribed(
+    client, completed_appointment
+):
+    doctor = completed_appointment["doctor"]
+    doctor_headers = _auth(doctor["token"])
+
+    awaiting = await client.get(
+        "/appointments/completed-awaiting-prescription", headers=doctor_headers
+    )
+    assert awaiting.status_code == 200
+    assert len(awaiting.json()) == 1
+    assert (
+        awaiting.json()[0]["appointment_id"] == completed_appointment["appointment_id"]
+    )
+    assert awaiting.json()[0]["patient_name"] == "Ada Lovelace"
+
+    await client.post(
+        "/prescriptions",
+        json={
+            "appointment_id": completed_appointment["appointment_id"],
+            "notes": None,
+            "treatments": [],
+        },
+        headers=doctor_headers,
+    )
+
+    awaiting_after = await client.get(
+        "/appointments/completed-awaiting-prescription", headers=doctor_headers
+    )
+    assert awaiting_after.json() == []
