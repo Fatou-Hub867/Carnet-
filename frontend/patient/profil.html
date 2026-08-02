@@ -108,11 +108,11 @@
           <div class="grid-2">
             <div>
               <label class="label" style="letter-spacing:0;">PRÉNOM</label>
-              <input class="input" id="profil-first-name">
+              <input class="input" id="profil-first-name" required>
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">NOM</label>
-              <input class="input" id="profil-last-name">
+              <input class="input" id="profil-last-name" required>
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">EMAIL</label>
@@ -120,19 +120,19 @@
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">TÉLÉPHONE</label>
-              <input class="input" id="profil-phone">
+              <input class="input" id="profil-phone" required>
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">PAYS DE RÉSIDENCE</label>
-              <input class="input" id="profil-country">
+              <input class="input" id="profil-country" required>
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">VILLE</label>
-              <input class="input" id="profil-city">
+              <input class="input" id="profil-city" required>
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">ADRESSE</label>
-              <input class="input" id="profil-address">
+              <input class="input" id="profil-address" required>
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">DATE DE NAISSANCE</label>
@@ -148,7 +148,7 @@
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">POIDS (KG)</label>
-              <input class="input" id="profil-weight" type="number" step="0.1" placeholder="Ex. 68.5">
+              <input class="input" id="profil-weight" type="number" min="0" step="0.1" placeholder="Ex. 68.5">
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">ALLERGIES</label>
@@ -193,8 +193,13 @@
       }
 
       async function load() {
-        profile = await apiGet('/patients/me');
-        fillForm(profile);
+        try {
+          profile = await apiGet('/patients/me');
+          fillForm(profile);
+        } catch (err) {
+          document.getElementById('profil-error').textContent = 'Impossible de charger le profil, réessayez.';
+          document.getElementById('profil-error').classList.remove('hidden');
+        }
       }
       load();
 
@@ -204,10 +209,17 @@
       document.getElementById('profil-photo-input').addEventListener('change', async function (e) {
         var file = e.target.files[0];
         if (!file) return;
-        var formData = new FormData();
-        formData.append('photo', file);
-        profile = await apiPostForm('/patients/me/photo', formData);
-        fillForm(profile);
+        var errorEl = document.getElementById('profil-error');
+        errorEl.classList.add('hidden');
+        try {
+          var formData = new FormData();
+          formData.append('photo', file);
+          profile = await apiPostForm('/patients/me/photo', formData);
+          fillForm(profile);
+        } catch (err) {
+          errorEl.textContent = 'Une erreur est survenue, réessayez.';
+          errorEl.classList.remove('hidden');
+        }
       });
 
       document.getElementById('profil-cancel').addEventListener('click', function () {
