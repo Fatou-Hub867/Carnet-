@@ -189,6 +189,9 @@
 
       async function openThread(conversation) {
         activeConversationId = conversation.id;
+        document.querySelectorAll('.conv-item').forEach(function (el) {
+          el.classList.toggle('active', el.getAttribute('data-id') === String(conversation.id));
+        });
         document.getElementById('thread-empty').style.display = 'none';
         document.getElementById('thread-active').style.display = 'flex';
         var header = document.getElementById('thread-header');
@@ -209,9 +212,11 @@
       }
 
       async function refreshMessages() {
-        if (!activeConversationId) return;
+        var targetId = activeConversationId;
+        if (!targetId) return;
         try {
-          var messages = await apiGet('/messaging/conversations/' + activeConversationId + '/messages');
+          var messages = await apiGet('/messaging/conversations/' + targetId + '/messages');
+          if (targetId !== activeConversationId) return; // user switched conversations while this was in flight
           var container = document.getElementById('thread-messages');
           container.innerHTML = '';
           messages.forEach(function (m) {
@@ -227,7 +232,7 @@
               link.addEventListener('click', async function (e) {
                 e.preventDefault();
                 try {
-                  var result = await apiGet('/messaging/conversations/' + activeConversationId + '/messages/' + m.id + '/attachment');
+                  var result = await apiGet('/messaging/conversations/' + targetId + '/messages/' + m.id + '/attachment');
                   window.open(result.download_url, '_blank', 'noopener,noreferrer');
                 } catch (err) {
                   window.alert('Impossible de télécharger cette pièce jointe, réessayez.');
