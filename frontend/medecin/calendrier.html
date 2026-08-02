@@ -96,6 +96,13 @@
             </svg>Ajouter une disponibilité
           </button>
         </div>
+        <div class="card card--pad" style="border-radius:18px;">
+          <div class="row" style="justify-content:space-between;margin-bottom:16px;">
+            <div class="section-title">Consultations du jour</div>
+            <input type="date" class="input" id="calendar-day-picker" style="width:auto;">
+          </div>
+          <div class="col" style="gap:9px;" id="calendar-day-list"></div>
+        </div>
         <div class="card mb-16" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
           <button class="cal-nav">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -246,6 +253,78 @@
             errorEl.textContent = 'Une erreur est survenue, réessayez.';
           }
           errorEl.classList.remove('hidden');
+        }
+      });
+
+      function todayIso() {
+        return new Date().toISOString().slice(0, 10);
+      }
+
+      function renderDayEntries(entries) {
+        var list = document.getElementById('calendar-day-list');
+        list.innerHTML = '';
+        var today = todayIso();
+        entries.forEach(function (entry) {
+          var row = document.createElement('div');
+          row.className = 'row';
+          row.style.cssText = 'gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;';
+
+          var timeDiv = document.createElement('div');
+          timeDiv.style.cssText = 'font-weight:800;font-size:14px;color:var(--green-text);width:46px;flex:none;';
+          timeDiv.textContent = entry.start_time.slice(0, 5);
+          row.appendChild(timeDiv);
+
+          var nameWrap = document.createElement('div');
+          nameWrap.style.cssText = 'flex:1;min-width:0;';
+          var nameDiv = document.createElement('div');
+          nameDiv.style.cssText = 'font-weight:700;font-size:14px;';
+          nameDiv.textContent = entry.patient_name;
+          nameWrap.appendChild(nameDiv);
+          row.appendChild(nameWrap);
+
+          var chip = document.createElement('span');
+          chip.className = 'chip';
+          chip.style.cssText = 'font-size:11.5px;padding:4px 9px;border-radius:14px;';
+          chip.textContent = entry.mode === 'message' ? 'Message' : 'Présentiel';
+          row.appendChild(chip);
+
+          var canComplete = entry.status === 'confirmed' && entry.date <= today;
+          if (canComplete) {
+            var completeBtn = document.createElement('button');
+            completeBtn.className = 'btn btn--primary btn--sm';
+            completeBtn.setAttribute('data-complete', entry.appointment_id);
+            completeBtn.textContent = 'Terminer';
+            row.appendChild(completeBtn);
+          }
+
+          list.appendChild(row);
+        });
+      }
+
+      async function loadDay(day) {
+        try {
+          var entries = await apiGet('/appointments/calendar?day=' + day);
+          renderDayEntries(entries);
+        } catch (err) {
+          document.getElementById('calendar-day-list').textContent = 'Impossible de charger le calendrier.';
+        }
+      }
+
+      var dayPicker = document.getElementById('calendar-day-picker');
+      dayPicker.value = todayIso();
+      dayPicker.addEventListener('change', function () { loadDay(dayPicker.value); });
+      loadDay(dayPicker.value);
+
+      document.addEventListener('click', async function (e) {
+        var completeBtn = e.target.closest('[data-complete]');
+        if (!completeBtn) return;
+        completeBtn.disabled = true;
+        try {
+          await apiPost('/appointments/' + completeBtn.getAttribute('data-complete') + '/complete', {});
+          await loadDay(dayPicker.value);
+        } catch (err) {
+          window.alert('Une erreur est survenue, réessayez.');
+          completeBtn.disabled = false;
         }
       });
     })();
