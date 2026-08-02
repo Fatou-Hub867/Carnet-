@@ -32,6 +32,21 @@ from features.Prescriptions.schemas import (
 )
 
 
+def _build_prescription_out(
+    prescription: Prescription, doctor: Doctor, treatments: list[TreatmentLineOut]
+) -> PrescriptionOut:
+    return PrescriptionOut(
+        id=prescription.id,
+        patient_id=prescription.patient_id,
+        doctor_id=prescription.doctor_id,
+        doctor_name=f"{doctor.first_name} {doctor.last_name}",
+        appointment_id=prescription.appointment_id,
+        notes=prescription.notes,
+        created_at=prescription.created_at,
+        treatments=treatments,
+    )
+
+
 def _latin1(text: str) -> str:
     # fpdf2 core fonts (Helvetica) only support latin-1; free-text medical fields
     # may contain characters outside it, so replace rather than crash.
@@ -163,15 +178,10 @@ async def create_prescription(
 
     await db.commit()
     await db.refresh(prescription)
-    return PrescriptionOut(
-        id=prescription.id,
-        patient_id=prescription.patient_id,
-        doctor_id=prescription.doctor_id,
-        doctor_name=f"{doctor.first_name} {doctor.last_name}",
-        appointment_id=prescription.appointment_id,
-        notes=prescription.notes,
-        created_at=prescription.created_at,
-        treatments=[
+    return _build_prescription_out(
+        prescription,
+        doctor,
+        [
             TreatmentLineOut(
                 medication_name=line.medication_name,
                 dosage=line.dosage,
@@ -220,16 +230,7 @@ async def list_patient_prescriptions(
         )
 
     return [
-        PrescriptionOut(
-            id=p.id,
-            patient_id=p.patient_id,
-            doctor_id=p.doctor_id,
-            doctor_name=f"{doctor.first_name} {doctor.last_name}",
-            appointment_id=p.appointment_id,
-            notes=p.notes,
-            created_at=p.created_at,
-            treatments=treatments_by_prescription.get(p.id, []),
-        )
+        _build_prescription_out(p, doctor, treatments_by_prescription.get(p.id, []))
         for p, doctor in rows
     ]
 
