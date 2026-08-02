@@ -253,6 +253,11 @@
         var doctorId = bookBtn.getAttribute('data-book');
         selectedDoctor = allDoctors.find(function (d) { return String(d.id) === doctorId; });
         selectedMode = null;
+        document.querySelectorAll('#rdv-modal [data-modeopt]').forEach(function (o) {
+          o.style.borderColor = ''; o.style.background = '';
+          var d = o.querySelector('.mode-dot');
+          if (d) { d.style.borderColor = ''; d.style.background = ''; d.innerHTML = ''; }
+        });
 
         var summary = document.getElementById('rdv-doctor-summary');
         summary.innerHTML = '';
@@ -307,29 +312,37 @@
         if (opt) selectedMode = opt.getAttribute('data-mode') === 'message' ? 'message' : 'in_person';
       });
 
-      document.addEventListener('click', async function (e) {
+      // Always stop propagation synchronously (before any await) so app.js's own
+      // [data-rdvconfirm] bubble-phase handler — which unconditionally swaps
+      // rdv-modal for the success screen — never fires. We own the full
+      // success/failure UI for this button ourselves, deterministically, only
+      // after the booking request actually resolves.
+      document.addEventListener('click', function (e) {
         var confirmBtn = e.target.closest('[data-rdvconfirm]');
         if (!confirmBtn) return;
+        e.stopImmediatePropagation();
         var errorEl = document.getElementById('rdv-error');
         errorEl.classList.add('hidden');
         var availabilityId = document.getElementById('rdv-availability-select').value;
         if (!availabilityId || !selectedMode) {
           errorEl.textContent = 'Choisissez un créneau et un mode de consultation.';
           errorEl.classList.remove('hidden');
-          e.stopImmediatePropagation();
           return;
         }
-        try {
-          await apiPost('/appointments', {
-            availability_id: parseInt(availabilityId, 10),
-            mode: selectedMode,
-            reason: document.getElementById('rdv-reason').value || null,
-          });
-        } catch (err) {
+        confirmBtn.disabled = true;
+        apiPost('/appointments', {
+          availability_id: parseInt(availabilityId, 10),
+          mode: selectedMode,
+          reason: document.getElementById('rdv-reason').value || null,
+        }).then(function () {
+          document.getElementById('rdv-modal').style.display = 'none';
+          document.getElementById('rdv-sent-modal').style.display = 'flex';
+        }).catch(function () {
           errorEl.textContent = 'Une erreur est survenue, réessayez.';
           errorEl.classList.remove('hidden');
-          e.stopImmediatePropagation();
-        }
+        }).finally(function () {
+          confirmBtn.disabled = false;
+        });
       }, true);
     })();
   </script>
