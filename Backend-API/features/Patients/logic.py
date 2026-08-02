@@ -6,11 +6,13 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.storage import get_file_url
 from features.Appointments.models import Appointment, AppointmentStatus, Availability
 from features.Auth.models import Doctor, Patient
 from features.Patients.schemas import (
     DoseReminder,
     PatientDashboardOut,
+    PatientProfileOut,
     PatientProfileUpdateRequest,
     TreatmentSummary,
     UpcomingAppointment,
@@ -24,15 +26,50 @@ from features.Prescriptions.models import (
 )
 
 
-async def update_patient_profile(db: AsyncSession, patient: Patient, data: PatientProfileUpdateRequest) -> Patient:
+def build_profile_out(patient: Patient) -> PatientProfileOut:
+    return PatientProfileOut(
+        id=patient.id,
+        first_name=patient.first_name,
+        last_name=patient.last_name,
+        date_of_birth=patient.date_of_birth,
+        place_of_birth=patient.place_of_birth,
+        address=patient.address,
+        phone_number=patient.phone_number,
+        country_of_residence=patient.country_of_residence,
+        gender=patient.gender,
+        city=patient.city,
+        email=patient.email,
+        blood_type=patient.blood_type,
+        allergies=patient.allergies,
+        weight_kg=float(patient.weight_kg) if patient.weight_kg is not None else None,
+        photo_url=get_file_url(patient.photo_file_key)
+        if patient.photo_file_key
+        else None,
+    )
+
+
+async def update_patient_profile(
+    db: AsyncSession, patient: Patient, data: PatientProfileUpdateRequest
+) -> PatientProfileOut:
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(patient, field, value)
     await db.commit()
     await db.refresh(patient)
-    return patient
+    return build_profile_out(patient)
 
 
-async def get_patient_dashboard(db: AsyncSession, patient_id: int) -> PatientDashboardOut:
+async def update_patient_photo(
+    db: AsyncSession, patient: Patient, file_key: str
+) -> PatientProfileOut:
+    patient.photo_file_key = file_key
+    await db.commit()
+    await db.refresh(patient)
+    return build_profile_out(patient)
+
+
+async def get_patient_dashboard(
+    db: AsyncSession, patient_id: int
+) -> PatientDashboardOut:
     """Aggregates active treatments, today's doses and upcoming appointments.
     Computed on read (no stored notification state), per the passive-reminders
     decision from brainstorming."""
@@ -59,7 +96,11 @@ async def get_patient_dashboard(db: AsyncSession, patient_id: int) -> PatientDas
     # derived live from the schedule rather than from pre-generated intake rows.
     schedule_rows = (
         await db.execute(
-            select(TreatmentSchedule.id, TreatmentSchedule.treatment_id, TreatmentSchedule.time_of_day)
+            select(
+                TreatmentSchedule.id,
+                TreatmentSchedule.treatment_id,
+                TreatmentSchedule.time_of_day,
+            )
             .where(TreatmentSchedule.treatment_id.in_(treatments_by_id.keys()))
             .order_by(TreatmentSchedule.time_of_day)
         )

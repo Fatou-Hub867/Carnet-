@@ -22,6 +22,8 @@ class PatientProfileOut(BaseModel):
     email: EmailStr
     blood_type: str | None
     allergies: str | None
+    weight_kg: float | None
+    photo_url: str | None
 
     model_config = {"from_attributes": True}
 
@@ -35,6 +37,7 @@ class PatientProfileUpdateRequest(BaseModel):
     city: str | None = None
     blood_type: str | None = None
     allergies: str | None = None
+    weight_kg: float | None = None
 
 
 class TreatmentSummary(BaseModel):
