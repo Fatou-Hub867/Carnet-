@@ -306,21 +306,31 @@
       document.addEventListener('click', async function (e) {
         var acceptBtn = e.target.closest('[data-accept]');
         if (acceptBtn) {
+          acceptBtn.disabled = true;
+          var refuseBtn1 = acceptBtn.parentElement.querySelector('[data-refuse]');
+          if (refuseBtn1) refuseBtn1.disabled = true;
           try {
             await apiPost('/appointments/' + acceptBtn.getAttribute('data-accept') + '/decision', { approve: true });
             await loadPending();
           } catch (err) {
             window.alert('Une erreur est survenue, réessayez.');
+            acceptBtn.disabled = false;
+            if (refuseBtn1) refuseBtn1.disabled = false;
           }
           return;
         }
         var refuseBtn = e.target.closest('[data-refuse]');
         if (refuseBtn) {
+          refuseBtn.disabled = true;
+          var acceptBtn1 = refuseBtn.parentElement.querySelector('[data-accept]');
+          if (acceptBtn1) acceptBtn1.disabled = true;
           try {
             await apiPost('/appointments/' + refuseBtn.getAttribute('data-refuse') + '/decision', { approve: false });
             await loadPending();
           } catch (err) {
             window.alert('Une erreur est survenue, réessayez.');
+            refuseBtn.disabled = false;
+            if (acceptBtn1) acceptBtn1.disabled = false;
           }
         }
       });
