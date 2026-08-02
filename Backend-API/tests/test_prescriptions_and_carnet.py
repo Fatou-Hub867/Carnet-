@@ -251,3 +251,20 @@ async def test_get_or_create_conversation_is_idempotent(client, completed_appoin
     assert second_body["id"] == first_body["id"]
     assert second_body["patient_name"] == "Ada Lovelace"
     assert second_body["doctor_name"] == "Gregory House"
+
+
+async def test_prescription_out_includes_doctor_name_and_treatments(
+    client, completed_appointment
+):
+    patient = completed_appointment["patient"]
+    resp = await _prescribe(client, completed_appointment)
+    assert resp.status_code == 201, resp.text
+    body = resp.json()
+    assert body["doctor_name"] == "Gregory House"
+    assert body["treatments"][0]["medication_name"] == "Aspirin"
+    assert body["treatments"][0]["dosage"] == "500mg"
+
+    listing = await client.get("/prescriptions", headers=_auth(patient["token"]))
+    listed = listing.json()[0]
+    assert listed["doctor_name"] == "Gregory House"
+    assert listed["treatments"][0]["medication_name"] == "Aspirin"

@@ -1,5 +1,6 @@
 """Prescription creation (PDF generation + storage) and treatment intake tracking."""
 
+from collections import defaultdict
 from datetime import date, datetime
 
 from fastapi import HTTPException, status
@@ -23,7 +24,12 @@ from features.Prescriptions.models import (
     TreatmentIntakeStatus,
     TreatmentSchedule,
 )
-from features.Prescriptions.schemas import PrescriptionCreateRequest, TreatmentLineRequest
+from features.Prescriptions.schemas import (
+    PrescriptionCreateRequest,
+    PrescriptionOut,
+    TreatmentLineOut,
+    TreatmentLineRequest,
+)
 
 
 def _latin1(text: str) -> str:
@@ -33,7 +39,10 @@ def _latin1(text: str) -> str:
 
 
 def _build_prescription_pdf(
-    doctor: Doctor, patient: Patient, notes: str | None, treatments: list[TreatmentLineRequest]
+    doctor: Doctor,
+    patient: Patient,
+    notes: str | None,
+    treatments: list[TreatmentLineRequest],
 ) -> bytes:
     pdf = FPDF()
     pdf.add_page()
@@ -77,7 +86,9 @@ def _build_prescription_pdf(
     return bytes(pdf.output())
 
 
-async def create_prescription(db: AsyncSession, doctor_id: int, data: PrescriptionCreateRequest) -> Prescription:
+async def create_prescription(
+    db: AsyncSession, doctor_id: int, data: PrescriptionCreateRequest
+) -> PrescriptionOut:
     """Only allowed if the appointment status is completed. Generates the PDF
     with fpdf2, uploads it via core.storage, then creates the Treatment and
     TreatmentSchedule rows from the submitted treatment lines."""
@@ -85,13 +96,22 @@ async def create_prescription(db: AsyncSession, doctor_id: int, data: Prescripti
     if appointment is None or appointment.doctor_id != doctor_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Appointment not found")
     if appointment.status != AppointmentStatus.COMPLETED:
-        raise HTTPException(status.HTTP_409_CONFLICT, "The consultation must be completed before prescribing")
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "The consultation must be completed before prescribing",
+        )
 
     for line in data.treatments:
         if line.end_date < line.start_date:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, "A treatment's end_date is before its start_date")
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                "A treatment's end_date is before its start_date",
+            )
         if not line.intake_times:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Each treatment needs at least one intake time")
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                "Each treatment needs at least one intake time",
+            )
 
     doctor = await db.get(Doctor, doctor_id)
     patient = await db.get(Patient, appointment.patient_id)
@@ -125,7 +145,9 @@ async def create_prescription(db: AsyncSession, doctor_id: int, data: Prescripti
         db.add(treatment)
         await db.flush()  # need treatment.id for its schedule rows
         for intake_time in line.intake_times:
-            db.add(TreatmentSchedule(treatment_id=treatment.id, time_of_day=intake_time))
+            db.add(
+                TreatmentSchedule(treatment_id=treatment.id, time_of_day=intake_time)
+            )
 
     # The prescription PDF is automatically filed in the patient's health record.
     db.add(
@@ -141,22 +163,80 @@ async def create_prescription(db: AsyncSession, doctor_id: int, data: Prescripti
 
     await db.commit()
     await db.refresh(prescription)
-    return prescription
-
-
-async def list_patient_prescriptions(db: AsyncSession, patient_id: int) -> list[Prescription]:
-    return list(
-        (
-            await db.scalars(
-                select(Prescription)
-                .where(Prescription.patient_id == patient_id)
-                .order_by(Prescription.created_at.desc())
+    return PrescriptionOut(
+        id=prescription.id,
+        patient_id=prescription.patient_id,
+        doctor_id=prescription.doctor_id,
+        doctor_name=f"{doctor.first_name} {doctor.last_name}",
+        appointment_id=prescription.appointment_id,
+        notes=prescription.notes,
+        created_at=prescription.created_at,
+        treatments=[
+            TreatmentLineOut(
+                medication_name=line.medication_name,
+                dosage=line.dosage,
+                start_date=line.start_date,
+                end_date=line.end_date,
             )
-        ).all()
+            for line in data.treatments
+        ],
     )
 
 
-async def get_prescription_pdf_url(db: AsyncSession, patient_id: int, prescription_id: int) -> str:
+async def list_patient_prescriptions(
+    db: AsyncSession, patient_id: int
+) -> list[PrescriptionOut]:
+    rows = (
+        await db.execute(
+            select(Prescription, Doctor)
+            .join(Doctor, Prescription.doctor_id == Doctor.id)
+            .where(Prescription.patient_id == patient_id)
+            .order_by(Prescription.created_at.desc())
+        )
+    ).all()
+    prescriptions = [p for p, _ in rows]
+    prescription_ids = [p.id for p in prescriptions]
+
+    treatment_rows: list[Treatment] = []
+    if prescription_ids:
+        treatment_rows = list(
+            (
+                await db.scalars(
+                    select(Treatment).where(
+                        Treatment.prescription_id.in_(prescription_ids)
+                    )
+                )
+            ).all()
+        )
+    treatments_by_prescription: dict[int, list[TreatmentLineOut]] = defaultdict(list)
+    for t in treatment_rows:
+        treatments_by_prescription[t.prescription_id].append(
+            TreatmentLineOut(
+                medication_name=t.medication_name,
+                dosage=t.dosage,
+                start_date=t.start_date,
+                end_date=t.end_date,
+            )
+        )
+
+    return [
+        PrescriptionOut(
+            id=p.id,
+            patient_id=p.patient_id,
+            doctor_id=p.doctor_id,
+            doctor_name=f"{doctor.first_name} {doctor.last_name}",
+            appointment_id=p.appointment_id,
+            notes=p.notes,
+            created_at=p.created_at,
+            treatments=treatments_by_prescription.get(p.id, []),
+        )
+        for p, doctor in rows
+    ]
+
+
+async def get_prescription_pdf_url(
+    db: AsyncSession, patient_id: int, prescription_id: int
+) -> str:
     prescription = await db.get(Prescription, prescription_id)
     if prescription is None or prescription.patient_id != patient_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Prescription not found")
@@ -176,7 +256,9 @@ async def confirm_treatment_intake(
     if owner_id is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Treatment schedule not found")
     if owner_id != patient_id:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "This treatment schedule is not yours")
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, "This treatment schedule is not yours"
+        )
 
     intake = (
         await db.scalars(

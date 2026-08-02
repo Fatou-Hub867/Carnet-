@@ -19,13 +19,22 @@ class PrescriptionCreateRequest(BaseModel):
     treatments: list[TreatmentLineRequest]
 
 
+class TreatmentLineOut(BaseModel):
+    medication_name: str
+    dosage: str
+    start_date: date
+    end_date: date
+
+
 class PrescriptionOut(BaseModel):
     id: int
     patient_id: int
     doctor_id: int
+    doctor_name: str
     appointment_id: int
     notes: str | None
     created_at: datetime
+    treatments: list[TreatmentLineOut]
 
     model_config = {"from_attributes": True}
 
