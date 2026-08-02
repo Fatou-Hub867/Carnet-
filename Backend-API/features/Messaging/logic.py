@@ -60,6 +60,8 @@ async def get_or_create_conversation(
     if doctor is None or doctor.status != DoctorStatus.VALIDATED:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Doctor not found")
     patient = await db.get(Patient, patient_id)
+    if patient is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
 
     existing = (
         await db.scalars(

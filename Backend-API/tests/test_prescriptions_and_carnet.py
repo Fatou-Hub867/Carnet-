@@ -226,3 +226,28 @@ async def test_conversation_out_includes_names_and_photos(
     )
     assert listing.status_code == 200
     assert listing.json()[0]["patient_name"] == "Ada Lovelace"
+
+
+async def test_get_or_create_conversation_is_idempotent(client, completed_appointment):
+    patient = completed_appointment["patient"]
+    doctor = completed_appointment["doctor"]
+
+    first = await client.post(
+        "/messaging/conversations",
+        json={"doctor_id": doctor["id"]},
+        headers=_auth(patient["token"]),
+    )
+    assert first.status_code == 201, first.text
+    first_body = first.json()
+
+    second = await client.post(
+        "/messaging/conversations",
+        json={"doctor_id": doctor["id"]},
+        headers=_auth(patient["token"]),
+    )
+    assert second.status_code == 201, second.text
+    second_body = second.json()
+
+    assert second_body["id"] == first_body["id"]
+    assert second_body["patient_name"] == "Ada Lovelace"
+    assert second_body["doctor_name"] == "Gregory House"
