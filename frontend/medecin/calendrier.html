@@ -234,10 +234,17 @@
             end_time: end + ':00',
           });
           document.getElementById('add-availability-modal').style.display = 'none';
+          document.getElementById('avail-date').value = '';
+          document.getElementById('avail-start').value = '';
+          document.getElementById('avail-end').value = '';
         } catch (err) {
-          errorEl.textContent = err.status === 409
-            ? 'Ce créneau chevauche une disponibilité existante.'
-            : 'Une erreur est survenue, réessayez.';
+          if (err.status === 409) {
+            errorEl.textContent = 'Ce créneau chevauche une disponibilité existante.';
+          } else if (err.status === 400) {
+            errorEl.textContent = err.detail;
+          } else {
+            errorEl.textContent = 'Une erreur est survenue, réessayez.';
+          }
           errorEl.classList.remove('hidden');
         }
       });
