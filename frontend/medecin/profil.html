@@ -90,48 +90,131 @@
         <h1 class="h1">Mon profil</h1>
         <p class="subtitle">Gérez vos informations personnelles et de sécurité.</p>
         <div class="banner" style="padding:26px;display:flex;align-items:center;gap:18px;margin-bottom:20px;box-shadow:0 12px 28px rgba(13,148,136,.2);">
-          <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px;flex:none;">FM</div>
+          <div id="profil-avatar" class="avatar avatar-round" style="width:72px;height:72px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px;flex:none;cursor:pointer;" title="Cliquer pour changer la photo">--</div>
+          <input type="file" id="profil-photo-input" accept="image/*" style="display:none;">
           <div>
-            <div style="font-size:23px;font-weight:800;">Dr. Fatou Malta</div>
-            <div style="opacity:.85;font-size:14px;margin-top:3px;">f.malta@carnetplus.cg</div>
+            <div id="profil-name" style="font-size:23px;font-weight:800;"></div>
+            <div id="profil-email" style="opacity:.85;font-size:14px;margin-top:3px;"></div>
           </div>
         </div>
-        <div class="card card--pad" style="border-radius:18px;padding:24px;">
+        <p class="form-error hidden" id="profil-error"></p>
+        <form id="profil-form" class="card card--pad" style="border-radius:18px;padding:24px;">
           <div style="font-weight:800;font-size:16px;margin-bottom:18px;">Informations personnelles</div>
           <div class="grid-2">
             <div>
               <label class="label" style="letter-spacing:0;">NOM COMPLET</label>
-              <input class="input" value="Dr. Fatou Malta">
+              <input class="input" id="profil-name-field" disabled>
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">EMAIL</label>
-              <input class="input" value="f.malta@carnetplus.cg">
+              <input class="input" id="profil-email-field" disabled>
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">TÉLÉPHONE</label>
-              <input class="input" value="+221 77 000 00 00">
+              <input class="input" id="profil-phone" required>
             </div>
             <div>
-              <label class="label" style="letter-spacing:0;">PAYS DE RÉSIDENCE</label>
-              <input class="input" value="Sénégal">
+              <label class="label" style="letter-spacing:0;">ÉTABLISSEMENT / CABINET</label>
+              <input class="input" id="profil-practice" required>
+            </div>
+            <div>
+              <label class="label" style="letter-spacing:0;">TARIF DE CONSULTATION</label>
+              <input class="input" id="profil-fee" type="number" step="0.01" min="0" required>
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">DATE DE NAISSANCE</label>
-              <input class="input" value="14/03/1994">
+              <input class="input" id="profil-dob" disabled>
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">LIEU DE NAISSANCE</label>
-              <input class="input" value="Dakar">
+              <input class="input" id="profil-pob" disabled>
             </div>
           </div>
           <div class="row" style="gap:10px;margin-top:22px;">
-            <button class="btn btn--primary">Enregistrer</button>
-            <button class="btn btn--ghost">Annuler</button>
+            <button type="submit" class="btn btn--primary">Enregistrer</button>
+            <button type="button" class="btn btn--ghost" id="profil-cancel">Annuler</button>
           </div>
-        </div>
+        </form>
       </div>
     </main>
   </div>
+  <script src="../auth.js"></script>
+  <script src="../api.js"></script>
   <script src="../app.js"></script>
+  <script>
+    (function () {
+      CarnetAuth.requireAuth('doctor');
+      var profile = null;
+
+      function fillForm(d) {
+        document.getElementById('profil-name').textContent = 'Dr. ' + d.first_name + ' ' + d.last_name;
+        document.getElementById('profil-email').textContent = d.email;
+        document.getElementById('profil-name-field').value = 'Dr. ' + d.first_name + ' ' + d.last_name;
+        document.getElementById('profil-email-field').value = d.email;
+        document.getElementById('profil-phone').value = d.phone_number;
+        document.getElementById('profil-practice').value = d.practice_name;
+        document.getElementById('profil-fee').value = d.consultation_fee;
+        document.getElementById('profil-dob').value = d.date_of_birth;
+        document.getElementById('profil-pob').value = d.place_of_birth;
+        var avatar = document.getElementById('profil-avatar');
+        avatar.textContent = (d.first_name[0] || '') + (d.last_name[0] || '');
+        avatar.style.backgroundImage = '';
+        renderAvatar(avatar, d.photo_url);
+      }
+
+      async function load() {
+        try {
+          profile = await apiGet('/doctors/me');
+          fillForm(profile);
+        } catch (err) {
+          document.getElementById('profil-error').textContent = 'Impossible de charger le profil, réessayez.';
+          document.getElementById('profil-error').classList.remove('hidden');
+        }
+      }
+      load();
+
+      document.getElementById('profil-avatar').addEventListener('click', function () {
+        document.getElementById('profil-photo-input').click();
+      });
+      document.getElementById('profil-photo-input').addEventListener('change', async function (e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var errorEl = document.getElementById('profil-error');
+        errorEl.classList.add('hidden');
+        try {
+          var formData = new FormData();
+          formData.append('photo', file);
+          profile = await apiPostForm('/doctors/me/photo', formData);
+          fillForm(profile);
+        } catch (err) {
+          errorEl.textContent = 'Une erreur est survenue, réessayez.';
+          errorEl.classList.remove('hidden');
+        }
+      });
+
+      document.getElementById('profil-cancel').addEventListener('click', function () {
+        fillForm(profile);
+      });
+
+      document.getElementById('profil-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errorEl = document.getElementById('profil-error');
+        errorEl.classList.add('hidden');
+        try {
+          profile = await apiRequest('PATCH', '/doctors/me', {
+            json: {
+              phone_number: document.getElementById('profil-phone').value,
+              practice_name: document.getElementById('profil-practice').value,
+              consultation_fee: parseFloat(document.getElementById('profil-fee').value),
+            },
+          });
+          fillForm(profile);
+        } catch (err) {
+          errorEl.textContent = 'Une erreur est survenue, réessayez.';
+          errorEl.classList.remove('hidden');
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
