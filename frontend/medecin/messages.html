@@ -93,43 +93,166 @@
           <div class="card" style="padding:16px;display:flex;flex-direction:column;min-height:0;">
             <div class="row" style="justify-content:space-between;margin-bottom:14px;">
               <div style="font-weight:800;font-size:15px;">Conversations</div>
-              <button class="btn btn--primary btn--pill">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>Nouveau
-              </button>
             </div>
-            <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;min-height:0;">
-              <div class="conv-item" data-id="m1" data-disabled="0">
-                <div class="avatar avatar-42" style="background:#5b6ef5;">AK</div>
-                <div style="flex:1;min-width:0;">
-                  <div class="name">Amadou Koné</div>
-                  <div class="sub">Patient · Diabète</div>
-                </div>
-                <span class="unread">1</span>
-              </div>
-              <div class="conv-item" data-id="m2" data-disabled="0">
-                <div class="avatar avatar-42" style="background:#ec4899;">LN</div>
-                <div style="flex:1;min-width:0;">
-                  <div class="name">Léa Nkouka</div>
-                  <div class="sub">Patiente · Hypertension</div>
-                </div>
-              </div>
-            </div>
+            <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;min-height:0;" id="conversation-list"></div>
           </div>
-          <div class="card" style="padding:0;display:flex;flex-direction:column;min-height:0;overflow:hidden;">
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted-2);padding:40px;text-align:center;">
+          <div class="card" style="padding:0;display:flex;flex-direction:column;min-height:0;overflow:hidden;" id="thread-pane">
+            <div id="thread-empty" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted-2);padding:40px;text-align:center;">
               <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" />
               </svg>
               <div style="font-size:16px;font-weight:700;color:var(--muted);margin-top:14px;">Sélectionnez une conversation</div>
               <div style="font-size:14px;margin-top:4px;">Choisissez un contact dans la liste pour commencer à discuter.</div>
             </div>
+            <div id="thread-active" style="display:none;flex-direction:column;flex:1;min-height:0;">
+              <div class="row" id="thread-header" style="gap:12px;padding:16px;border-bottom:1px solid #f4f6f7;"></div>
+              <div id="thread-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;"></div>
+              <form id="thread-send-form" class="row" style="gap:8px;padding:12px 16px;border-top:1px solid #f4f6f7;">
+                <input class="input" id="thread-content" placeholder="Écrire un message…" style="flex:1;">
+                <input type="file" id="thread-file" style="display:none;">
+                <button type="button" class="btn btn--ghost btn--sm" id="thread-attach">📎</button>
+                <button type="submit" class="btn btn--primary btn--sm">Envoyer</button>
+              </form>
+            </div>
           </div>
         </div>
       </div>
     </main>
   </div>
+  <script src="../auth.js"></script>
+  <script src="../api.js"></script>
   <script src="../app.js"></script>
+  <script>
+    (function () {
+      CarnetAuth.requireAuth('doctor');
+      var activeConversationId = null;
+      var pollTimer = null;
+
+      function initials(name) {
+        var parts = name.split(' ');
+        return (parts[0][0] || '') + (parts[parts.length - 1][0] || '');
+      }
+
+      async function loadConversations() {
+        try {
+          var conversations = await apiGet('/messaging/conversations');
+          var list = document.getElementById('conversation-list');
+          list.innerHTML = '';
+          conversations.forEach(function (c) {
+            var item = document.createElement('div');
+            item.className = 'conv-item';
+            item.setAttribute('data-id', c.id);
+
+            var avatar = document.createElement('div');
+            avatar.className = 'avatar avatar-42';
+            avatar.style.background = '#5b6ef5';
+            avatar.textContent = initials(c.patient_name);
+            item.appendChild(avatar);
+
+            var nameWrap = document.createElement('div');
+            nameWrap.style.cssText = 'flex:1;min-width:0;';
+            var nameDiv = document.createElement('div');
+            nameDiv.className = 'name';
+            nameDiv.textContent = c.patient_name;
+            nameWrap.appendChild(nameDiv);
+            item.appendChild(nameWrap);
+
+            renderAvatar(avatar, c.patient_photo_url);
+            item.addEventListener('click', function () { openThread(c); });
+            list.appendChild(item);
+          });
+        } catch (err) {
+          document.getElementById('conversation-list').textContent = 'Impossible de charger les conversations.';
+        }
+      }
+
+      async function openThread(conversation) {
+        activeConversationId = conversation.id;
+        document.querySelectorAll('.conv-item').forEach(function (el) {
+          el.classList.toggle('active', el.getAttribute('data-id') === String(conversation.id));
+        });
+        document.getElementById('thread-empty').style.display = 'none';
+        document.getElementById('thread-active').style.display = 'flex';
+        var header = document.getElementById('thread-header');
+        header.innerHTML = '';
+        var headerAvatar = document.createElement('div');
+        headerAvatar.className = 'avatar avatar-42';
+        headerAvatar.style.background = '#5b6ef5';
+        headerAvatar.textContent = initials(conversation.patient_name);
+        header.appendChild(headerAvatar);
+        var headerName = document.createElement('div');
+        headerName.style.cssText = 'font-weight:700;';
+        headerName.textContent = conversation.patient_name;
+        header.appendChild(headerName);
+        renderAvatar(headerAvatar, conversation.patient_photo_url);
+        await refreshMessages();
+        if (pollTimer) clearInterval(pollTimer);
+        pollTimer = setInterval(refreshMessages, 4000);
+      }
+
+      async function refreshMessages() {
+        var targetId = activeConversationId;
+        if (!targetId) return;
+        try {
+          var messages = await apiGet('/messaging/conversations/' + targetId + '/messages');
+          if (targetId !== activeConversationId) return;
+          var container = document.getElementById('thread-messages');
+          container.innerHTML = '';
+          messages.forEach(function (m) {
+            var bubble = document.createElement('div');
+            var mine = m.sender_type === 'doctor';
+            bubble.style.cssText = 'max-width:70%;padding:10px 14px;border-radius:14px;' +
+              (mine ? 'align-self:flex-end;background:var(--green-soft);' : 'align-self:flex-start;background:var(--field);');
+            bubble.textContent = m.content || '(pièce jointe)';
+            if (m.file_key) {
+              var link = document.createElement('a');
+              link.href = '#';
+              link.textContent = ' [voir la pièce jointe]';
+              link.addEventListener('click', async function (e) {
+                e.preventDefault();
+                try {
+                  var result = await apiGet('/messaging/conversations/' + targetId + '/messages/' + m.id + '/attachment');
+                  window.open(result.download_url, '_blank', 'noopener,noreferrer');
+                } catch (err) {
+                  window.alert('Impossible de télécharger cette pièce jointe, réessayez.');
+                }
+              });
+              bubble.appendChild(link);
+            }
+            container.appendChild(bubble);
+          });
+          container.scrollTop = container.scrollHeight;
+        } catch (err) {
+          // Silent: this is polled every 4s, a transient failure shouldn't spam
+          // the user with alerts — the thread simply catches up on the next poll.
+        }
+      }
+
+      document.getElementById('thread-attach').addEventListener('click', function () {
+        document.getElementById('thread-file').click();
+      });
+
+      document.getElementById('thread-send-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (!activeConversationId) return;
+        var contentInput = document.getElementById('thread-content');
+        var fileInput = document.getElementById('thread-file');
+        if (!contentInput.value && !fileInput.files[0]) return;
+        var formData = new FormData();
+        formData.append('content', contentInput.value);
+        if (fileInput.files[0]) formData.append('file', fileInput.files[0]);
+        try {
+          await apiPostForm('/messaging/conversations/' + activeConversationId + '/messages', formData);
+          contentInput.value = '';
+          fileInput.value = '';
+          await refreshMessages();
+        } catch (err) {
+          window.alert('Une erreur est survenue, réessayez.');
+        }
+      });
+
+      loadConversations();
+    })();
+  </script>
 </body>
 </html>
