@@ -100,176 +100,45 @@
               <circle cx="11" cy="11" r="7" />
               <path d="m21 21-4.3-4.3" />
             </svg>
-            <input placeholder="Rechercher un médecin…" style="padding:14px 0;">
+            <input id="doctor-search-input" placeholder="Rechercher un médecin…" style="padding:14px 0;">
           </div>
-          <select class="select" style="border-color:var(--border);border-radius:13px;font-weight:600;color:var(--slate);min-width:180px;width:auto;background:#fff;">
-            <option>Toutes spécialités</option>
-            <option>Médecine générale</option>
-            <option>Cardiologie</option>
-            <option>Gynécologie</option>
-            <option>Psychiatrie</option>
+          <select class="select" id="doctor-specialty-filter" style="border-color:var(--border);border-radius:13px;font-weight:600;color:var(--slate);min-width:180px;width:auto;background:#fff;">
+            <option value="">Toutes spécialités</option>
+            <option value="Médecine générale">Médecine générale</option>
+            <option value="Cardiologie">Cardiologie</option>
+            <option value="Gynécologie">Gynécologie</option>
+            <option value="Psychiatrie">Psychiatrie</option>
           </select>
         </div>
-        <div class="grid-2">
-          <div class="card col">
-            <div class="row" style="gap:13px;margin-bottom:12px;">
-              <div class="avatar avatar-48" style="background:#10b981;">JI</div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-weight:700;font-size:15.5px;">Dr. Jany Itoua-Issena</div>
-                <div style="color:var(--green-text);font-size:13px;font-weight:600;">Gynécologie</div>
-              </div>
-            </div>
-            <div style="font-weight:800;font-size:16px;margin-bottom:8px;">10 000 FCFA</div>
-            <div style="color:var(--muted);font-size:13.5px;line-height:1.5;margin-bottom:12px;flex:1;">Suivi gynécologique, grossesse et planification familiale.</div>
-            <div class="row" style="gap:6px;color:var(--muted-2);font-size:13px;margin-bottom:14px;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                <circle cx="12" cy="10" r="2.5" />
-              </svg>Point E, Dakar
-            </div>
-            <button class="btn btn--primary" style="width:100%;padding:12px;" data-open="rdv-modal">Prendre RDV <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M13 6l6 6-6 6" />
-              </svg>
-            </button>
-          </div>
-          <div class="card col">
-            <div class="row" style="gap:13px;margin-bottom:12px;">
-              <div class="avatar avatar-48" style="background:#5b6ef5;">RO</div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-weight:700;font-size:15.5px;">Dr. Richedman Onsiala</div>
-                <div style="color:var(--green-text);font-size:13px;font-weight:600;">Cardiologie</div>
-              </div>
-            </div>
-            <div style="font-weight:800;font-size:16px;margin-bottom:8px;">15 000 FCFA</div>
-            <div style="color:var(--muted);font-size:13.5px;line-height:1.5;margin-bottom:12px;flex:1;">Cardiologue, explorations et suivi de l’hypertension.</div>
-            <div class="row" style="gap:6px;color:var(--muted-2);font-size:13px;margin-bottom:14px;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                <circle cx="12" cy="10" r="2.5" />
-              </svg>Almadies, Dakar
-            </div>
-            <button class="btn btn--primary" style="width:100%;padding:12px;" data-open="rdv-modal">Prendre RDV <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M13 6l6 6-6 6" />
-              </svg>
-            </button>
-          </div>
-          <div class="card col">
-            <div class="row" style="gap:13px;margin-bottom:12px;">
-              <div class="avatar avatar-48" style="background:#8b5cf6;">PG</div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-weight:700;font-size:15.5px;">Dr. Paul Gandou</div>
-                <div style="color:var(--green-text);font-size:13px;font-weight:600;">Psychiatrie</div>
-              </div>
-            </div>
-            <div style="font-weight:800;font-size:16px;margin-bottom:8px;">15 000 FCFA</div>
-            <div style="color:var(--muted);font-size:13.5px;line-height:1.5;margin-bottom:12px;flex:1;">Chef adjoint, programme national de santé mentale.</div>
-            <div class="row" style="gap:6px;color:var(--muted-2);font-size:13px;margin-bottom:14px;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                <circle cx="12" cy="10" r="2.5" />
-              </svg>Fann, Dakar
-            </div>
-            <button class="btn btn--primary" style="width:100%;padding:12px;" data-open="rdv-modal">Prendre RDV <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M13 6l6 6-6 6" />
-              </svg>
-            </button>
-          </div>
-          <div class="card col">
-            <div class="row" style="gap:13px;margin-bottom:12px;">
-              <div class="avatar avatar-48" style="background:#0ea5e9;">EB</div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-weight:700;font-size:15.5px;">Dr. Eden Bous</div>
-                <div style="color:var(--green-text);font-size:13px;font-weight:600;">Médecine générale</div>
-              </div>
-            </div>
-            <div style="font-weight:800;font-size:16px;margin-bottom:8px;">15 000 FCFA</div>
-            <div style="color:var(--muted);font-size:13.5px;line-height:1.5;margin-bottom:12px;flex:1;">Téléconsultation, disponible en soirée.</div>
-            <div class="row" style="gap:6px;color:var(--muted-2);font-size:13px;margin-bottom:14px;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                <circle cx="12" cy="10" r="2.5" />
-              </svg>En ligne
-            </div>
-            <button class="btn btn--primary" style="width:100%;padding:12px;" data-open="rdv-modal">Prendre RDV <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M13 6l6 6-6 6" />
-              </svg>
-            </button>
-          </div>
-          <div class="card col">
-            <div class="row" style="gap:13px;margin-bottom:12px;">
-              <div class="avatar avatar-48" style="background:#f59e0b;">GB</div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-weight:700;font-size:15.5px;">Dr. Gryd Batantou</div>
-                <div style="color:var(--green-text);font-size:13px;font-weight:600;">Médecine générale</div>
-              </div>
-            </div>
-            <div style="font-weight:800;font-size:16px;margin-bottom:8px;">1 500 FCFA</div>
-            <div style="color:var(--muted);font-size:13.5px;line-height:1.5;margin-bottom:12px;flex:1;">Médecin généraliste, 15 ans d’expérience.</div>
-            <div class="row" style="gap:6px;color:var(--muted-2);font-size:13px;margin-bottom:14px;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                <circle cx="12" cy="10" r="2.5" />
-              </svg>Plateau, Dakar
-            </div>
-            <button class="btn btn--primary" style="width:100%;padding:12px;" data-open="rdv-modal">Prendre RDV <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M13 6l6 6-6 6" />
-              </svg>
-            </button>
-          </div>
-          <div class="card col">
-            <div class="row" style="gap:13px;margin-bottom:12px;">
-              <div class="avatar avatar-48" style="background:#ec4899;">HB</div>
-              <div style="flex:1;min-width:0;">
-                <div style="font-weight:700;font-size:15.5px;">Dr. Helena Backima</div>
-                <div style="color:var(--green-text);font-size:13px;font-weight:600;">Rhumatologie</div>
-              </div>
-            </div>
-            <div style="font-weight:800;font-size:16px;margin-bottom:8px;">5 000 FCFA</div>
-            <div style="color:var(--muted);font-size:13.5px;line-height:1.5;margin-bottom:12px;flex:1;">En formation spécialisée de rhumatologie.</div>
-            <div class="row" style="gap:6px;color:var(--muted-2);font-size:13px;margin-bottom:14px;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-                <circle cx="12" cy="10" r="2.5" />
-              </svg>Mermoz, Dakar
-            </div>
-            <button class="btn btn--primary" style="width:100%;padding:12px;" data-open="rdv-modal">Prendre RDV <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M5 12h14M13 6l6 6-6 6" />
-              </svg>
-            </button>
-          </div>
-        </div>
+        <div class="grid-2" id="doctor-grid"></div>
       </div>
     </main>
   </div>
   <div class="modal__backdrop" id="rdv-modal" style="display:none;">
     <div class="modal">
       <div class="row" style="justify-content:space-between;margin-bottom:18px;">
-        <div style="font-size:19px;font-weight:800;">Choisir le mode de consultation</div>
+        <div style="font-size:19px;font-weight:800;">Prendre rendez-vous</div>
         <button class="modal__close" data-close>✕</button>
       </div>
-      <div class="row" style="gap:14px;background:var(--green-soft);border-radius:14px;padding:15px;margin-bottom:18px;">
-        <div class="avatar avatar-46" style="background:#10b981;">JI</div>
-        <div>
-          <div style="font-weight:700;font-size:15px;">Dr. Jany Itoua-Issena</div>
-          <div style="color:var(--green-text);font-size:13px;font-weight:600;">Gynécologie · 10 000 FCFA</div>
-        </div>
-      </div>
-      <div class="col" style="gap:10px;margin-bottom:20px;">
-        <div class="mode-opt" data-modeopt data-c="#8b5cf6" data-mode="message" style="border-color:#8b5cf6;background:#8b5cf612;">
-          <div class="mode-dot" style="border-color:#8b5cf6;background:#8b5cf6;">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
-          </div>
+      <div class="row" id="rdv-doctor-summary" style="gap:14px;background:var(--green-soft);border-radius:14px;padding:15px;margin-bottom:18px;"></div>
+      <label class="label" style="margin-bottom:8px;display:block;">CRÉNEAU</label>
+      <select class="select" id="rdv-availability-select" style="margin-bottom:16px;"></select>
+      <label class="label" style="margin-bottom:8px;display:block;">MODE</label>
+      <div class="col" style="gap:10px;margin-bottom:16px;">
+        <div class="mode-opt" data-modeopt data-c="#8b5cf6" data-mode="message">
+          <div class="mode-dot" style="border-color:#8b5cf6;"></div>
           <div class="mode-tag" style="background:#8b5cf618;color:#8b5cf6;">M</div>
           <div style="font-weight:700;font-size:15px;">Message</div>
         </div>
-        <div class="mode-opt" data-modeopt data-c="#0d9488" data-mode="presentiel" style="">
-          <div class="mode-dot" style=""></div>
+        <div class="mode-opt" data-modeopt data-c="#0d9488" data-mode="presentiel">
+          <div class="mode-dot"></div>
           <div class="mode-tag" style="background:#0d948818;color:#0d9488;">P</div>
           <div style="font-weight:700;font-size:15px;">Présentiel</div>
         </div>
       </div>
+      <label class="label" style="margin-bottom:8px;display:block;">MOTIF (OPTIONNEL)</label>
+      <input class="input" id="rdv-reason" style="margin-bottom:16px;" placeholder="Ex. Douleurs thoraciques">
+      <p class="form-error hidden" id="rdv-error"></p>
       <button class="btn btn--primary btn--block" data-rdvconfirm>Confirmer le rendez-vous <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M5 12h14M13 6l6 6-6 6" />
         </svg>
@@ -289,6 +158,180 @@
       <button class="btn btn--primary btn--block" data-close>J'ai compris</button>
     </div>
   </div>
+  <script src="../auth.js"></script>
+  <script src="../api.js"></script>
   <script src="../app.js"></script>
+  <script>
+    (function () {
+      CarnetAuth.requireAuth('patient');
+      var allDoctors = [];
+      var selectedDoctor = null;
+      var selectedMode = null;
+
+      function doctorInitials(d) {
+        return (d.first_name[0] || '') + (d.last_name[0] || '');
+      }
+
+      function renderDoctors(doctors) {
+        var grid = document.getElementById('doctor-grid');
+        grid.innerHTML = '';
+        doctors.forEach(function (d) {
+          var card = document.createElement('div');
+          card.className = 'card col';
+
+          var headerRow = document.createElement('div');
+          headerRow.className = 'row';
+          headerRow.style.cssText = 'gap:13px;margin-bottom:12px;';
+
+          var avatar = document.createElement('div');
+          avatar.className = 'avatar avatar-48';
+          avatar.style.background = '#10b981';
+          avatar.textContent = doctorInitials(d);
+          headerRow.appendChild(avatar);
+
+          var infoDiv = document.createElement('div');
+          infoDiv.style.cssText = 'flex:1;min-width:0;';
+          var nameDiv = document.createElement('div');
+          nameDiv.style.cssText = 'font-weight:700;font-size:15.5px;';
+          nameDiv.textContent = 'Dr. ' + d.first_name + ' ' + d.last_name;
+          var specialtyDiv = document.createElement('div');
+          specialtyDiv.style.cssText = 'color:var(--green-text);font-size:13px;font-weight:600;';
+          specialtyDiv.textContent = d.specialty;
+          infoDiv.appendChild(nameDiv);
+          infoDiv.appendChild(specialtyDiv);
+          headerRow.appendChild(infoDiv);
+          card.appendChild(headerRow);
+
+          var feeDiv = document.createElement('div');
+          feeDiv.style.cssText = 'font-weight:800;font-size:16px;margin-bottom:8px;';
+          feeDiv.textContent = d.consultation_fee + ' FCFA';
+          card.appendChild(feeDiv);
+
+          var descDiv = document.createElement('div');
+          descDiv.style.cssText = 'color:var(--muted);font-size:13.5px;line-height:1.5;margin-bottom:12px;flex:1;';
+          descDiv.textContent = d.practice_name + ' · ' + d.city;
+          card.appendChild(descDiv);
+
+          var bookBtn = document.createElement('button');
+          bookBtn.className = 'btn btn--primary';
+          bookBtn.style.cssText = 'width:100%;padding:12px;';
+          bookBtn.setAttribute('data-book', d.id);
+          bookBtn.setAttribute('data-open', 'rdv-modal');
+          bookBtn.textContent = 'Prendre RDV';
+          card.appendChild(bookBtn);
+
+          renderAvatar(avatar, d.photo_url);
+          grid.appendChild(card);
+        });
+      }
+
+      function applyFilters() {
+        var text = document.getElementById('doctor-search-input').value.trim().toLowerCase();
+        var filtered = allDoctors.filter(function (d) {
+          return !text || (d.first_name + ' ' + d.last_name).toLowerCase().indexOf(text) !== -1;
+        });
+        renderDoctors(filtered);
+      }
+
+      async function loadDoctors() {
+        try {
+          var specialty = document.getElementById('doctor-specialty-filter').value;
+          allDoctors = await apiGet('/doctors' + (specialty ? '?specialty=' + encodeURIComponent(specialty) : ''));
+          applyFilters();
+        } catch (err) {
+          document.getElementById('doctor-grid').textContent = 'Impossible de charger les médecins.';
+        }
+      }
+
+      document.getElementById('doctor-specialty-filter').addEventListener('change', loadDoctors);
+      document.getElementById('doctor-search-input').addEventListener('input', applyFilters);
+      loadDoctors();
+
+      document.addEventListener('click', async function (e) {
+        var bookBtn = e.target.closest('[data-book]');
+        if (!bookBtn) return;
+        var doctorId = bookBtn.getAttribute('data-book');
+        selectedDoctor = allDoctors.find(function (d) { return String(d.id) === doctorId; });
+        selectedMode = null;
+
+        var summary = document.getElementById('rdv-doctor-summary');
+        summary.innerHTML = '';
+        var summaryAvatar = document.createElement('div');
+        summaryAvatar.className = 'avatar avatar-46';
+        summaryAvatar.style.background = '#10b981';
+        summaryAvatar.textContent = doctorInitials(selectedDoctor);
+        var summaryInfo = document.createElement('div');
+        var summaryName = document.createElement('div');
+        summaryName.style.cssText = 'font-weight:700;font-size:15px;';
+        summaryName.textContent = 'Dr. ' + selectedDoctor.first_name + ' ' + selectedDoctor.last_name;
+        var summarySpecialty = document.createElement('div');
+        summarySpecialty.style.cssText = 'color:var(--green-text);font-size:13px;font-weight:600;';
+        summarySpecialty.textContent = selectedDoctor.specialty + ' · ' + selectedDoctor.consultation_fee + ' FCFA';
+        summaryInfo.appendChild(summaryName);
+        summaryInfo.appendChild(summarySpecialty);
+        summary.appendChild(summaryAvatar);
+        summary.appendChild(summaryInfo);
+        renderAvatar(summaryAvatar, selectedDoctor.photo_url);
+
+        document.getElementById('rdv-reason').value = '';
+        var select = document.getElementById('rdv-availability-select');
+        select.innerHTML = '<option>Chargement…</option>';
+        var today = new Date().toISOString().slice(0, 10);
+        try {
+          var slots = await apiGet('/appointments/doctors/' + doctorId + '/availabilities?from_date=' + today);
+          select.innerHTML = '';
+          if (slots.length === 0) {
+            var noneOpt = document.createElement('option');
+            noneOpt.value = '';
+            noneOpt.textContent = 'Aucun créneau disponible';
+            select.appendChild(noneOpt);
+          } else {
+            slots.forEach(function (s) {
+              var opt = document.createElement('option');
+              opt.value = s.id;
+              opt.textContent = s.date + ' · ' + s.start_time.slice(0, 5) + '-' + s.end_time.slice(0, 5);
+              select.appendChild(opt);
+            });
+          }
+        } catch (err) {
+          select.innerHTML = '';
+          var errOpt = document.createElement('option');
+          errOpt.value = '';
+          errOpt.textContent = 'Erreur de chargement des créneaux';
+          select.appendChild(errOpt);
+        }
+      });
+
+      document.addEventListener('click', function (e) {
+        var opt = e.target.closest('[data-modeopt]');
+        if (opt) selectedMode = opt.getAttribute('data-mode') === 'message' ? 'message' : 'in_person';
+      });
+
+      document.addEventListener('click', async function (e) {
+        var confirmBtn = e.target.closest('[data-rdvconfirm]');
+        if (!confirmBtn) return;
+        var errorEl = document.getElementById('rdv-error');
+        errorEl.classList.add('hidden');
+        var availabilityId = document.getElementById('rdv-availability-select').value;
+        if (!availabilityId || !selectedMode) {
+          errorEl.textContent = 'Choisissez un créneau et un mode de consultation.';
+          errorEl.classList.remove('hidden');
+          e.stopImmediatePropagation();
+          return;
+        }
+        try {
+          await apiPost('/appointments', {
+            availability_id: parseInt(availabilityId, 10),
+            mode: selectedMode,
+            reason: document.getElementById('rdv-reason').value || null,
+          });
+        } catch (err) {
+          errorEl.textContent = 'Une erreur est survenue, réessayez.';
+          errorEl.classList.remove('hidden');
+          e.stopImmediatePropagation();
+        }
+      }, true);
+    })();
+  </script>
 </body>
 </html>
