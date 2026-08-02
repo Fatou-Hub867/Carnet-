@@ -89,6 +89,13 @@
       <div class="fade container">
         <h1 class="h1">Mon calendrier</h1>
         <p class="subtitle">Gérez vos consultations et disponibilités.</p>
+        <div class="row mb-20">
+          <button class="btn btn--primary" data-open="add-availability-modal">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>Ajouter une disponibilité
+          </button>
+        </div>
         <div class="card mb-16" style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
           <button class="cal-nav">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -186,6 +193,55 @@
       </div>
     </main>
   </div>
+  <div class="modal__backdrop" id="add-availability-modal" style="display:none;">
+    <div class="modal" style="max-width:400px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:18px;">
+        <div style="font-size:19px;font-weight:800;">Ajouter une disponibilité</div>
+        <button class="modal__close" data-close>✕</button>
+      </div>
+      <label class="label">DATE</label>
+      <input class="input" type="date" id="avail-date" style="margin-bottom:14px;">
+      <label class="label">HEURE DE DÉBUT</label>
+      <input class="input" type="time" id="avail-start" style="margin-bottom:14px;">
+      <label class="label">HEURE DE FIN</label>
+      <input class="input" type="time" id="avail-end" style="margin-bottom:16px;">
+      <p class="form-error hidden" id="avail-error"></p>
+      <button class="btn btn--primary btn--block" id="avail-submit">Publier le créneau</button>
+    </div>
+  </div>
+  <script src="../auth.js"></script>
+  <script src="../api.js"></script>
   <script src="../app.js"></script>
+  <script>
+    (function () {
+      CarnetAuth.requireAuth('doctor');
+
+      document.getElementById('avail-submit').addEventListener('click', async function () {
+        var errorEl = document.getElementById('avail-error');
+        errorEl.classList.add('hidden');
+        var date = document.getElementById('avail-date').value;
+        var start = document.getElementById('avail-start').value;
+        var end = document.getElementById('avail-end').value;
+        if (!date || !start || !end) {
+          errorEl.textContent = 'Tous les champs sont obligatoires.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        try {
+          await apiPost('/appointments/availabilities', {
+            date: date,
+            start_time: start + ':00',
+            end_time: end + ':00',
+          });
+          document.getElementById('add-availability-modal').style.display = 'none';
+        } catch (err) {
+          errorEl.textContent = err.status === 409
+            ? 'Ce créneau chevauche une disponibilité existante.'
+            : 'Une erreur est survenue, réessayez.';
+          errorEl.classList.remove('hidden');
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
