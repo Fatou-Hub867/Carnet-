@@ -22,4 +22,5 @@ class HealthRecordSummaryOut(BaseModel):
     last_name: str
     blood_type: str | None
     allergies: str | None
+    weight_kg: float | None
     document_count: int

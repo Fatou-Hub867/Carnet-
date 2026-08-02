@@ -59,7 +59,9 @@ async def upload_document_from_doctor(
     return document
 
 
-async def get_health_record_summary(db: AsyncSession, patient_id: int) -> HealthRecordSummaryOut:
+async def get_health_record_summary(
+    db: AsyncSession, patient_id: int
+) -> HealthRecordSummaryOut:
     patient = await db.get(Patient, patient_id)
     document_count = await db.scalar(
         select(func.count())
@@ -71,11 +73,14 @@ async def get_health_record_summary(db: AsyncSession, patient_id: int) -> Health
         last_name=patient.last_name,
         blood_type=patient.blood_type,
         allergies=patient.allergies,
+        weight_kg=float(patient.weight_kg) if patient.weight_kg is not None else None,
         document_count=document_count or 0,
     )
 
 
-async def list_documents(db: AsyncSession, patient_id: int) -> list[HealthRecordDocument]:
+async def list_documents(
+    db: AsyncSession, patient_id: int
+) -> list[HealthRecordDocument]:
     return list(
         (
             await db.scalars(

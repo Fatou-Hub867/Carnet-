@@ -21,16 +21,24 @@ async def _prescribe(client, completed_appointment):
             }
         ],
     }
-    return await client.post("/prescriptions", json=payload, headers=_auth(doctor["token"]))
+    return await client.post(
+        "/prescriptions", json=payload, headers=_auth(doctor["token"])
+    )
 
 
-async def test_prescription_requires_completed_appointment(client, patient, validated_doctor):
+async def test_prescription_requires_completed_appointment(
+    client, patient, validated_doctor
+):
     from datetime import date as _date
 
     doctor_headers = _auth(validated_doctor["token"])
     slot = await client.post(
         "/appointments/availabilities",
-        json={"date": _date.today().isoformat(), "start_time": "09:00:00", "end_time": "09:30:00"},
+        json={
+            "date": _date.today().isoformat(),
+            "start_time": "09:00:00",
+            "end_time": "09:30:00",
+        },
         headers=doctor_headers,
     )
     booking = await client.post(
@@ -47,7 +55,9 @@ async def test_prescription_requires_completed_appointment(client, patient, vali
     assert resp.status_code == 409
 
 
-async def test_prescription_creates_pdf_and_files_it_in_carnet(client, completed_appointment):
+async def test_prescription_creates_pdf_and_files_it_in_carnet(
+    client, completed_appointment
+):
     patient = completed_appointment["patient"]
 
     before = await client.get("/health-records/me", headers=_auth(patient["token"]))
@@ -69,7 +79,9 @@ async def test_prescription_creates_pdf_and_files_it_in_carnet(client, completed
     # The prescription PDF was auto-filed in the health record.
     after = await client.get("/health-records/me", headers=_auth(patient["token"]))
     assert after.json()["document_count"] == count_before + 1
-    docs = await client.get("/health-records/me/documents", headers=_auth(patient["token"]))
+    docs = await client.get(
+        "/health-records/me/documents", headers=_auth(patient["token"])
+    )
     sources = [d["source_type"] for d in docs.json()]
     assert "prescription" in sources
 
@@ -78,7 +90,9 @@ async def test_patient_can_confirm_a_dose(client, completed_appointment):
     patient = completed_appointment["patient"]
     await _prescribe(client, completed_appointment)
 
-    dashboard = await client.get("/patients/me/dashboard", headers=_auth(patient["token"]))
+    dashboard = await client.get(
+        "/patients/me/dashboard", headers=_auth(patient["token"])
+    )
     assert dashboard.status_code == 200
     doses = dashboard.json()["today_doses"]
     assert len(doses) == 2  # two intake times
@@ -97,7 +111,9 @@ async def test_doctor_message_attachment_lands_in_carnet(client, completed_appoi
     assert convo.status_code == 201
     conversation_id = convo.json()["id"]
 
-    before = (await client.get("/health-records/me", headers=_auth(patient["token"]))).json()["document_count"]
+    before = (
+        await client.get("/health-records/me", headers=_auth(patient["token"]))
+    ).json()["document_count"]
 
     # Doctor sends an attachment -> auto-filed in the patient's carnet.
     sent = await client.post(
@@ -108,9 +124,13 @@ async def test_doctor_message_attachment_lands_in_carnet(client, completed_appoi
     )
     assert sent.status_code == 201
 
-    after = (await client.get("/health-records/me", headers=_auth(patient["token"]))).json()["document_count"]
+    after = (
+        await client.get("/health-records/me", headers=_auth(patient["token"]))
+    ).json()["document_count"]
     assert after == before + 1
-    docs = await client.get("/health-records/me/documents", headers=_auth(patient["token"]))
+    docs = await client.get(
+        "/health-records/me/documents", headers=_auth(patient["token"])
+    )
     assert any(d["source_type"] == "message" for d in docs.json())
 
 
@@ -119,10 +139,14 @@ async def test_patient_message_attachment_not_filed(client, completed_appointmen
     patient = completed_appointment["patient"]
     doctor = completed_appointment["doctor"]
     convo = await client.post(
-        "/messaging/conversations", json={"doctor_id": doctor["id"]}, headers=_auth(patient["token"])
+        "/messaging/conversations",
+        json={"doctor_id": doctor["id"]},
+        headers=_auth(patient["token"]),
     )
     conversation_id = convo.json()["id"]
-    before = (await client.get("/health-records/me", headers=_auth(patient["token"]))).json()["document_count"]
+    before = (
+        await client.get("/health-records/me", headers=_auth(patient["token"]))
+    ).json()["document_count"]
 
     await client.post(
         f"/messaging/conversations/{conversation_id}/messages",
@@ -130,7 +154,9 @@ async def test_patient_message_attachment_not_filed(client, completed_appointmen
         files={"file": ("scan.pdf", b"%PDF-scan", "application/pdf")},
         headers=_auth(patient["token"]),
     )
-    after = (await client.get("/health-records/me", headers=_auth(patient["token"]))).json()["document_count"]
+    after = (
+        await client.get("/health-records/me", headers=_auth(patient["token"]))
+    ).json()["document_count"]
     assert after == before
 
 
@@ -138,7 +164,9 @@ async def test_messages_marked_read_on_fetch(client, completed_appointment):
     patient = completed_appointment["patient"]
     doctor = completed_appointment["doctor"]
     convo = await client.post(
-        "/messaging/conversations", json={"doctor_id": doctor["id"]}, headers=_auth(patient["token"])
+        "/messaging/conversations",
+        json={"doctor_id": doctor["id"]},
+        headers=_auth(patient["token"]),
     )
     conversation_id = convo.json()["id"]
 
@@ -149,11 +177,22 @@ async def test_messages_marked_read_on_fetch(client, completed_appointment):
     )
     # Doctor fetches the thread -> the patient's message is marked read.
     fetched = await client.get(
-        f"/messaging/conversations/{conversation_id}/messages", headers=_auth(doctor["token"])
+        f"/messaging/conversations/{conversation_id}/messages",
+        headers=_auth(doctor["token"]),
     )
     assert fetched.status_code == 200
     # Re-fetch to observe the persisted read_at (the first fetch set it).
     again = await client.get(
-        f"/messaging/conversations/{conversation_id}/messages", headers=_auth(doctor["token"])
+        f"/messaging/conversations/{conversation_id}/messages",
+        headers=_auth(doctor["token"]),
     )
     assert again.json()[0]["read_at"] is not None
+
+
+async def test_health_record_summary_includes_weight(client, patient):
+    await client.patch(
+        "/patients/me", json={"weight_kg": 72.0}, headers=_auth(patient["token"])
+    )
+    resp = await client.get("/health-records/me", headers=_auth(patient["token"]))
+    assert resp.status_code == 200
+    assert resp.json()["weight_kg"] == 72.0
