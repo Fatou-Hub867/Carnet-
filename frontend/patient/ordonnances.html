@@ -94,50 +94,109 @@
       <div class="fade container-md">
         <h1 class="h1">Mes ordonnances</h1>
         <p class="subtitle">Retrouvez vos prescriptions et suivez vos traitements.</p>
-        <div class="col" style="gap:14px;">
-          <div class="card">
-            <div class="row" style="justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
-              <div class="row" style="gap:12px;">
-                <div style="width:44px;height:44px;border-radius:12px;background:var(--green-soft);display:flex;align-items:center;justify-content:center;flex:none;">
-                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m10.5 20.5-7-7a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z" />
-                    <path d="m8.5 8.5 7 7" />
-                  </svg>
-                </div>
-                <div>
-                  <div style="font-weight:700;font-size:15.5px;">Amoxicilline 500mg</div>
-                  <div style="color:var(--muted);font-size:13px;">Dr. Gryd Batantou · 12 juil. 2026</div>
-                </div>
-              </div>
-              <span class="badge badge--green">Active</span>
-            </div>
-            <div style="color:var(--slate);font-size:13.5px;background:var(--field);border-radius:11px;padding:12px 14px;">1 comprimé × 3/jour pendant 7 jours · À prendre pendant les repas.</div>
-            <div class="row" style="gap:10px;margin-top:14px;">
-              <button class="btn btn--disabled">Envoyer à la pharmacie</button>
-              <button class="btn btn--ghost btn--sm" style="padding:10px 16px;">Télécharger PDF</button>
-            </div>
-          </div>
-          <div class="card" style="opacity:.85;">
-            <div class="row" style="justify-content:space-between;align-items:flex-start;">
-              <div class="row" style="gap:12px;">
-                <div style="width:44px;height:44px;border-radius:12px;background:#f1f5f7;display:flex;align-items:center;justify-content:center;flex:none;">
-                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m10.5 20.5-7-7a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z" />
-                    <path d="m8.5 8.5 7 7" />
-                  </svg>
-                </div>
-                <div>
-                  <div style="font-weight:700;font-size:15.5px;">Paracétamol 1g</div>
-                  <div style="color:var(--muted);font-size:13px;">Dr. Eden Bous · 28 juin 2026</div>
-                </div>
-              </div>
-              <span class="badge badge--muted" style="font-weight:700;">Terminée</span>
-            </div>
-          </div>
-        </div>
+        <div class="col" style="gap:14px;" id="prescription-list"></div>
       </div>
     </main>
   </div>
+  <script src="../auth.js"></script>
+  <script src="../api.js"></script>
   <script src="../app.js"></script>
+  <script>
+    (function () {
+      CarnetAuth.requireAuth('patient');
+
+      function isActive(prescription) {
+        var today = new Date().toISOString().slice(0, 10);
+        return prescription.treatments.some(function (t) { return t.end_date >= today; });
+      }
+
+      function renderPrescriptions(prescriptions) {
+        var container = document.getElementById('prescription-list');
+        container.innerHTML = '';
+        prescriptions.forEach(function (p) {
+          var title = p.treatments.length ? p.treatments.map(function (t) { return t.medication_name; }).join(', ') : 'Ordonnance';
+          var posology = p.treatments.length ? p.treatments.map(function (t) { return t.medication_name + ' (' + t.dosage + ')'; }).join(' · ') : '';
+          var active = isActive(p);
+
+          var card = document.createElement('div');
+          card.className = 'card';
+
+          var headerRow = document.createElement('div');
+          headerRow.className = 'row';
+          headerRow.style.cssText = 'justify-content:space-between;align-items:flex-start;margin-bottom:12px;';
+
+          var leftRow = document.createElement('div');
+          leftRow.className = 'row';
+          leftRow.style.cssText = 'gap:12px;';
+
+          var iconWrap = document.createElement('div');
+          iconWrap.style.cssText = 'width:44px;height:44px;border-radius:12px;background:var(--green-soft);display:flex;align-items:center;justify-content:center;flex:none;';
+          iconWrap.innerHTML = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5-7-7a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7Z" /><path d="m8.5 8.5 7 7" /></svg>';
+          leftRow.appendChild(iconWrap);
+
+          var textWrap = document.createElement('div');
+          var titleDiv = document.createElement('div');
+          titleDiv.style.cssText = 'font-weight:700;font-size:15.5px;';
+          titleDiv.textContent = title;
+          var subDiv = document.createElement('div');
+          subDiv.style.cssText = 'color:var(--muted);font-size:13px;';
+          subDiv.textContent = 'Dr. ' + p.doctor_name + ' · ' + new Date(p.created_at).toLocaleDateString('fr-FR');
+          textWrap.appendChild(titleDiv);
+          textWrap.appendChild(subDiv);
+          leftRow.appendChild(textWrap);
+
+          headerRow.appendChild(leftRow);
+
+          var badge = document.createElement('span');
+          badge.className = 'badge ' + (active ? 'badge--green' : 'badge--muted');
+          badge.textContent = active ? 'Active' : 'Terminée';
+          headerRow.appendChild(badge);
+
+          card.appendChild(headerRow);
+
+          if (posology) {
+            var posologyDiv = document.createElement('div');
+            posologyDiv.style.cssText = 'color:var(--slate);font-size:13.5px;background:var(--field);border-radius:11px;padding:12px 14px;';
+            posologyDiv.textContent = posology;
+            card.appendChild(posologyDiv);
+          }
+
+          var actionsRow = document.createElement('div');
+          actionsRow.className = 'row';
+          actionsRow.style.cssText = 'gap:10px;margin-top:14px;';
+          var downloadBtn = document.createElement('button');
+          downloadBtn.className = 'btn btn--ghost btn--sm';
+          downloadBtn.style.cssText = 'padding:10px 16px;';
+          downloadBtn.setAttribute('data-download', p.id);
+          downloadBtn.textContent = 'Télécharger PDF';
+          actionsRow.appendChild(downloadBtn);
+          card.appendChild(actionsRow);
+
+          container.appendChild(card);
+        });
+      }
+
+      async function load() {
+        try {
+          var prescriptions = await apiGet('/prescriptions');
+          renderPrescriptions(prescriptions);
+        } catch (err) {
+          document.getElementById('prescription-list').textContent = 'Impossible de charger les ordonnances.';
+        }
+      }
+      load();
+
+      document.addEventListener('click', async function (e) {
+        var btn = e.target.closest('[data-download]');
+        if (!btn) return;
+        try {
+          var result = await apiGet('/prescriptions/' + btn.getAttribute('data-download') + '/download');
+          window.open(result.download_url, '_blank', 'noopener,noreferrer');
+        } catch (err) {
+          window.alert('Impossible de télécharger ce document, réessayez.');
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
