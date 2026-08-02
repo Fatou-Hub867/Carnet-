@@ -160,3 +160,14 @@ function renumberMeds() {
     if (n) n.textContent = i + 1;
   });
 }
+
+// --- Avatar : remplace le fond initiales par la vraie photo si elle existe ---
+// `el` est le div .avatar existant (initiales en texte + fond coloré inline).
+// Ne touche à rien si photoUrl est absent/null : les initiales restent affichées.
+function renderAvatar(el, photoUrl) {
+  if (!el || !photoUrl) return;
+  el.style.backgroundImage = 'url(' + photoUrl + ')';
+  el.style.backgroundSize = 'cover';
+  el.style.backgroundPosition = 'center';
+  el.textContent = '';
+}
