@@ -196,3 +196,33 @@ async def test_health_record_summary_includes_weight(client, patient):
     resp = await client.get("/health-records/me", headers=_auth(patient["token"]))
     assert resp.status_code == 200
     assert resp.json()["weight_kg"] == 72.0
+
+
+async def test_conversation_out_includes_names_and_photos(
+    client, completed_appointment
+):
+    patient = completed_appointment["patient"]
+    doctor = completed_appointment["doctor"]
+    await client.post(
+        "/doctors/me/photo",
+        files={"photo": ("doc.jpg", b"\xff\xd8\xfffake", "image/jpeg")},
+        headers=_auth(doctor["token"]),
+    )
+
+    convo = await client.post(
+        "/messaging/conversations",
+        json={"doctor_id": doctor["id"]},
+        headers=_auth(patient["token"]),
+    )
+    assert convo.status_code == 201, convo.text
+    body = convo.json()
+    assert body["patient_name"] == "Ada Lovelace"
+    assert body["doctor_name"] == "Gregory House"
+    assert body["doctor_photo_url"].startswith("https://fake-s3.local/")
+    assert body["patient_photo_url"] is None
+
+    listing = await client.get(
+        "/messaging/conversations", headers=_auth(doctor["token"])
+    )
+    assert listing.status_code == 200
+    assert listing.json()[0]["patient_name"] == "Ada Lovelace"

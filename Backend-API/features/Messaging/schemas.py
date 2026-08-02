@@ -14,7 +14,11 @@ class ConversationCreateRequest(BaseModel):
 class ConversationOut(BaseModel):
     id: int
     patient_id: int
+    patient_name: str
+    patient_photo_url: str | None
     doctor_id: int
+    doctor_name: str
+    doctor_photo_url: str | None
     created_at: datetime
 
     model_config = {"from_attributes": True}

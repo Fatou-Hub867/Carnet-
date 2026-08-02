@@ -7,13 +7,14 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.storage import get_file_url
-from features.Auth.models import Doctor, DoctorStatus
+from features.Auth.models import Doctor, DoctorStatus, Patient
 from features.HealthRecords.models import (
     DocumentAddedBy,
     DocumentSourceType,
     HealthRecordDocument,
 )
 from features.Messaging.models import Conversation, Message, SenderType
+from features.Messaging.schemas import ConversationOut
 
 
 async def authorize_conversation(
@@ -27,41 +28,76 @@ async def authorize_conversation(
         user_type == "doctor" and conversation.doctor_id == user_id
     )
     if not belongs:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "You are not a participant of this conversation")
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN, "You are not a participant of this conversation"
+        )
     return conversation
 
 
-async def get_or_create_conversation(db: AsyncSession, patient_id: int, doctor_id: int) -> Conversation:
+def _build_conversation_out(
+    conversation: Conversation, patient: Patient, doctor: Doctor
+) -> ConversationOut:
+    return ConversationOut(
+        id=conversation.id,
+        patient_id=conversation.patient_id,
+        patient_name=f"{patient.first_name} {patient.last_name}",
+        patient_photo_url=(
+            get_file_url(patient.photo_file_key) if patient.photo_file_key else None
+        ),
+        doctor_id=conversation.doctor_id,
+        doctor_name=f"{doctor.first_name} {doctor.last_name}",
+        doctor_photo_url=(
+            get_file_url(doctor.photo_file_key) if doctor.photo_file_key else None
+        ),
+        created_at=conversation.created_at,
+    )
+
+
+async def get_or_create_conversation(
+    db: AsyncSession, patient_id: int, doctor_id: int
+) -> ConversationOut:
     doctor = await db.get(Doctor, doctor_id)
     if doctor is None or doctor.status != DoctorStatus.VALIDATED:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Doctor not found")
+    patient = await db.get(Patient, patient_id)
 
     existing = (
         await db.scalars(
             select(Conversation).where(
-                Conversation.patient_id == patient_id, Conversation.doctor_id == doctor_id
+                Conversation.patient_id == patient_id,
+                Conversation.doctor_id == doctor_id,
             )
         )
     ).first()
     if existing is not None:
-        return existing
+        return _build_conversation_out(existing, patient, doctor)
 
     conversation = Conversation(patient_id=patient_id, doctor_id=doctor_id)
     db.add(conversation)
     await db.commit()
     await db.refresh(conversation)
-    return conversation
+    return _build_conversation_out(conversation, patient, doctor)
 
 
-async def list_my_conversations(db: AsyncSession, user_type: str, user_id: int) -> list[Conversation]:
-    column = Conversation.patient_id if user_type == "patient" else Conversation.doctor_id
-    return list(
-        (
-            await db.scalars(
-                select(Conversation).where(column == user_id).order_by(Conversation.created_at.desc())
-            )
-        ).all()
+async def list_my_conversations(
+    db: AsyncSession, user_type: str, user_id: int
+) -> list[ConversationOut]:
+    column = (
+        Conversation.patient_id if user_type == "patient" else Conversation.doctor_id
     )
+    rows = (
+        await db.execute(
+            select(Conversation, Patient, Doctor)
+            .join(Patient, Conversation.patient_id == Patient.id)
+            .join(Doctor, Conversation.doctor_id == Doctor.id)
+            .where(column == user_id)
+            .order_by(Conversation.created_at.desc())
+        )
+    ).all()
+    return [
+        _build_conversation_out(conversation, patient, doctor)
+        for conversation, patient, doctor in rows
+    ]
 
 
 async def send_message(
@@ -76,7 +112,9 @@ async def send_message(
     record (source MESSAGE), per the automatic-save-to-carnet decision. Written
     inline here because this is the only place the original filename is in scope."""
     if not content and file_key is None:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "A message must have text or an attachment")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "A message must have text or an attachment"
+        )
 
     message = Message(
         conversation_id=conversation.id,
@@ -105,7 +143,9 @@ async def send_message(
     return message
 
 
-async def list_conversation_messages(db: AsyncSession, conversation_id: int) -> list[Message]:
+async def list_conversation_messages(
+    db: AsyncSession, conversation_id: int
+) -> list[Message]:
     """Polled periodically by the frontend, no server push."""
     return list(
         (
@@ -118,7 +158,9 @@ async def list_conversation_messages(db: AsyncSession, conversation_id: int) -> 
     )
 
 
-async def mark_messages_as_read(db: AsyncSession, conversation_id: int, reader_type: SenderType) -> None:
+async def mark_messages_as_read(
+    db: AsyncSession, conversation_id: int, reader_type: SenderType
+) -> None:
     """Marks the other party's still-unread messages as read. Triggered when the
     reader fetches the thread (the natural read event in a polling design)."""
     await db.execute(
@@ -133,8 +175,14 @@ async def mark_messages_as_read(db: AsyncSession, conversation_id: int, reader_t
     await db.commit()
 
 
-async def get_message_attachment_url(db: AsyncSession, conversation_id: int, message_id: int) -> str:
+async def get_message_attachment_url(
+    db: AsyncSession, conversation_id: int, message_id: int
+) -> str:
     message = await db.get(Message, message_id)
-    if message is None or message.conversation_id != conversation_id or message.file_key is None:
+    if (
+        message is None
+        or message.conversation_id != conversation_id
+        or message.file_key is None
+    ):
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Attachment not found")
     return get_file_url(message.file_key)
