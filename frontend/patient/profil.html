@@ -95,48 +95,151 @@
         <h1 class="h1">Mon profil</h1>
         <p class="subtitle">Gérez vos informations personnelles et de sécurité.</p>
         <div class="banner" style="padding:26px;display:flex;align-items:center;gap:18px;margin-bottom:20px;box-shadow:0 12px 28px rgba(13,148,136,.2);">
-          <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px;flex:none;">FD</div>
+          <div id="profil-avatar" class="avatar avatar-round" style="width:72px;height:72px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:26px;flex:none;cursor:pointer;" title="Cliquer pour changer la photo">--</div>
+          <input type="file" id="profil-photo-input" accept="image/*" style="display:none;">
           <div>
-            <div style="font-size:23px;font-weight:800;">Fanta Diallo</div>
-            <div style="opacity:.85;font-size:14px;margin-top:3px;">fanta.diallo@email.cg</div>
+            <div id="profil-name" style="font-size:23px;font-weight:800;"></div>
+            <div id="profil-email" style="opacity:.85;font-size:14px;margin-top:3px;"></div>
           </div>
         </div>
-        <div class="card card--pad" style="border-radius:18px;padding:24px;">
+        <p class="form-error hidden" id="profil-error"></p>
+        <form id="profil-form" class="card card--pad" style="border-radius:18px;padding:24px;">
           <div style="font-weight:800;font-size:16px;margin-bottom:18px;">Informations personnelles</div>
           <div class="grid-2">
             <div>
-              <label class="label" style="letter-spacing:0;">NOM COMPLET</label>
-              <input class="input" value="Fanta Diallo">
+              <label class="label" style="letter-spacing:0;">PRÉNOM</label>
+              <input class="input" id="profil-first-name">
+            </div>
+            <div>
+              <label class="label" style="letter-spacing:0;">NOM</label>
+              <input class="input" id="profil-last-name">
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">EMAIL</label>
-              <input class="input" value="fanta.diallo@email.cg">
+              <input class="input" id="profil-email-field" disabled>
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">TÉLÉPHONE</label>
-              <input class="input" value="+221 77 000 00 00">
+              <input class="input" id="profil-phone">
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">PAYS DE RÉSIDENCE</label>
-              <input class="input" value="Sénégal">
+              <input class="input" id="profil-country">
+            </div>
+            <div>
+              <label class="label" style="letter-spacing:0;">VILLE</label>
+              <input class="input" id="profil-city">
+            </div>
+            <div>
+              <label class="label" style="letter-spacing:0;">ADRESSE</label>
+              <input class="input" id="profil-address">
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">DATE DE NAISSANCE</label>
-              <input class="input" value="14/03/1994">
+              <input class="input" id="profil-dob" disabled>
             </div>
             <div>
               <label class="label" style="letter-spacing:0;">LIEU DE NAISSANCE</label>
-              <input class="input" value="Dakar">
+              <input class="input" id="profil-pob" disabled>
+            </div>
+            <div>
+              <label class="label" style="letter-spacing:0;">GROUPE SANGUIN</label>
+              <input class="input" id="profil-blood-type" placeholder="Ex. O+">
+            </div>
+            <div>
+              <label class="label" style="letter-spacing:0;">POIDS (KG)</label>
+              <input class="input" id="profil-weight" type="number" step="0.1" placeholder="Ex. 68.5">
+            </div>
+            <div>
+              <label class="label" style="letter-spacing:0;">ALLERGIES</label>
+              <input class="input" id="profil-allergies" placeholder="Ex. Pénicilline, poils d'animaux">
             </div>
           </div>
           <div class="row" style="gap:10px;margin-top:22px;">
-            <button class="btn btn--primary">Enregistrer</button>
-            <button class="btn btn--ghost">Annuler</button>
+            <button type="submit" class="btn btn--primary">Enregistrer</button>
+            <button type="button" class="btn btn--ghost" id="profil-cancel">Annuler</button>
           </div>
-        </div>
+        </form>
       </div>
     </main>
   </div>
+  <script src="../auth.js"></script>
+  <script src="../api.js"></script>
   <script src="../app.js"></script>
+  <script>
+    (function () {
+      CarnetAuth.requireAuth('patient');
+      var profile = null;
+
+      function fillForm(p) {
+        document.getElementById('profil-name').textContent = p.first_name + ' ' + p.last_name;
+        document.getElementById('profil-email').textContent = p.email;
+        document.getElementById('profil-first-name').value = p.first_name;
+        document.getElementById('profil-last-name').value = p.last_name;
+        document.getElementById('profil-email-field').value = p.email;
+        document.getElementById('profil-phone').value = p.phone_number;
+        document.getElementById('profil-country').value = p.country_of_residence;
+        document.getElementById('profil-city').value = p.city;
+        document.getElementById('profil-address').value = p.address;
+        document.getElementById('profil-dob').value = p.date_of_birth;
+        document.getElementById('profil-pob').value = p.place_of_birth;
+        document.getElementById('profil-blood-type').value = p.blood_type || '';
+        document.getElementById('profil-weight').value = p.weight_kg != null ? p.weight_kg : '';
+        document.getElementById('profil-allergies').value = p.allergies || '';
+        var avatar = document.getElementById('profil-avatar');
+        avatar.textContent = (p.first_name[0] || '') + (p.last_name[0] || '');
+        avatar.style.backgroundImage = '';
+        renderAvatar(avatar, p.photo_url);
+      }
+
+      async function load() {
+        profile = await apiGet('/patients/me');
+        fillForm(profile);
+      }
+      load();
+
+      document.getElementById('profil-avatar').addEventListener('click', function () {
+        document.getElementById('profil-photo-input').click();
+      });
+      document.getElementById('profil-photo-input').addEventListener('change', async function (e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        var formData = new FormData();
+        formData.append('photo', file);
+        profile = await apiPostForm('/patients/me/photo', formData);
+        fillForm(profile);
+      });
+
+      document.getElementById('profil-cancel').addEventListener('click', function () {
+        fillForm(profile);
+      });
+
+      document.getElementById('profil-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var errorEl = document.getElementById('profil-error');
+        errorEl.classList.add('hidden');
+        var weightRaw = document.getElementById('profil-weight').value;
+        try {
+          profile = await apiRequest('PATCH', '/patients/me', {
+            json: {
+              first_name: document.getElementById('profil-first-name').value,
+              last_name: document.getElementById('profil-last-name').value,
+              phone_number: document.getElementById('profil-phone').value,
+              country_of_residence: document.getElementById('profil-country').value,
+              city: document.getElementById('profil-city').value,
+              address: document.getElementById('profil-address').value,
+              blood_type: document.getElementById('profil-blood-type').value || null,
+              weight_kg: weightRaw ? parseFloat(weightRaw) : null,
+              allergies: document.getElementById('profil-allergies').value || null,
+            },
+          });
+          fillForm(profile);
+        } catch (err) {
+          errorEl.textContent = 'Une erreur est survenue, réessayez.';
+          errorEl.classList.remove('hidden');
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
