@@ -215,6 +215,10 @@
             intake_times: ['08:00:00'],
           });
         });
+        if (treatments.length === 0) {
+          window.alert("Ajoutez au moins un médicament avant de générer l'ordonnance.");
+          return;
+        }
         btn.disabled = true;
         try {
           await apiPost('/prescriptions', {
@@ -222,9 +226,17 @@
             notes: null,
             treatments: treatments,
           });
-          window.location.reload();
+          selectedAppointmentId = null;
+          document.getElementById('ordonnance-step2').style.display = 'none';
+          document.querySelectorAll('[data-selectord]').forEach(function (r) { r.classList.remove('sel'); });
+          var medList = document.getElementById('med-list');
+          var allRows = medList.querySelectorAll('.med-row');
+          for (var i = allRows.length - 1; i > 0; i--) allRows[i].remove();
+          medList.querySelectorAll('.med-input').forEach(function (input) { input.value = ''; });
+          await loadAwaiting();
         } catch (err) {
           window.alert('Une erreur est survenue, réessayez.');
+        } finally {
           btn.disabled = false;
         }
       });
