@@ -44,25 +44,73 @@ Nouveau script `Backend-API/scripts/reset_dev_data.py` (réutilisable, même esp
 `complaints`, `chronic_follow_ups`, `care_plans`), en conservant `admins`. Confirmation
 requise avant exécution (`--yes` ou prompt) puisque c'est destructif.
 
-## Tranche 2 — Profil patient + Carnet de santé
+## Tranche 2 — Profil patient + médecin, photo de profil, Carnet de santé
+
+### Backend — nouveaux champs et endpoints
+
+**Poids patient** : nouvelle colonne `Patient.weight_kg` (`Numeric(5,2)`, nullable),
+migration Alembic. Ajouté à `PatientProfileOut`/`PatientProfileUpdateRequest` au même
+titre que `blood_type`/`allergies` — même statut : absent à l'inscription, éditable
+uniquement depuis le profil.
+
+**Photo de profil (patient ET médecin)** : nouvelle colonne `photo_file_key`
+(`String(500)`, nullable) sur `Patient` et sur `Doctor`, migration Alembic. Upload via le
+même mécanisme que le diplôme médecin (fichier → `core/storage.upload_file` → clé S3
+privée stockée en base, jamais d'URL publique) :
+- `POST /patients/me/photo` (multipart, patient authentifié) → remplace la clé existante.
+- `POST /doctors/me/photo` (multipart, médecin authentifié) → idem.
+
+`PatientProfileOut`, `DoctorProfileOut` et `DoctorPublicOut` gagnent un champ
+`photo_url: str | None` (URL présignée générée à la lecture, `None` si pas de photo —
+même pattern que `diploma_url` dans `PendingDoctorOut`).
+
+**Messagerie** : `ConversationOut` (`features/Messaging/schemas.py`) ne renvoie
+aujourd'hui que des IDs bruts, ni noms ni photos des deux côtés — trou pré-existant,
+comblé ici puisque la photo en dépend directement :
+```python
+class ConversationOut(BaseModel):
+    id: int
+    patient_id: int
+    patient_name: str
+    patient_photo_url: str | None
+    doctor_id: int
+    doctor_name: str
+    doctor_photo_url: str | None
+    created_at: datetime
+```
+Toujours les deux côtés (même choix que `ComplaintOut` côté Admin) — le frontend affiche
+celui qui n'est pas l'utilisateur courant, pas de logique de « point de vue » côté API.
 
 ### `patient/profil.html`
-Le mock actuel n'a pas de champ groupe sanguin/allergies, et « NOM COMPLET » est un seul
-champ alors que l'API attend `first_name`/`last_name` séparés. Refonte du formulaire :
+Le mock actuel n'a pas de champ groupe sanguin/allergies/poids/photo, et « NOM COMPLET »
+est un seul champ alors que l'API attend `first_name`/`last_name` séparés. Refonte du
+formulaire :
 
 - **Chargé** depuis `GET /patients/me` au montage.
 - **Éditable** (soumis via `PATCH /patients/me`, `exclude_unset` côté backend donc on
   n'envoie que les champs modifiés) : prénom, nom, adresse, téléphone, pays de
-  résidence, ville, **groupe sanguin**, **allergies**.
+  résidence, ville, **groupe sanguin**, **allergies**, **poids**.
 - **Lecture seule** (non modifiable par l'API, affiché mais désactivé) : email, date de
   naissance, lieu de naissance, sexe.
+- **Photo de profil** : au-dessus du formulaire, remplace l'avatar initiales actuel ;
+  clic → sélection fichier → `POST /patients/me/photo` (multipart, `accept="image/*"`
+  côté input, pas de validation stricte serveur au-delà de ce qui existe déjà pour les
+  autres uploads) → rafraîchit l'avatar avec la nouvelle URL présignée.
 - Bouton **Enregistrer** → `PATCH`, toast de succès, re-remplit le formulaire avec la
   réponse. Bouton **Annuler** → recharge les valeurs d'origine sans appel réseau.
 
+### `medecin/profil.html`
+Actuellement statique lui aussi (pas dans le périmètre initial, ajouté ici pour la
+symétrie photo). Même traitement que le patient pour la partie photo : avatar
+remplaçable → `POST /doctors/me/photo`. Les autres champs du profil médecin (déjà
+couverts par `GET/PATCH /doctors/me`, existant) sont branchés à la même occasion plutôt
+que de laisser la page à moitié en dur.
+
 ### `patient/carnet.html`
 - Bandeau résumé (`GET /health-records/me`) : nom/prénom, groupe sanguin, allergies,
-  nombre de documents — plus besoin de dupliquer la saisie, c'est juste un miroir du
-  profil.
+  **poids**, nombre de documents — plus besoin de dupliquer la saisie, c'est un miroir du
+  profil (le résumé carnet devra exposer `weight_kg`, à ajouter à
+  `HealthRecordSummaryOut`).
 - Liste des documents (`GET /health-records/me/documents`), triée desc.
 - Bouton **Ajouter un document** → modale simple (input `type="file"`) →
   `POST /health-records/me/documents` (multipart) → ajoute la nouvelle carte en tête de
@@ -72,6 +120,13 @@ champ alors que l'API attend `first_name`/`last_name` séparés. Refonte du form
   `source_type` : Upload manuel / Ordonnance / Message / Médecin.
 - Chaque carte a un bouton **Télécharger** → `GET .../documents/{id}/download` →
   ouvre l'URL présignée retournée dans un nouvel onglet.
+
+### Avatars partout ailleurs
+Chaque endroit de l'UI qui affiche aujourd'hui un avatar en dur (initiales sur fond
+coloré — barre latérale, listes de RDV, dashboard médecin...) doit afficher la vraie
+photo dès qu'un `photo_url` est disponible dans la réponse API consommée par cette page,
+sinon garder le repli initiales existant. Pas de nouveau composant : juste un
+`if (photo_url) <img> else <div initiales>` répété là où c'est pertinent.
 
 ## Tranche 3 — Créneaux (médecin) + Consultations (patient)
 
@@ -174,6 +229,11 @@ Convention déjà établie : messages inline, jamais d'`alert()`. Pas de paginat
 listes (carnet, ordonnances, conversations) pour cette V1.
 
 ## Ce qui reste explicitement hors périmètre
+- Étape de consentement séparée avant qu'un médecin voie la photo d'un patient (ou
+  inversement) : dès qu'une conversation existe, les deux parties voient nom + photo,
+  comme c'est déjà le cas pour le nom aujourd'hui côté RDV.
+- Validation stricte du format/poids des photos uploadées (type, taille max) au-delà de
+  ce qui existe déjà pour les autres uploads du projet.
 - Récurrence des créneaux de disponibilité (un slot = un formulaire, pas de génération
   en masse).
 - Catégorisation manuelle des documents du carnet (pas de champ en base).
