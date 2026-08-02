@@ -13,13 +13,18 @@ from features.Appointments.schemas import (
     AvailabilityCreateRequest,
     AvailabilityOut,
     DoctorCalendarEntryOut,
+    PendingAppointmentOut,
 )
 from features.Auth.models import Doctor, Patient
 
 router = APIRouter(prefix="/appointments", tags=["appointments"])
 
 
-@router.post("/availabilities", response_model=AvailabilityOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/availabilities",
+    response_model=AvailabilityOut,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_availability(
     data: AvailabilityCreateRequest,
     current_doctor: Doctor = Depends(get_current_doctor),
@@ -29,7 +34,9 @@ async def create_availability(
 
 
 @router.get("/doctors/{doctor_id}/availabilities", response_model=list[AvailabilityOut])
-async def list_doctor_availabilities(doctor_id: int, from_date: date, db: AsyncSession = Depends(get_db)):
+async def list_doctor_availabilities(
+    doctor_id: int, from_date: date, db: AsyncSession = Depends(get_db)
+):
     return await logic.list_doctor_availabilities(db, doctor_id, from_date)
 
 
@@ -63,7 +70,7 @@ async def complete_appointment(
     return await logic.complete_appointment(db, current_doctor.id, appointment_id)
 
 
-@router.get("/pending", response_model=list[AppointmentOut])
+@router.get("/pending", response_model=list[PendingAppointmentOut])
 async def list_pending_appointments(
     current_doctor: Doctor = Depends(get_current_doctor),
     db: AsyncSession = Depends(get_db),

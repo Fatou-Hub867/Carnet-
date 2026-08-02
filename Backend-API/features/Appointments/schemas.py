@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, time
+from datetime import date, datetime, time
 
 from pydantic import BaseModel
 
@@ -43,6 +43,17 @@ class AppointmentOut(BaseModel):
     reason: str | None
 
     model_config = {"from_attributes": True}
+
+
+class PendingAppointmentOut(BaseModel):
+    """A pending request as shown on the doctor's dashboard — needs the
+    patient's name, which a raw AppointmentOut can't carry without a join."""
+
+    appointment_id: int
+    patient_name: str
+    reason: str | None
+    mode: AppointmentMode
+    created_at: datetime
 
 
 class DoctorCalendarEntryOut(BaseModel):

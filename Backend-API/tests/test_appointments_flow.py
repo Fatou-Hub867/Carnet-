@@ -16,7 +16,9 @@ async def test_pending_doctor_hidden_from_search(client, admin_token):
     # Register a doctor but never validate it.
     from tests.conftest import _doctor_payload
 
-    reg = await client.post("/auth/doctors/register", json=_doctor_payload("pending@example.com"))
+    reg = await client.post(
+        "/auth/doctors/register", json=_doctor_payload("pending@example.com")
+    )
     assert reg.status_code == 201
     resp = await client.get("/doctors")
     assert reg.json()["id"] not in [d["id"] for d in resp.json()]
@@ -28,7 +30,11 @@ async def test_fee_is_snapshotted_on_confirmation(client, patient, validated_doc
 
     slot = await client.post(
         "/appointments/availabilities",
-        json={"date": date.today().isoformat(), "start_time": "10:00:00", "end_time": "10:30:00"},
+        json={
+            "date": date.today().isoformat(),
+            "start_time": "10:00:00",
+            "end_time": "10:30:00",
+        },
         headers=doctor_headers,
     )
     availability_id = slot.json()["id"]
@@ -44,7 +50,9 @@ async def test_fee_is_snapshotted_on_confirmation(client, patient, validated_doc
     assert body["amount"] is None  # not billed until confirmed
 
     confirm = await client.post(
-        f"/appointments/{body['id']}/decision", json={"approve": True}, headers=doctor_headers
+        f"/appointments/{body['id']}/decision",
+        json={"approve": True},
+        headers=doctor_headers,
     )
     assert confirm.status_code == 200
     assert confirm.json()["status"] == "confirmed"
@@ -55,7 +63,11 @@ async def test_double_booking_is_rejected(client, patient, validated_doctor):
     doctor_headers = _auth(validated_doctor["token"])
     slot = await client.post(
         "/appointments/availabilities",
-        json={"date": date.today().isoformat(), "start_time": "11:00:00", "end_time": "11:30:00"},
+        json={
+            "date": date.today().isoformat(),
+            "start_time": "11:00:00",
+            "end_time": "11:30:00",
+        },
         headers=doctor_headers,
     )
     availability_id = slot.json()["id"]
@@ -81,7 +93,11 @@ async def test_refusal_frees_the_slot(client, patient, validated_doctor):
     patient_headers = _auth(patient["token"])
     slot = await client.post(
         "/appointments/availabilities",
-        json={"date": date.today().isoformat(), "start_time": "12:00:00", "end_time": "12:30:00"},
+        json={
+            "date": date.today().isoformat(),
+            "start_time": "12:00:00",
+            "end_time": "12:30:00",
+        },
         headers=doctor_headers,
     )
     availability_id = slot.json()["id"]
@@ -92,7 +108,9 @@ async def test_refusal_frees_the_slot(client, patient, validated_doctor):
         headers=patient_headers,
     )
     await client.post(
-        f"/appointments/{booking.json()['id']}/decision", json={"approve": False}, headers=doctor_headers
+        f"/appointments/{booking.json()['id']}/decision",
+        json={"approve": False},
+        headers=doctor_headers,
     )
 
     # The slot is bookable again after refusal.
@@ -105,12 +123,22 @@ async def test_refusal_frees_the_slot(client, patient, validated_doctor):
 
 async def test_overlapping_availability_rejected(client, validated_doctor):
     doctor_headers = _auth(validated_doctor["token"])
-    base = {"date": date.today().isoformat(), "start_time": "14:00:00", "end_time": "15:00:00"}
-    first = await client.post("/appointments/availabilities", json=base, headers=doctor_headers)
+    base = {
+        "date": date.today().isoformat(),
+        "start_time": "14:00:00",
+        "end_time": "15:00:00",
+    }
+    first = await client.post(
+        "/appointments/availabilities", json=base, headers=doctor_headers
+    )
     assert first.status_code == 201
     overlap = await client.post(
         "/appointments/availabilities",
-        json={"date": date.today().isoformat(), "start_time": "14:30:00", "end_time": "15:30:00"},
+        json={
+            "date": date.today().isoformat(),
+            "start_time": "14:30:00",
+            "end_time": "15:30:00",
+        },
         headers=doctor_headers,
     )
     assert overlap.status_code == 409
@@ -121,7 +149,11 @@ async def test_calendar_shows_confirmed_visit(client, patient, validated_doctor)
     doctor_headers = _auth(validated_doctor["token"])
     slot = await client.post(
         "/appointments/availabilities",
-        json={"date": date.today().isoformat(), "start_time": "16:00:00", "end_time": "16:30:00"},
+        json={
+            "date": date.today().isoformat(),
+            "start_time": "16:00:00",
+            "end_time": "16:30:00",
+        },
         headers=doctor_headers,
     )
     booking = await client.post(
@@ -130,7 +162,9 @@ async def test_calendar_shows_confirmed_visit(client, patient, validated_doctor)
         headers=_auth(patient["token"]),
     )
     await client.post(
-        f"/appointments/{booking.json()['id']}/decision", json={"approve": True}, headers=doctor_headers
+        f"/appointments/{booking.json()['id']}/decision",
+        json={"approve": True},
+        headers=doctor_headers,
     )
 
     resp = await client.get(
@@ -142,3 +176,36 @@ async def test_calendar_shows_confirmed_visit(client, patient, validated_doctor)
     entries = resp.json()
     assert len(entries) == 1
     assert entries[0]["patient_name"] == "Ada Lovelace"
+
+
+async def test_pending_list_includes_patient_name_and_reason(
+    client, patient, validated_doctor
+):
+    from datetime import date
+
+    doctor_headers = _auth(validated_doctor["token"])
+    slot = await client.post(
+        "/appointments/availabilities",
+        json={
+            "date": date.today().isoformat(),
+            "start_time": "10:00:00",
+            "end_time": "10:30:00",
+        },
+        headers=doctor_headers,
+    )
+    await client.post(
+        "/appointments",
+        json={
+            "availability_id": slot.json()["id"],
+            "mode": "in_person",
+            "reason": "Douleurs thoraciques",
+        },
+        headers=_auth(patient["token"]),
+    )
+
+    pending = await client.get("/appointments/pending", headers=doctor_headers)
+    assert pending.status_code == 200
+    entry = pending.json()[0]
+    assert entry["patient_name"] == "Ada Lovelace"
+    assert entry["reason"] == "Douleurs thoraciques"
+    assert entry["mode"] == "in_person"
