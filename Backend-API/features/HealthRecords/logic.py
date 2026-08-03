@@ -24,6 +24,7 @@ from features.HealthRecords.schemas import (
     HealthRecordSummaryOut,
     NumericVitalValueOut,
     TensionValueOut,
+    VitalBilanCreateRequest,
     VitalsSummaryOut,
 )
 
@@ -155,3 +156,18 @@ async def get_vitals_summary(db: AsyncSession, patient_id: int) -> VitalsSummary
         if weight_row
         else None,
     )
+
+
+async def create_vital_bilan(
+    db: AsyncSession, patient_id: int, data: VitalBilanCreateRequest
+) -> VitalsSummaryOut:
+    bilan = VitalSignBilan(
+        patient_id=patient_id,
+        systolic=data.systolic,
+        diastolic=data.diastolic,
+        glycemia_g_l=data.glycemia_g_l,
+        heart_rate_bpm=data.heart_rate_bpm,
+    )
+    db.add(bilan)
+    await db.commit()
+    return await get_vitals_summary(db, patient_id)

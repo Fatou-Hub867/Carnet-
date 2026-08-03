@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from features.HealthRecords.models import DocumentAddedBy, DocumentSourceType
 
@@ -42,3 +42,26 @@ class VitalsSummaryOut(BaseModel):
     glycemia: NumericVitalValueOut | None
     heart_rate: NumericVitalValueOut | None
     weight: NumericVitalValueOut | None
+
+
+class VitalBilanCreateRequest(BaseModel):
+    systolic: int | None = None
+    diastolic: int | None = None
+    glycemia_g_l: float | None = None
+    heart_rate_bpm: int | None = None
+
+    model_config = {"extra": "forbid"}
+
+    @model_validator(mode="after")
+    def _validate(self):
+        if (self.systolic is None) != (self.diastolic is None):
+            raise ValueError("systolic and diastolic must be provided together")
+        if (
+            self.systolic is None
+            and self.glycemia_g_l is None
+            and self.heart_rate_bpm is None
+        ):
+            raise ValueError(
+                "at least one of tension, glycemia_g_l or heart_rate_bpm is required"
+            )
+        return self

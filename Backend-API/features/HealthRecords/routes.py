@@ -9,6 +9,7 @@ from features.HealthRecords import logic
 from features.HealthRecords.schemas import (
     HealthRecordDocumentOut,
     HealthRecordSummaryOut,
+    VitalBilanCreateRequest,
     VitalsSummaryOut,
 )
 
@@ -80,3 +81,14 @@ async def get_my_vitals(
     db: AsyncSession = Depends(get_db),
 ):
     return await logic.get_vitals_summary(db, current_patient.id)
+
+
+@router.post(
+    "/me/vitals", response_model=VitalsSummaryOut, status_code=status.HTTP_201_CREATED
+)
+async def create_my_vital_bilan(
+    data: VitalBilanCreateRequest,
+    current_patient: Patient = Depends(get_current_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.create_vital_bilan(db, current_patient.id, data)
