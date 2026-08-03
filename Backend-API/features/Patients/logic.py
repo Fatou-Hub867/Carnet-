@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.storage import get_file_url
 from features.Appointments.models import Appointment, AppointmentStatus, Availability
 from features.Auth.models import Doctor, Patient
+from features.HealthRecords.models import VitalSignBilan
 from features.Patients.schemas import (
     DoseReminder,
     PatientDashboardOut,
@@ -51,8 +52,16 @@ def build_profile_out(patient: Patient) -> PatientProfileOut:
 async def update_patient_profile(
     db: AsyncSession, patient: Patient, data: PatientProfileUpdateRequest
 ) -> PatientProfileOut:
-    for field, value in data.model_dump(exclude_unset=True).items():
+    updates = data.model_dump(exclude_unset=True)
+    current_weight = float(patient.weight_kg) if patient.weight_kg is not None else None
+    weight_changed = "weight_kg" in updates and updates["weight_kg"] != current_weight
+
+    for field, value in updates.items():
         setattr(patient, field, value)
+
+    if weight_changed:
+        db.add(VitalSignBilan(patient_id=patient.id, weight_kg=updates["weight_kg"]))
+
     await db.commit()
     await db.refresh(patient)
     return build_profile_out(patient)

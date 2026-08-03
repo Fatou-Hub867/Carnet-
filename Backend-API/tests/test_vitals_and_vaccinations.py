@@ -152,3 +152,45 @@ async def test_delete_latest_bilan_falls_back_to_previous_value(client, patient)
     )
     assert resp.status_code == 200, resp.text
     assert resp.json()["heart_rate"]["value"] == 70.0
+
+
+async def test_profile_weight_change_creates_a_weight_snapshot(client, patient):
+    resp = await client.patch(
+        "/patients/me", json={"weight_kg": 68.5}, headers=_auth(patient["token"])
+    )
+    assert resp.status_code == 200, resp.text
+
+    vitals = await client.get(
+        "/health-records/me/vitals", headers=_auth(patient["token"])
+    )
+    assert vitals.json()["weight"]["value"] == 68.5
+
+
+async def test_profile_weight_unchanged_does_not_duplicate_snapshot(client, patient):
+    await client.patch(
+        "/patients/me", json={"weight_kg": 68.5}, headers=_auth(patient["token"])
+    )
+    first = await client.get(
+        "/health-records/me/vitals", headers=_auth(patient["token"])
+    )
+    first_recorded_at = first.json()["weight"]["recorded_at"]
+
+    # Re-submitting the exact same weight must not create a new row (the
+    # recorded_at timestamp should be unchanged).
+    await client.patch(
+        "/patients/me", json={"weight_kg": 68.5}, headers=_auth(patient["token"])
+    )
+    second = await client.get(
+        "/health-records/me/vitals", headers=_auth(patient["token"])
+    )
+    assert second.json()["weight"]["recorded_at"] == first_recorded_at
+
+
+async def test_profile_update_without_weight_does_not_create_snapshot(client, patient):
+    await client.patch(
+        "/patients/me", json={"city": "Brazzaville"}, headers=_auth(patient["token"])
+    )
+    vitals = await client.get(
+        "/health-records/me/vitals", headers=_auth(patient["token"])
+    )
+    assert vitals.json()["weight"] is None
