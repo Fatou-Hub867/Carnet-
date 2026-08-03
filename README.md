@@ -36,6 +36,8 @@ Le **backend** (10 modules) est entièrement implémenté et testé (suite `pyte
 
 Restent encore à brancher : le tableau de bord patient/médecin (traitements en cours, rappels, chiffres), les évaluations patient, et le suivi des patients chroniques — ces pages affichent toujours des données d'exemple codées en dur.
 
+**Écart connu** : l'identité affichée dans le pied de la barre latérale (nom/email/initiales en bas à gauche) reste codée en dur sur les 15 pages authentifiées — elle ne reflète pas le patient/médecin réellement connecté, contrairement au contenu principal de chaque page (déjà branché sur l'API). `auth.js` ne garde en session que le token et le rôle, pas l'identité ; corriger ça suppose un petit helper (`renderSidebarUser()`) appelé sur chaque page, hors périmètre du chantier actuel.
+
 ---
 
 ## Démarrage en local

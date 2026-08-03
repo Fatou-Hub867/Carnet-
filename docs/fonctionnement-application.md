@@ -186,3 +186,9 @@ d'ordonnance, messagerie). Restent encore des données d'exemple codées en
 dur sur : le tableau de bord patient/médecin (traitements en cours,
 rappels, chiffres), les évaluations patient, et le suivi des patients
 chroniques — leur branchement fera l'objet de tranches ultérieures.
+
+**Écart connu** : l'identité affichée dans le pied de la barre latérale
+(nom/email/initiales) reste codée en dur sur les 15 pages authentifiées,
+contrairement au contenu principal de chaque page. `auth.js` ne garde en
+session que le token et le rôle, pas l'identité — un `renderSidebarUser()`
+appelé sur chaque page corrigerait ça, hors périmètre du chantier actuel.
