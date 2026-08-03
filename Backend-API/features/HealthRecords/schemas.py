@@ -65,3 +65,18 @@ class VitalBilanCreateRequest(BaseModel):
                 "at least one of tension, glycemia_g_l or heart_rate_bpm is required"
             )
         return self
+
+
+class VitalBilanUpdateRequest(BaseModel):
+    systolic: int | None = None
+    diastolic: int | None = None
+    glycemia_g_l: float | None = None
+    heart_rate_bpm: int | None = None
+
+    model_config = {"extra": "forbid"}
+
+    @model_validator(mode="after")
+    def _validate(self):
+        if (self.systolic is None) != (self.diastolic is None):
+            raise ValueError("systolic and diastolic must be provided together")
+        return self

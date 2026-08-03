@@ -82,3 +82,54 @@ async def test_create_vital_bilan_rejects_weight_field(client, patient):
         headers=_auth(patient["token"]),
     )
     assert resp.status_code == 422
+
+
+async def test_update_latest_bilan_without_existing_one_404s(client, patient):
+    resp = await client.patch(
+        "/health-records/me/vitals/latest",
+        json={"heart_rate_bpm": 80},
+        headers=_auth(patient["token"]),
+    )
+    assert resp.status_code == 404
+
+
+async def test_delete_latest_bilan_without_existing_one_404s(client, patient):
+    resp = await client.delete(
+        "/health-records/me/vitals/latest", headers=_auth(patient["token"])
+    )
+    assert resp.status_code == 404
+
+
+async def test_update_latest_bilan(client, patient):
+    await client.post(
+        "/health-records/me/vitals",
+        json={"heart_rate_bpm": 70},
+        headers=_auth(patient["token"]),
+    )
+    resp = await client.patch(
+        "/health-records/me/vitals/latest",
+        json={"heart_rate_bpm": 75, "glycemia_g_l": 1.1},
+        headers=_auth(patient["token"]),
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["heart_rate"]["value"] == 75.0
+    assert body["glycemia"]["value"] == 1.1
+
+
+async def test_delete_latest_bilan_falls_back_to_previous_value(client, patient):
+    await client.post(
+        "/health-records/me/vitals",
+        json={"heart_rate_bpm": 70},
+        headers=_auth(patient["token"]),
+    )
+    await client.post(
+        "/health-records/me/vitals",
+        json={"heart_rate_bpm": 75},
+        headers=_auth(patient["token"]),
+    )
+    resp = await client.delete(
+        "/health-records/me/vitals/latest", headers=_auth(patient["token"])
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["heart_rate"]["value"] == 70.0

@@ -10,6 +10,7 @@ from features.HealthRecords.schemas import (
     HealthRecordDocumentOut,
     HealthRecordSummaryOut,
     VitalBilanCreateRequest,
+    VitalBilanUpdateRequest,
     VitalsSummaryOut,
 )
 
@@ -92,3 +93,20 @@ async def create_my_vital_bilan(
     db: AsyncSession = Depends(get_db),
 ):
     return await logic.create_vital_bilan(db, current_patient.id, data)
+
+
+@router.patch("/me/vitals/latest", response_model=VitalsSummaryOut)
+async def update_my_latest_vital_bilan(
+    data: VitalBilanUpdateRequest,
+    current_patient: Patient = Depends(get_current_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.update_latest_vital_bilan(db, current_patient.id, data)
+
+
+@router.delete("/me/vitals/latest", response_model=VitalsSummaryOut)
+async def delete_my_latest_vital_bilan(
+    current_patient: Patient = Depends(get_current_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.delete_latest_vital_bilan(db, current_patient.id)

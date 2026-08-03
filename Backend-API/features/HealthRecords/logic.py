@@ -9,7 +9,7 @@ carnet write atomic with the event that triggered it:
 """
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.storage import get_file_url
@@ -25,6 +25,7 @@ from features.HealthRecords.schemas import (
     NumericVitalValueOut,
     TensionValueOut,
     VitalBilanCreateRequest,
+    VitalBilanUpdateRequest,
     VitalsSummaryOut,
 )
 
@@ -169,5 +170,48 @@ async def create_vital_bilan(
         heart_rate_bpm=data.heart_rate_bpm,
     )
     db.add(bilan)
+    await db.commit()
+    return await get_vitals_summary(db, patient_id)
+
+
+async def _get_latest_bilan_row(
+    db: AsyncSession, patient_id: int
+) -> VitalSignBilan | None:
+    return (
+        await db.scalars(
+            select(VitalSignBilan)
+            .where(
+                VitalSignBilan.patient_id == patient_id,
+                or_(
+                    VitalSignBilan.systolic.is_not(None),
+                    VitalSignBilan.glycemia_g_l.is_not(None),
+                    VitalSignBilan.heart_rate_bpm.is_not(None),
+                ),
+            )
+            .order_by(VitalSignBilan.recorded_at.desc(), VitalSignBilan.id.desc())
+            .limit(1)
+        )
+    ).first()
+
+
+async def update_latest_vital_bilan(
+    db: AsyncSession, patient_id: int, data: VitalBilanUpdateRequest
+) -> VitalsSummaryOut:
+    bilan = await _get_latest_bilan_row(db, patient_id)
+    if bilan is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No bilan to update")
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(bilan, field, value)
+    await db.commit()
+    return await get_vitals_summary(db, patient_id)
+
+
+async def delete_latest_vital_bilan(
+    db: AsyncSession, patient_id: int
+) -> VitalsSummaryOut:
+    bilan = await _get_latest_bilan_row(db, patient_id)
+    if bilan is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No bilan to delete")
+    await db.delete(bilan)
     await db.commit()
     return await get_vitals_summary(db, patient_id)
