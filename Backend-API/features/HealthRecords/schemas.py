@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, model_validator
 
@@ -80,3 +80,28 @@ class VitalBilanUpdateRequest(BaseModel):
         if (self.systolic is None) != (self.diastolic is None):
             raise ValueError("systolic and diastolic must be provided together")
         return self
+
+
+class VaccinationOut(BaseModel):
+    id: int
+    vaccine_name: str
+    dose_number: int | None
+    administered_at: date
+
+    model_config = {"from_attributes": True}
+
+
+class VaccinationCreateRequest(BaseModel):
+    vaccine_name: str
+    dose_number: int | None = None
+    administered_at: date
+
+    model_config = {"extra": "forbid"}
+
+
+class VaccinationUpdateRequest(BaseModel):
+    vaccine_name: str | None = None
+    dose_number: int | None = None
+    administered_at: date | None = None
+
+    model_config = {"extra": "forbid"}

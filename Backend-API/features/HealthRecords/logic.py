@@ -18,12 +18,15 @@ from features.HealthRecords.models import (
     DocumentAddedBy,
     DocumentSourceType,
     HealthRecordDocument,
+    Vaccination,
     VitalSignBilan,
 )
 from features.HealthRecords.schemas import (
     HealthRecordSummaryOut,
     NumericVitalValueOut,
     TensionValueOut,
+    VaccinationCreateRequest,
+    VaccinationUpdateRequest,
     VitalBilanCreateRequest,
     VitalBilanUpdateRequest,
     VitalsSummaryOut,
@@ -224,3 +227,56 @@ async def delete_latest_vital_bilan(
     await db.delete(bilan)
     await db.commit()
     return await get_vitals_summary(db, patient_id)
+
+
+async def list_vaccinations(db: AsyncSession, patient_id: int) -> list[Vaccination]:
+    return list(
+        (
+            await db.scalars(
+                select(Vaccination)
+                .where(Vaccination.patient_id == patient_id)
+                .order_by(Vaccination.administered_at.desc(), Vaccination.id.desc())
+            )
+        ).all()
+    )
+
+
+async def create_vaccination(
+    db: AsyncSession, patient_id: int, data: VaccinationCreateRequest
+) -> Vaccination:
+    vaccination = Vaccination(patient_id=patient_id, **data.model_dump())
+    db.add(vaccination)
+    await db.commit()
+    await db.refresh(vaccination)
+    return vaccination
+
+
+async def _get_owned_vaccination(
+    db: AsyncSession, patient_id: int, vaccination_id: int
+) -> Vaccination:
+    vaccination = await db.get(Vaccination, vaccination_id)
+    if vaccination is None or vaccination.patient_id != patient_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Vaccination not found")
+    return vaccination
+
+
+async def update_vaccination(
+    db: AsyncSession,
+    patient_id: int,
+    vaccination_id: int,
+    data: VaccinationUpdateRequest,
+) -> Vaccination:
+    vaccination = await _get_owned_vaccination(db, patient_id, vaccination_id)
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(vaccination, field, value)
+    await db.commit()
+    await db.refresh(vaccination)
+    return vaccination
+
+
+async def delete_vaccination(
+    db: AsyncSession, patient_id: int, vaccination_id: int
+) -> None:
+    vaccination = await _get_owned_vaccination(db, patient_id, vaccination_id)
+    await db.delete(vaccination)
+    await db.commit()

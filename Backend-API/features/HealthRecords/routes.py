@@ -9,6 +9,9 @@ from features.HealthRecords import logic
 from features.HealthRecords.schemas import (
     HealthRecordDocumentOut,
     HealthRecordSummaryOut,
+    VaccinationCreateRequest,
+    VaccinationOut,
+    VaccinationUpdateRequest,
     VitalBilanCreateRequest,
     VitalBilanUpdateRequest,
     VitalsSummaryOut,
@@ -110,3 +113,45 @@ async def delete_my_latest_vital_bilan(
     db: AsyncSession = Depends(get_db),
 ):
     return await logic.delete_latest_vital_bilan(db, current_patient.id)
+
+
+@router.get("/me/vaccinations", response_model=list[VaccinationOut])
+async def list_my_vaccinations(
+    current_patient: Patient = Depends(get_current_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.list_vaccinations(db, current_patient.id)
+
+
+@router.post(
+    "/me/vaccinations",
+    response_model=VaccinationOut,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_my_vaccination(
+    data: VaccinationCreateRequest,
+    current_patient: Patient = Depends(get_current_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.create_vaccination(db, current_patient.id, data)
+
+
+@router.patch("/me/vaccinations/{vaccination_id}", response_model=VaccinationOut)
+async def update_my_vaccination(
+    vaccination_id: int,
+    data: VaccinationUpdateRequest,
+    current_patient: Patient = Depends(get_current_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.update_vaccination(db, current_patient.id, vaccination_id, data)
+
+
+@router.delete(
+    "/me/vaccinations/{vaccination_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_my_vaccination(
+    vaccination_id: int,
+    current_patient: Patient = Depends(get_current_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    await logic.delete_vaccination(db, current_patient.id, vaccination_id)

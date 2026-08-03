@@ -235,3 +235,78 @@ async def test_clearing_profile_weight_does_not_create_a_junk_snapshot(client, p
             )
         ).all()
     assert len(rows) == 1
+
+
+async def test_vaccination_crud_flow(client, patient):
+    empty = await client.get(
+        "/health-records/me/vaccinations", headers=_auth(patient["token"])
+    )
+    assert empty.status_code == 200
+    assert empty.json() == []
+
+    created = await client.post(
+        "/health-records/me/vaccinations",
+        json={
+            "vaccine_name": "Fièvre jaune",
+            "dose_number": 1,
+            "administered_at": "2019-03-10",
+        },
+        headers=_auth(patient["token"]),
+    )
+    assert created.status_code == 201, created.text
+    vaccination_id = created.json()["id"]
+    assert created.json()["vaccine_name"] == "Fièvre jaune"
+
+    listed = await client.get(
+        "/health-records/me/vaccinations", headers=_auth(patient["token"])
+    )
+    assert len(listed.json()) == 1
+
+    updated = await client.patch(
+        f"/health-records/me/vaccinations/{vaccination_id}",
+        json={"dose_number": 2},
+        headers=_auth(patient["token"]),
+    )
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["dose_number"] == 2
+    assert updated.json()["vaccine_name"] == "Fièvre jaune"
+
+    deleted = await client.delete(
+        f"/health-records/me/vaccinations/{vaccination_id}",
+        headers=_auth(patient["token"]),
+    )
+    assert deleted.status_code == 204
+
+    after_delete = await client.get(
+        "/health-records/me/vaccinations", headers=_auth(patient["token"])
+    )
+    assert after_delete.json() == []
+
+
+async def test_vaccination_ownership_is_enforced(client, patient):
+    from tests.conftest import register_and_login_patient
+
+    other = await register_and_login_patient(client, "other-vax@example.com")
+    created = await client.post(
+        "/health-records/me/vaccinations",
+        json={
+            "vaccine_name": "Tétanos",
+            "dose_number": None,
+            "administered_at": "2022-01-01",
+        },
+        headers=_auth(patient["token"]),
+    )
+    vaccination_id = created.json()["id"]
+
+    resp = await client.patch(
+        f"/health-records/me/vaccinations/{vaccination_id}",
+        json={"dose_number": 3},
+        headers=_auth(other["token"]),
+    )
+    assert resp.status_code == 404
+
+    resp = await client.delete(
+        f"/health-records/me/vaccinations/{vaccination_id}",
+        headers=_auth(other["token"]),
+    )
+    assert resp.status_code == 404
