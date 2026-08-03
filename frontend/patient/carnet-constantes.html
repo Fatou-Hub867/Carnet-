@@ -97,31 +97,23 @@
             <h1 class="h1">Carnet de santé</h1>
             <p class="subtitle" style="margin:0;">Tous vos antécédents médicaux en un seul endroit.</p>
           </div>
-          <button class="btn btn--primary">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 5v14M5 12h14" />
-            </svg>Ajouter un document
-          </button>
         </div>
         <div style="background:var(--green-soft);border:1px solid var(--green-soft-border);border-radius:16px;padding:20px 24px;display:flex;gap:40px;margin-bottom:22px;flex-wrap:wrap;">
           <div>
             <div style="color:var(--muted);font-size:13px;margin-bottom:4px;">Patient</div>
-            <div style="font-weight:800;font-size:16px;">Fanta Diallo</div>
+            <div id="carnet-name" style="font-weight:800;font-size:16px;"></div>
           </div>
           <div>
             <div style="color:var(--muted);font-size:13px;margin-bottom:4px;">Groupe sanguin</div>
-            <div style="font-weight:800;font-size:16px;">O+</div>
+            <div id="carnet-blood-type" style="font-weight:800;font-size:16px;">—</div>
           </div>
           <div>
             <div style="color:var(--muted);font-size:13px;margin-bottom:6px;">Allergies</div>
-            <div class="row" style="gap:6px;">
-              <span style="background:#fee2e2;color:#dc2626;font-weight:600;font-size:12.5px;padding:4px 11px;border-radius:20px;">Poils d’animaux</span>
-              <span style="background:#fee2e2;color:#dc2626;font-weight:600;font-size:12.5px;padding:4px 11px;border-radius:20px;">Pénicilline</span>
-            </div>
+            <div id="carnet-allergies" class="row" style="gap:6px;"></div>
           </div>
           <div>
             <div style="color:var(--muted);font-size:13px;margin-bottom:4px;">Documents</div>
-            <div style="font-weight:800;font-size:16px;">3 fichiers</div>
+            <div id="carnet-doc-count" style="font-weight:800;font-size:16px;"></div>
           </div>
         </div>
         <div class="tabs">
@@ -143,35 +135,210 @@
             </svg>Vaccinations
           </a>
         </div>
+        <div class="row" style="justify-content:flex-end;margin-bottom:14px;gap:10px;">
+          <a href="profil.html" class="btn btn--ghost btn--sm">Modifier le poids (profil)</a>
+          <button class="btn btn--primary btn--sm" id="carnet-bilan-btn" data-open="carnet-bilan-modal">Ajouter/modifier un bilan</button>
+        </div>
+        <p class="form-error hidden" id="carnet-vitals-error"></p>
         <div class="grid-4">
           <div class="card">
-            <div style="color:var(--muted);font-size:13px;margin-bottom:8px;">Tension</div>
-            <div style="font-size:28px;font-weight:800;line-height:1;">12/8 <span style="font-size:14px;font-weight:600;color:var(--muted-2);">cmHg</span>
+            <div class="row" style="justify-content:space-between;">
+              <div style="color:var(--muted);font-size:13px;margin-bottom:8px;">Tension</div>
+              <button class="icon-btn" id="carnet-tension-delete" title="Supprimer le bilan" style="display:none;">✕</button>
             </div>
-            <div style="color:var(--muted-2);font-size:12px;margin-top:8px;">Mesuré le 02 juil.</div>
+            <div id="carnet-tension-value" style="font-size:28px;font-weight:800;line-height:1;">—</div>
+            <div id="carnet-tension-date" style="color:var(--muted-2);font-size:12px;margin-top:8px;"></div>
           </div>
           <div class="card">
             <div style="color:var(--muted);font-size:13px;margin-bottom:8px;">Poids</div>
-            <div style="font-size:28px;font-weight:800;line-height:1;">64 <span style="font-size:14px;font-weight:600;color:var(--muted-2);">kg</span>
-            </div>
-            <div style="color:var(--muted-2);font-size:12px;margin-top:8px;">Mesuré le 02 juil.</div>
+            <div id="carnet-weight-value" style="font-size:28px;font-weight:800;line-height:1;">—</div>
+            <div id="carnet-weight-date" style="color:var(--muted-2);font-size:12px;margin-top:8px;"></div>
           </div>
           <div class="card">
-            <div style="color:var(--muted);font-size:13px;margin-bottom:8px;">Glycémie</div>
-            <div style="font-size:28px;font-weight:800;line-height:1;">0,9 <span style="font-size:14px;font-weight:600;color:var(--muted-2);">g/L</span>
+            <div class="row" style="justify-content:space-between;">
+              <div style="color:var(--muted);font-size:13px;margin-bottom:8px;">Glycémie</div>
+              <button class="icon-btn" id="carnet-glycemia-delete" title="Supprimer le bilan" style="display:none;">✕</button>
             </div>
-            <div style="color:var(--muted-2);font-size:12px;margin-top:8px;">Mesuré le 28 juin</div>
+            <div id="carnet-glycemia-value" style="font-size:28px;font-weight:800;line-height:1;">—</div>
+            <div id="carnet-glycemia-date" style="color:var(--muted-2);font-size:12px;margin-top:8px;"></div>
           </div>
           <div class="card">
-            <div style="color:var(--muted);font-size:13px;margin-bottom:8px;">Fréq. cardiaque</div>
-            <div style="font-size:28px;font-weight:800;line-height:1;">72 <span style="font-size:14px;font-weight:600;color:var(--muted-2);">bpm</span>
+            <div class="row" style="justify-content:space-between;">
+              <div style="color:var(--muted);font-size:13px;margin-bottom:8px;">Fréq. cardiaque</div>
+              <button class="icon-btn" id="carnet-heart-rate-delete" title="Supprimer le bilan" style="display:none;">✕</button>
             </div>
-            <div style="color:var(--muted-2);font-size:12px;margin-top:8px;">Mesuré le 02 juil.</div>
+            <div id="carnet-heart-rate-value" style="font-size:28px;font-weight:800;line-height:1;">—</div>
+            <div id="carnet-heart-rate-date" style="color:var(--muted-2);font-size:12px;margin-top:8px;"></div>
           </div>
         </div>
       </div>
     </main>
   </div>
+  <div class="modal__backdrop" id="carnet-bilan-modal" style="display:none;">
+    <div class="modal" style="max-width:420px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:18px;">
+        <div style="font-size:19px;font-weight:800;">Ajouter un bilan</div>
+        <button class="modal__close" data-close>✕</button>
+      </div>
+      <label style="font-size:13px;font-weight:600;margin-bottom:4px;display:block;">Tension (systolique / diastolique, cmHg)</label>
+      <div class="row" style="gap:10px;margin-bottom:14px;">
+        <input type="number" id="bilan-systolic" placeholder="12" style="flex:1;">
+        <input type="number" id="bilan-diastolic" placeholder="8" style="flex:1;">
+      </div>
+      <label style="font-size:13px;font-weight:600;margin-bottom:4px;display:block;">Glycémie (g/L)</label>
+      <input type="number" step="0.01" id="bilan-glycemia" style="margin-bottom:14px;">
+      <label style="font-size:13px;font-weight:600;margin-bottom:4px;display:block;">Fréquence cardiaque (bpm)</label>
+      <input type="number" id="bilan-heart-rate" style="margin-bottom:16px;">
+      <p class="form-error hidden" id="bilan-modal-error"></p>
+      <button class="btn btn--primary btn--block" id="bilan-modal-submit">Enregistrer</button>
+    </div>
+  </div>
+  <script src="../auth.js"></script>
+  <script src="../api.js"></script>
   <script src="../app.js"></script>
+  <script>
+    (function () {
+      CarnetAuth.requireAuth('patient');
+
+      var latestVitals = null;
+
+      function fmtDate(iso) {
+        return new Date(iso).toLocaleDateString('fr-FR');
+      }
+
+      // The 3 delete buttons (tension/glycémie/fréq. cardiaque) each trigger the same
+      // deleteLatestBilan() call, which hits DELETE .../vitals/latest — a single bilan
+      // holds tension+glycémie+fréq. cardiaque together (weight is separate, from the
+      // profile), so deleting from any one of the 3 cards deletes the whole latest bilan.
+      function renderVitals(vitals) {
+        latestVitals = vitals;
+
+        if (vitals.tension) {
+          document.getElementById('carnet-tension-value').innerHTML =
+            vitals.tension.systolic + '/' + vitals.tension.diastolic +
+            ' <span style="font-size:14px;font-weight:600;color:var(--muted-2);">cmHg</span>';
+          document.getElementById('carnet-tension-date').textContent = 'Mesuré le ' + fmtDate(vitals.tension.recorded_at);
+          document.getElementById('carnet-tension-delete').style.display = '';
+        } else {
+          document.getElementById('carnet-tension-value').textContent = '—';
+          document.getElementById('carnet-tension-date').textContent = '';
+          document.getElementById('carnet-tension-delete').style.display = 'none';
+        }
+
+        if (vitals.weight) {
+          document.getElementById('carnet-weight-value').innerHTML =
+            vitals.weight.value + ' <span style="font-size:14px;font-weight:600;color:var(--muted-2);">kg</span>';
+          document.getElementById('carnet-weight-date').textContent = 'Mesuré le ' + fmtDate(vitals.weight.recorded_at);
+        } else {
+          document.getElementById('carnet-weight-value').textContent = '—';
+          document.getElementById('carnet-weight-date').textContent = '';
+        }
+
+        if (vitals.glycemia) {
+          document.getElementById('carnet-glycemia-value').innerHTML =
+            vitals.glycemia.value + ' <span style="font-size:14px;font-weight:600;color:var(--muted-2);">g/L</span>';
+          document.getElementById('carnet-glycemia-date').textContent = 'Mesuré le ' + fmtDate(vitals.glycemia.recorded_at);
+          document.getElementById('carnet-glycemia-delete').style.display = '';
+        } else {
+          document.getElementById('carnet-glycemia-value').textContent = '—';
+          document.getElementById('carnet-glycemia-date').textContent = '';
+          document.getElementById('carnet-glycemia-delete').style.display = 'none';
+        }
+
+        if (vitals.heart_rate) {
+          document.getElementById('carnet-heart-rate-value').innerHTML =
+            vitals.heart_rate.value + ' <span style="font-size:14px;font-weight:600;color:var(--muted-2);">bpm</span>';
+          document.getElementById('carnet-heart-rate-date').textContent = 'Mesuré le ' + fmtDate(vitals.heart_rate.recorded_at);
+          document.getElementById('carnet-heart-rate-delete').style.display = '';
+        } else {
+          document.getElementById('carnet-heart-rate-value').textContent = '—';
+          document.getElementById('carnet-heart-rate-date').textContent = '';
+          document.getElementById('carnet-heart-rate-delete').style.display = 'none';
+        }
+      }
+
+      async function loadSummary() {
+        try {
+          var summary = await apiGet('/health-records/me');
+          document.getElementById('carnet-name').textContent = summary.first_name + ' ' + summary.last_name;
+          document.getElementById('carnet-blood-type').textContent = summary.blood_type || '—';
+          document.getElementById('carnet-doc-count').textContent = summary.document_count + ' fichier' + (summary.document_count > 1 ? 's' : '');
+          var allergiesEl = document.getElementById('carnet-allergies');
+          allergiesEl.innerHTML = '';
+          (summary.allergies ? summary.allergies.split(',') : []).forEach(function (a) {
+            var span = document.createElement('span');
+            span.style.cssText = 'background:#fee2e2;color:#dc2626;font-weight:600;font-size:12.5px;padding:4px 11px;border-radius:20px;';
+            span.textContent = a.trim();
+            allergiesEl.appendChild(span);
+          });
+        } catch (err) {
+          document.getElementById('carnet-name').textContent = 'Erreur de chargement';
+        }
+      }
+
+      async function loadVitals() {
+        try {
+          renderVitals(await apiGet('/health-records/me/vitals'));
+        } catch (err) {
+          document.getElementById('carnet-vitals-error').textContent = 'Impossible de charger les constantes.';
+          document.getElementById('carnet-vitals-error').classList.remove('hidden');
+        }
+      }
+
+      loadSummary();
+      loadVitals();
+
+      document.getElementById('carnet-bilan-btn').addEventListener('click', function () {
+        document.getElementById('bilan-systolic').value = latestVitals && latestVitals.tension ? latestVitals.tension.systolic : '';
+        document.getElementById('bilan-diastolic').value = latestVitals && latestVitals.tension ? latestVitals.tension.diastolic : '';
+        document.getElementById('bilan-glycemia').value = latestVitals && latestVitals.glycemia ? latestVitals.glycemia.value : '';
+        document.getElementById('bilan-heart-rate').value = latestVitals && latestVitals.heart_rate ? latestVitals.heart_rate.value : '';
+        document.getElementById('bilan-modal-error').classList.add('hidden');
+      });
+
+      document.getElementById('bilan-modal-submit').addEventListener('click', async function () {
+        var errorEl = document.getElementById('bilan-modal-error');
+        errorEl.classList.add('hidden');
+
+        var systolic = document.getElementById('bilan-systolic').value;
+        var diastolic = document.getElementById('bilan-diastolic').value;
+        var glycemia = document.getElementById('bilan-glycemia').value;
+        var heartRate = document.getElementById('bilan-heart-rate').value;
+
+        var payload = {
+          systolic: systolic ? parseInt(systolic, 10) : null,
+          diastolic: diastolic ? parseInt(diastolic, 10) : null,
+          glycemia_g_l: glycemia ? parseFloat(glycemia) : null,
+          heart_rate_bpm: heartRate ? parseInt(heartRate, 10) : null,
+        };
+
+        var hasExistingBilan = latestVitals && (latestVitals.tension || latestVitals.glycemia || latestVitals.heart_rate);
+
+        try {
+          var updated = hasExistingBilan
+            ? await apiRequest('PATCH', '/health-records/me/vitals/latest', { json: payload })
+            : await apiRequest('POST', '/health-records/me/vitals', { json: payload });
+          renderVitals(updated);
+          document.getElementById('carnet-bilan-modal').style.display = 'none';
+        } catch (err) {
+          errorEl.textContent = err.message || 'Une erreur est survenue, réessayez.';
+          errorEl.classList.remove('hidden');
+        }
+      });
+
+      async function deleteLatestBilan() {
+        try {
+          renderVitals(await apiRequest('DELETE', '/health-records/me/vitals/latest'));
+        } catch (err) {
+          document.getElementById('carnet-vitals-error').textContent = 'Impossible de supprimer le bilan.';
+          document.getElementById('carnet-vitals-error').classList.remove('hidden');
+        }
+      }
+
+      document.getElementById('carnet-tension-delete').addEventListener('click', deleteLatestBilan);
+      document.getElementById('carnet-glycemia-delete').addEventListener('click', deleteLatestBilan);
+      document.getElementById('carnet-heart-rate-delete').addEventListener('click', deleteLatestBilan);
+    })();
+  </script>
 </body>
 </html>
