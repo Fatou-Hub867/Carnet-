@@ -206,3 +206,32 @@ async def test_profile_update_without_weight_does_not_create_snapshot(client, pa
         "/health-records/me/vitals", headers=_auth(patient["token"])
     )
     assert vitals.json()["weight"] is None
+
+
+async def test_clearing_profile_weight_does_not_create_a_junk_snapshot(client, patient):
+    resp = await client.patch(
+        "/patients/me", json={"weight_kg": 68.5}, headers=_auth(patient["token"])
+    )
+    assert resp.status_code == 200, resp.text
+
+    # Clearing the weight (null) must update the profile but must NOT create
+    # a new VitalSignBilan row - a snapshot with no weight (and no other
+    # vitals) is meaningless.
+    resp = await client.patch(
+        "/patients/me", json={"weight_kg": None}, headers=_auth(patient["token"])
+    )
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["weight_kg"] is None
+
+    # Count ALL rows for the patient (not just non-null-weight ones): the
+    # junk row this bug produces has weight_kg=None, so a filter on
+    # weight_kg.is_not(None) would blindly miss it.
+    async with async_session_factory() as session:
+        rows = (
+            await session.scalars(
+                select(VitalSignBilan).where(
+                    VitalSignBilan.patient_id == patient["id"],
+                )
+            )
+        ).all()
+    assert len(rows) == 1

@@ -54,7 +54,11 @@ async def update_patient_profile(
 ) -> PatientProfileOut:
     updates = data.model_dump(exclude_unset=True)
     current_weight = float(patient.weight_kg) if patient.weight_kg is not None else None
-    weight_changed = "weight_kg" in updates and updates["weight_kg"] != current_weight
+    weight_changed = (
+        "weight_kg" in updates
+        and updates["weight_kg"] is not None
+        and updates["weight_kg"] != current_weight
+    )
 
     for field, value in updates.items():
         setattr(patient, field, value)
