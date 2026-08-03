@@ -117,6 +117,25 @@ async def test_update_latest_bilan(client, patient):
     assert body["glycemia"]["value"] == 1.1
 
 
+async def test_update_latest_bilan_rejects_nulling_all_fields(client, patient):
+    await client.post(
+        "/health-records/me/vitals",
+        json={"heart_rate_bpm": 70},
+        headers=_auth(patient["token"]),
+    )
+    resp = await client.patch(
+        "/health-records/me/vitals/latest",
+        json={"heart_rate_bpm": None},
+        headers=_auth(patient["token"]),
+    )
+    assert resp.status_code == 400, resp.text
+
+    summary = await client.get(
+        "/health-records/me/vitals", headers=_auth(patient["token"])
+    )
+    assert summary.json()["heart_rate"]["value"] == 70.0
+
+
 async def test_delete_latest_bilan_falls_back_to_previous_value(client, patient):
     await client.post(
         "/health-records/me/vitals",

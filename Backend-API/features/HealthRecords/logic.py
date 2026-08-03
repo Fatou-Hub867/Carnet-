@@ -202,6 +202,15 @@ async def update_latest_vital_bilan(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No bilan to update")
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(bilan, field, value)
+    if (
+        bilan.systolic is None
+        and bilan.glycemia_g_l is None
+        and bilan.heart_rate_bpm is None
+    ):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "Update would leave no data — use DELETE instead",
+        )
     await db.commit()
     return await get_vitals_summary(db, patient_id)
 
