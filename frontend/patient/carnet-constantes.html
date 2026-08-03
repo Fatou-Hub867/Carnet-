@@ -137,7 +137,7 @@
         </div>
         <div class="row" style="justify-content:flex-end;margin-bottom:14px;gap:10px;">
           <a href="profil.html" class="btn btn--ghost btn--sm">Modifier le poids (profil)</a>
-          <button class="btn btn--primary btn--sm" id="carnet-bilan-btn" data-open="carnet-bilan-modal">Ajouter/modifier un bilan</button>
+          <button class="btn btn--primary btn--sm" id="carnet-bilan-btn" data-open="carnet-bilan-modal" disabled>Ajouter/modifier un bilan</button>
         </div>
         <p class="form-error hidden" id="carnet-vitals-error"></p>
         <div class="grid-4">
@@ -286,7 +286,9 @@
       }
 
       loadSummary();
-      loadVitals();
+      loadVitals().finally(function () {
+        document.getElementById('carnet-bilan-btn').disabled = false;
+      });
 
       document.getElementById('carnet-bilan-btn').addEventListener('click', function () {
         document.getElementById('bilan-systolic').value = latestVitals && latestVitals.tension ? latestVitals.tension.systolic : '';
