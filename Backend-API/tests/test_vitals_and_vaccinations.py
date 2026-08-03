@@ -1,6 +1,10 @@
 """Vital-sign bilans and vaccinations: patient-entered carnet data, plus the
 inline weight snapshot written by Patients.logic on profile update."""
 
+from sqlalchemy import select
+
+from core.database import async_session_factory
+from features.HealthRecords.models import VitalSignBilan
 from tests.conftest import _auth
 
 
@@ -167,23 +171,31 @@ async def test_profile_weight_change_creates_a_weight_snapshot(client, patient):
 
 
 async def test_profile_weight_unchanged_does_not_duplicate_snapshot(client, patient):
-    await client.patch(
+    resp = await client.patch(
         "/patients/me", json={"weight_kg": 68.5}, headers=_auth(patient["token"])
     )
-    first = await client.get(
-        "/health-records/me/vitals", headers=_auth(patient["token"])
-    )
-    first_recorded_at = first.json()["weight"]["recorded_at"]
+    assert resp.status_code == 200, resp.text
 
-    # Re-submitting the exact same weight must not create a new row (the
-    # recorded_at timestamp should be unchanged).
-    await client.patch(
+    # Re-submitting the exact same weight must not create a new row. The
+    # read API's "latest value" endpoint can't prove this on its own: SQLite's
+    # func.now() has second-level granularity, so two PATCHes in the same test
+    # run can produce identical recorded_at timestamps even if two rows were
+    # inserted. Query the VitalSignBilan table directly instead.
+    resp = await client.patch(
         "/patients/me", json={"weight_kg": 68.5}, headers=_auth(patient["token"])
     )
-    second = await client.get(
-        "/health-records/me/vitals", headers=_auth(patient["token"])
-    )
-    assert second.json()["weight"]["recorded_at"] == first_recorded_at
+    assert resp.status_code == 200, resp.text
+
+    async with async_session_factory() as session:
+        rows = (
+            await session.scalars(
+                select(VitalSignBilan).where(
+                    VitalSignBilan.patient_id == patient["id"],
+                    VitalSignBilan.weight_kg.is_not(None),
+                )
+            )
+        ).all()
+    assert len(rows) == 1
 
 
 async def test_profile_update_without_weight_does_not_create_snapshot(client, patient):
