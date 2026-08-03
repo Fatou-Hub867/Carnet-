@@ -279,7 +279,8 @@
         document.getElementById('vaccin-modal-error').classList.add('hidden');
       });
 
-      document.getElementById('vaccin-modal-submit').addEventListener('click', async function () {
+      document.getElementById('vaccin-modal-submit').addEventListener('click', async function (e) {
+        var submitBtn = e.currentTarget;
         var errorEl = document.getElementById('vaccin-modal-error');
         errorEl.classList.add('hidden');
 
@@ -299,6 +300,7 @@
           administered_at: date,
         };
 
+        submitBtn.disabled = true;
         try {
           if (editingId) {
             await apiRequest('PATCH', '/health-records/me/vaccinations/' + editingId, { json: payload });
@@ -310,6 +312,8 @@
         } catch (err) {
           errorEl.textContent = err.message || 'Une erreur est survenue, réessayez.';
           errorEl.classList.remove('hidden');
+        } finally {
+          submitBtn.disabled = false;
         }
       });
     })();

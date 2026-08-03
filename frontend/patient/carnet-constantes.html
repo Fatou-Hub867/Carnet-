@@ -298,7 +298,8 @@
         document.getElementById('bilan-modal-error').classList.add('hidden');
       });
 
-      document.getElementById('bilan-modal-submit').addEventListener('click', async function () {
+      document.getElementById('bilan-modal-submit').addEventListener('click', async function (e) {
+        var submitBtn = e.currentTarget;
         var errorEl = document.getElementById('bilan-modal-error');
         errorEl.classList.add('hidden');
 
@@ -316,6 +317,7 @@
 
         var hasExistingBilan = latestVitals && (latestVitals.tension || latestVitals.glycemia || latestVitals.heart_rate);
 
+        submitBtn.disabled = true;
         try {
           var updated = hasExistingBilan
             ? await apiRequest('PATCH', '/health-records/me/vitals/latest', { json: payload })
@@ -325,6 +327,8 @@
         } catch (err) {
           errorEl.textContent = err.message || 'Une erreur est survenue, réessayez.';
           errorEl.classList.remove('hidden');
+        } finally {
+          submitBtn.disabled = false;
         }
       });
 
