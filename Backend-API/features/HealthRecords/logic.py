@@ -18,8 +18,14 @@ from features.HealthRecords.models import (
     DocumentAddedBy,
     DocumentSourceType,
     HealthRecordDocument,
+    VitalSignBilan,
 )
-from features.HealthRecords.schemas import HealthRecordSummaryOut
+from features.HealthRecords.schemas import (
+    HealthRecordSummaryOut,
+    NumericVitalValueOut,
+    TensionValueOut,
+    VitalsSummaryOut,
+)
 
 
 async def upload_document_from_patient(
@@ -97,3 +103,55 @@ async def get_document_url(db: AsyncSession, patient_id: int, document_id: int) 
     if document is None or document.patient_id != patient_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
     return get_file_url(document.file_key)
+
+
+async def _latest_bilan_with(
+    db: AsyncSession, patient_id: int, column
+) -> VitalSignBilan | None:
+    return (
+        await db.scalars(
+            select(VitalSignBilan)
+            .where(VitalSignBilan.patient_id == patient_id, column.is_not(None))
+            .order_by(VitalSignBilan.recorded_at.desc(), VitalSignBilan.id.desc())
+            .limit(1)
+        )
+    ).first()
+
+
+async def get_vitals_summary(db: AsyncSession, patient_id: int) -> VitalsSummaryOut:
+    """Each of the 4 fields is resolved independently: a bilan can fill only a
+    subset of its 3 manual fields, and the weight snapshot always lives on a
+    separate row (written by Patients.logic) — so "latest" is per-column, not
+    per-row. Four small queries rather than one clever one, for clarity."""
+    tension_row = await _latest_bilan_with(db, patient_id, VitalSignBilan.systolic)
+    glycemia_row = await _latest_bilan_with(db, patient_id, VitalSignBilan.glycemia_g_l)
+    heart_rate_row = await _latest_bilan_with(
+        db, patient_id, VitalSignBilan.heart_rate_bpm
+    )
+    weight_row = await _latest_bilan_with(db, patient_id, VitalSignBilan.weight_kg)
+
+    return VitalsSummaryOut(
+        tension=TensionValueOut(
+            systolic=tension_row.systolic,
+            diastolic=tension_row.diastolic,
+            recorded_at=tension_row.recorded_at,
+        )
+        if tension_row
+        else None,
+        glycemia=NumericVitalValueOut(
+            value=float(glycemia_row.glycemia_g_l), recorded_at=glycemia_row.recorded_at
+        )
+        if glycemia_row
+        else None,
+        heart_rate=NumericVitalValueOut(
+            value=float(heart_rate_row.heart_rate_bpm),
+            recorded_at=heart_rate_row.recorded_at,
+        )
+        if heart_rate_row
+        else None,
+        weight=NumericVitalValueOut(
+            value=float(weight_row.weight_kg), recorded_at=weight_row.recorded_at
+        )
+        if weight_row
+        else None,
+    )

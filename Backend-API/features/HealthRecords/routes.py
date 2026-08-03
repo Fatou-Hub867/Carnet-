@@ -6,7 +6,11 @@ from core.deps import get_current_doctor, get_current_patient
 from core.storage import upload_file
 from features.Auth.models import Doctor, Patient
 from features.HealthRecords import logic
-from features.HealthRecords.schemas import HealthRecordDocumentOut, HealthRecordSummaryOut
+from features.HealthRecords.schemas import (
+    HealthRecordDocumentOut,
+    HealthRecordSummaryOut,
+    VitalsSummaryOut,
+)
 
 router = APIRouter(prefix="/health-records", tags=["health-records"])
 
@@ -27,14 +31,20 @@ async def list_my_documents(
     return await logic.list_documents(db, current_patient.id)
 
 
-@router.post("/me/documents", response_model=HealthRecordDocumentOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/me/documents",
+    response_model=HealthRecordDocumentOut,
+    status_code=status.HTTP_201_CREATED,
+)
 async def upload_document(
     file: UploadFile,
     current_patient: Patient = Depends(get_current_patient),
     db: AsyncSession = Depends(get_db),
 ):
     file_key = upload_file(await file.read(), file.filename, file.content_type)
-    return await logic.upload_document_from_patient(db, current_patient.id, file_key, file.filename)
+    return await logic.upload_document_from_patient(
+        db, current_patient.id, file_key, file.filename
+    )
 
 
 @router.get("/me/documents/{document_id}/download")
@@ -59,4 +69,14 @@ async def doctor_upload_document(
     db: AsyncSession = Depends(get_db),
 ):
     file_key = upload_file(await file.read(), file.filename, file.content_type)
-    return await logic.upload_document_from_doctor(db, patient_id, current_doctor.id, file_key, file.filename)
+    return await logic.upload_document_from_doctor(
+        db, patient_id, current_doctor.id, file_key, file.filename
+    )
+
+
+@router.get("/me/vitals", response_model=VitalsSummaryOut)
+async def get_my_vitals(
+    current_patient: Patient = Depends(get_current_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.get_vitals_summary(db, current_patient.id)

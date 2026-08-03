@@ -24,3 +24,21 @@ class HealthRecordSummaryOut(BaseModel):
     allergies: str | None
     weight_kg: float | None
     document_count: int
+
+
+class TensionValueOut(BaseModel):
+    systolic: int
+    diastolic: int
+    recorded_at: datetime
+
+
+class NumericVitalValueOut(BaseModel):
+    value: float
+    recorded_at: datetime
+
+
+class VitalsSummaryOut(BaseModel):
+    tension: TensionValueOut | None
+    glycemia: NumericVitalValueOut | None
+    heart_rate: NumericVitalValueOut | None
+    weight: NumericVitalValueOut | None
