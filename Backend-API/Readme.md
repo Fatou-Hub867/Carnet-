@@ -74,6 +74,9 @@ Backend-API/
 - **Carnet auto-alimenté** : ordonnances et pièces jointes médecin classées automatiquement dans le carnet (écrit inline par le producteur).
 - **Suppression = soft delete** : statut `deleted`, jamais d'effacement des données de santé.
 - **Suspension médecin** : automatique au 5ᵉ signalement actif (1 mois), réactivation automatique au login.
+- **Poids = source unique le profil** : `VitalSignBilan` sert à la fois aux bilans de constantes saisis manuellement et au snapshot automatique du poids (écrit inline par `Patients/logic.py` à chaque `PATCH /patients/me` qui change `weight_kg`) — le carnet n'a pas de formulaire de poids séparé.
+- **Accès médecin au carnet d'un patient** : gardé par `_authorize_doctor_for_patient` (`HealthRecords/logic.py`) — au moins un RDV `confirmed`/`completed` entre ce médecin et ce patient, sinon 404 (jamais 403, pour ne pas confirmer l'existence du patient à un médecin non autorisé). Même garde sur la lecture et sur le dépôt de document médecin.
+- **Voir vs télécharger** : chaque fichier privé expose deux URL présignées distinctes (`core/storage.get_file_url`, `DocumentUrlsOut`) — une pour l'affichage inline, une avec `Content-Disposition: attachment` (nom original recalculé depuis la clé S3 quand il n'est pas stocké, ex. diplôme médecin).
 
 ---
 
@@ -124,7 +127,7 @@ uv run python -m pytest tests/test_appointments_flow.py -q   # un fichier
 
 ## Ce qui est implémenté
 
-Les **10 modules** sont fonctionnels. Suite de tests end-to-end **verte (27 tests)**, migration Alembic initiale en place, validé en run réel (PostgreSQL + MinIO).
+Les **10 modules** sont fonctionnels. Suite de tests end-to-end **verte (81 tests)**, migrations Alembic en place, validé en run réel (PostgreSQL + MinIO).
 
 ### `Auth` — `/auth`
 Inscription patient/médecin (mot de passe ≥ 10 caractères + confirmation), connexion JWT, upload du diplôme médecin (en 2 appels), reset de mot de passe (token à usage unique).
@@ -153,10 +156,13 @@ Création d'ordonnance par le médecin (RDV complété requis) : génération du
 - `GET /prescriptions/{id}/download`, `POST /prescriptions/treatment-intakes/confirm`
 
 ### `HealthRecords` — `/health-records`
-Carnet de santé : résumé (infos santé + nombre de documents), liste, upload manuel patient, dépôt médecin, téléchargement (URL présignée). Alimenté par 4 sources (upload patient, ordonnance, pièce jointe messagerie, dépôt médecin).
+Carnet de santé : résumé (infos santé + nombre de documents), documents (liste, upload manuel patient, dépôt médecin, voir/télécharger), constantes vitales (bilans tension/glycémie/fréq. cardiaque + snapshot auto du poids), vaccinations (CRUD, texte libre, pas de calendrier vaccinal). Documents alimentés par 4 sources (upload patient, ordonnance, pièce jointe messagerie, dépôt médecin). Un médecin peut lire (et déposer un document dans) le carnet d'un patient qu'il a consulté — RDV `confirmed`/`completed` requis, sinon 404.
 - `GET /health-records/me`, `GET /health-records/me/documents`
-- `POST /health-records/me/documents`, `GET /health-records/me/documents/{id}/download`
-- `POST /health-records/patients/{patient_id}/documents` (médecin)
+- `POST /health-records/me/documents`, `GET /health-records/me/documents/{id}/download` (→ `{view_url, download_url}`)
+- `GET|POST /health-records/me/vitals`, `PATCH|DELETE /health-records/me/vitals/latest`
+- `GET|POST /health-records/me/vaccinations`, `PATCH|DELETE /health-records/me/vaccinations/{id}`
+- `POST /health-records/patients/{patient_id}/documents` (médecin, dépôt)
+- `GET /health-records/patients/{patient_id}`, `.../documents`, `.../documents/{id}/download`, `.../vitals`, `.../vaccinations` (médecin, lecture seule)
 
 ### `Messaging` — `/messaging`
 Messagerie patient-médecin en **REST + polling** (pas de WebSocket en V1). Bi-rôle, autorisation par conversation, marquage « lu » au fetch, pièce jointe médecin classée automatiquement au carnet.
@@ -164,9 +170,11 @@ Messagerie patient-médecin en **REST + polling** (pas de WebSocket en V1). Bi-r
 - `GET|POST /messaging/conversations/{id}/messages`
 - `GET /messaging/conversations/{id}/messages/{message_id}/attachment`
 
-### `Admin` — `/admin` (+ dépôt avis/signalements côté patient)
-Validation/refus des comptes médecin (sur justificatif, avec emails), liste des demandes en attente (avec URL présignée du diplôme), soft delete de comptes. Côté patient : dépôt d'avis (note 1-5, RDV complété requis) et de signalements (→ **suspension auto au 5ᵉ signalement actif**).
-- `GET /admin/doctors/pending`, `POST /admin/doctors/{id}/validate`, `DELETE /admin/{user_type}/{user_id}`
+### `Admin` — `/admin` (+ avis/signalements côté patient)
+Validation/refus des comptes médecin (sur justificatif, avec emails), liste des demandes en attente, téléchargement du diplôme (URL fraîche à chaque appel — pas de lien mis en cache dans la liste), soft delete de comptes. Côté patient : consultations à évaluer / avis déjà publiés, dépôt d'avis (note 1-5, RDV complété requis) et de signalements (→ **suspension auto au 5ᵉ signalement actif**).
+- `GET /admin/doctors/pending`, `GET /admin/doctors/{id}/diploma/download` (→ `{view_url, download_url}`)
+- `POST /admin/doctors/{id}/validate`, `DELETE /admin/{user_type}/{user_id}`
+- `GET /patients/me/pending-reviews`, `GET /patients/me/reviews`
 - `POST /doctors/{id}/reviews`, `POST /doctors/{id}/complaints` (patient authentifié)
 
 ### `ChronicCare` — `/chronic-care`

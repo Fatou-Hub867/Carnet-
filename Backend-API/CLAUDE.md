@@ -119,3 +119,106 @@ Venv neuf (`uv venv --python 3.14`) + `uv pip install -r requirements.text` : **
 - Installation réelle des dépendances dans le venv du projet (`uv pip install -r requirements.text` ou migration vers `uv add`).
 - `docker compose up` pour lancer Postgres/MinIO réellement (le fichier a été renommé `docker-compose.yml`, il était mal nommé `docker compose.yml`).
 - Faire tourner l'app en conditions réelles (vérifié pour l'instant uniquement via import direct + génération OpenAPI avec les dépendances installées dans un dossier temporaire, et via un test end-to-end sur SQLite en mémoire pour Auth).
+
+**Note** : les trois points ci-dessus sont des notes historiques d'une session bien
+antérieure (Alembic, Docker et le run réel sont en fait faits depuis longtemps —
+voir les sections « Alembic — FAIT », « Run réel — FAIT » plus haut). Ne pas s'y
+fier, se référer plutôt à la section « Reste à faire » ci-dessous et à la session
+du 2026-08-04.
+
+## Session du 2026-08-04 — carnet (constantes/vaccins), accès médecin, corrections
+
+Point de départ de la session : bug remonté par l'utilisateur (traitements en
+cours affichés en dur sur le dashboard patient). Diagnostic → brainstorming de
+découpage en 8 sujets (A-G) sur l'ensemble du frontend patient/médecin/admin
+encore câblé en dur. Traités ce soir : **B, D, E, F, G, A** (+ 2 correctifs de
+sécurité et une fonctionnalité transverse non prévue au découpage initial).
+**Reste : C** (dashboard patient/médecin — traitements/rappels, backend déjà
+prêt) — voir `docs/fonctionnement-application.md` §7 pour le détail à jour.
+
+**B — Carnet : constantes vitales & vaccinations** (nouveau, exécuté via
+subagent-driven-development sur un plan à 8 tâches, `docs/superpowers/plans/
+2026-08-03-carnet-constantes-vaccins.md`) : nouvelles tables `VitalSignBilan`
+(bilans manuels tension/glycémie/fréq. cardiaque **+ snapshot auto du poids**,
+une seule table pour les deux — le poids n'est éditable que via
+`PATCH /patients/me`, jamais directement dans le carnet) et `Vaccination`
+(texte libre, pas de statut « à jour »). CRUD complet
+(`/health-records/me/vitals*`, `/health-records/me/vaccinations*`), 2 pages
+frontend branchées (`carnet-constantes.html`, `carnet-vaccins.html`). 3 bugs
+réels trouvés et corrigés par les revues de code pendant l'implémentation :
+PATCH pouvant vider un bilan sans le supprimer réellement (orphelin invisible),
+poids effacé (`null`) créant un snapshot fantôme, et une course POST/PATCH sur
+double-clic avant le premier chargement.
+
+**G — Admin : diplôme médecin invisible** (bug remonté par l'utilisateur —
+clic sur « Voir les justificatifs » ouvrait une page vide) : la liste
+`GET /admin/doctors/pending` générait l'URL présignée une seule fois au
+chargement ; un admin cliquant plus tard (ex. après l'email de notification)
+tombait sur un lien expiré. Nouvelle route
+`GET /admin/doctors/{id}/diploma/download`, URL fraîche à chaque clic. **Non
+vérifié en direct** (pas de Docker/navigateur dans l'environnement de session) —
+diagnostic déduit du code, à confirmer par l'utilisateur.
+
+**D — Patients chroniques (médecin)** : branchement frontend pur,
+`patients-chroniques.html` sur `GET /chronic-care/dashboard` et
+`GET /chronic-care/patients?search=` — backend déjà complet et testé de longue
+date. Ajout d'un lien « Voir le carnet » par ligne.
+
+**F — Carnet de santé lu par le médecin** : nouvelles routes
+`GET /health-records/patients/{patient_id}` (+ `/documents`, `/vitals`,
+`/vaccinations`), gardées par `_authorize_doctor_for_patient` (RDV
+`confirmed`/`completed` requis avec ce patient, 404 sinon — jamais 403, pour
+ne pas confirmer l'existence du patient à un médecin non autorisé). Nouvelle
+page `medecin/patient-carnet.html`, lecture seule, accessible depuis
+`patients-chroniques.html`.
+
+**Correctif de sécurité (trouvé en marge de F)** :
+`POST /health-records/patients/{patient_id}/documents` (dépôt de document par
+un médecin) n'avait **aucune vérification d'autorisation** — n'importe quel
+médecin authentifié pouvait déposer un fichier dans le carnet de n'importe
+quel patient. Gardé maintenant par la même règle que F. La pièce jointe
+messagerie (auto-classée au carnet) n'est pas concernée, elle écrit
+`HealthRecordDocument` inline sans passer par cette fonction.
+
+**E — Évaluations patient** : `evaluations.html` était 100 % codé en dur.
+Nouvelles routes `GET /patients/me/pending-reviews` (consultations terminées
+non notées) et `GET /patients/me/reviews` (avis publiés), jointes au nom/
+spécialité du médecin. **Clarification actée avec l'utilisateur** : une
+mauvaise note (`Review`, 1-5) ne déclenche **jamais** de suspension — seul le
+mécanisme `Complaint` (signalement motivé, déjà existant) compte pour le seuil
+de 5. Étoiles de notation rendues réellement interactives (c'était purement
+décoratif avant). Bouton « Modifier un avis » retiré (pas de route pour ça).
+
+**A — Identité sidebar/dashboard codée en dur** : `auth.js` ne gardait que le
+token/rôle. Ajout de `CarnetAuth.saveIdentity()` (appelé une fois à la
+connexion dans `index.html`, via `GET /patients/me`/`/doctors/me`) + un bloc
+dans `app.js` qui applique automatiquement nom/email/photo partout où le bloc
+sidebar existe (identique sur les ~15 pages, donc un seul changement suffit)
+et sur la salutation des 2 dashboards. **Une session ouverte avant ce
+correctif doit se reconnecter une fois.**
+
+**Fonctionnalité transverse (hors découpage initial, demandée en cours de
+session)** : séparation voir/télécharger pour tout fichier privé.
+`core/storage.get_file_url()` accepte un `download_filename` optionnel qui
+ajoute un `ResponseContentDisposition` présigné (RFC 6266, fallback ASCII +
+variante UTF-8) ; `original_filename_from_key()` récupère le nom d'origine
+pour les objets qui ne le stockent pas séparément (diplôme médecin), en
+s'appuyant sur le format de clé fixe d'`upload_file()` (`uuid4()` = toujours
+36 caractères, vérifié empiriquement). Appliqué à `HealthRecords` (documents
+patient + lecture médecin) et `Admin` (diplôme). **Pas encore appliqué à
+`Prescriptions`** (`GET /prescriptions/{id}/download` ne renvoie encore
+qu'une seule URL) — signalé à l'utilisateur, pas demandé explicitement.
+
+**Tests** : 48 → **81 tests**, tous verts (`uv run python -m pytest -q`).
+Nouveaux fichiers : `tests/test_vitals_and_vaccinations.py`,
+`tests/test_doctor_patient_access.py`, `tests/test_storage.py`. Le faux client
+S3 de `tests/conftest.py` reflète désormais `ResponseContentDisposition` dans
+l'URL renvoyée, pour pouvoir vérifier que voir/télécharger diffèrent
+réellement.
+
+**Process** : après le chantier B (fait via le pipeline complet
+implémenteur + 2 revues par tâche, coûteux en tokens), l'utilisateur a demandé
+de continuer sans ce pipeline pour économiser les tokens — tout le reste de la
+session (D, F, E, A, le correctif de sécurité, voir/télécharger) a été fait en
+implémentation directe dans la session principale, tests à l'appui mais sans
+sous-agents.

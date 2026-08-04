@@ -18,10 +18,10 @@ Run the existing suite once to confirm a clean baseline:
 
 ```bash
 cd Backend-API
-uv run pytest -q
+uv run python -m pytest -q
 ```
 
-Expected: `27 passed`. If this doesn't pass, stop and fix it before starting — nothing in this plan depends on failures that predate it.
+Expected: `37 passed`. If this doesn't pass, stop and fix it before starting — nothing in this plan depends on failures that predate it.
 
 ---
 
@@ -188,7 +188,7 @@ def downgrade() -> None:
 
 ```bash
 cd Backend-API
-uv run alembic upgrade head
+uv run python -m alembic upgrade head
 uv run python -c "
 import asyncio
 from sqlalchemy import text
@@ -308,7 +308,7 @@ async def test_patient_can_upload_a_photo(client, patient):
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_profile_and_photos.py -v
+uv run python -m pytest tests/test_profile_and_photos.py -v
 ```
 
 Expected: FAIL — `weight_kg`/`photo_url` unknown fields (422 or KeyError), and `POST /patients/me/photo` returns 404 (route doesn't exist yet).
@@ -459,7 +459,7 @@ async def get_my_dashboard(
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_profile_and_photos.py -v
+uv run python -m pytest tests/test_profile_and_photos.py -v
 ```
 
 Expected: `3 passed`.
@@ -467,10 +467,10 @@ Expected: `3 passed`.
 - [ ] **Step 7: Run the full suite to check nothing else broke**
 
 ```bash
-uv run pytest -q
+uv run python -m pytest -q
 ```
 
-Expected: `30 passed` (27 existing + 3 new).
+Expected: `40 passed` (37 existing + 3 new).
 
 - [ ] **Step 8: Commit**
 
@@ -520,7 +520,7 @@ async def test_doctor_photo_visible_in_public_search(client, validated_doctor):
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_profile_and_photos.py -v -k doctor
+uv run python -m pytest tests/test_profile_and_photos.py -v -k doctor
 ```
 
 Expected: FAIL — 404 on `POST /doctors/me/photo`, and `photo_url` missing from search/single responses.
@@ -699,11 +699,11 @@ async def get_doctor(doctor_id: int, db: AsyncSession = Depends(get_db)):
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_profile_and_photos.py -v
-uv run pytest -q
+uv run python -m pytest tests/test_profile_and_photos.py -v
+uv run python -m pytest -q
 ```
 
-Expected: all `test_profile_and_photos.py` tests pass (5 total), full suite `32 passed`.
+Expected: all `test_profile_and_photos.py` tests pass (5 total), full suite `42 passed`.
 
 - [ ] **Step 7: Commit**
 
@@ -735,7 +735,7 @@ async def test_health_record_summary_includes_weight(client, patient):
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_prescriptions_and_carnet.py -v -k weight
+uv run python -m pytest tests/test_prescriptions_and_carnet.py -v -k weight
 ```
 
 Expected: FAIL — `KeyError: 'weight_kg'`.
@@ -761,11 +761,11 @@ In `features/HealthRecords/logic.py`, in `get_health_record_summary` (line 69-75
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_prescriptions_and_carnet.py -v
-uv run pytest -q
+uv run python -m pytest tests/test_prescriptions_and_carnet.py -v
+uv run python -m pytest -q
 ```
 
-Expected: full suite `33 passed`.
+Expected: full suite `43 passed`.
 
 - [ ] **Step 5: Commit**
 
@@ -814,7 +814,7 @@ async def test_conversation_out_includes_names_and_photos(client, completed_appo
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_prescriptions_and_carnet.py -v -k conversation_out
+uv run python -m pytest tests/test_prescriptions_and_carnet.py -v -k conversation_out
 ```
 
 Expected: FAIL — `KeyError: 'patient_name'`.
@@ -906,11 +906,11 @@ async def list_my_conversations(db: AsyncSession, user_type: str, user_id: int) 
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_prescriptions_and_carnet.py -v
-uv run pytest -q
+uv run python -m pytest tests/test_prescriptions_and_carnet.py -v
+uv run python -m pytest -q
 ```
 
-Expected: full suite `34 passed`.
+Expected: full suite `44 passed`.
 
 - [ ] **Step 6: Commit**
 
@@ -1811,7 +1811,7 @@ async def test_pending_list_includes_patient_name_and_reason(client, patient, va
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_appointments_flow.py -v -k pending_list
+uv run python -m pytest tests/test_appointments_flow.py -v -k pending_list
 ```
 
 Expected: FAIL — `KeyError: 'patient_name'`.
@@ -1881,11 +1881,11 @@ async def list_pending_appointments(
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_appointments_flow.py -v
-uv run pytest -q
+uv run python -m pytest tests/test_appointments_flow.py -v
+uv run python -m pytest -q
 ```
 
-Expected: full suite `35 passed`.
+Expected: full suite `45 passed`.
 
 - [ ] **Step 7: Commit**
 
@@ -2087,7 +2087,7 @@ async def test_prescription_out_includes_doctor_name_and_treatments(client, comp
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_prescriptions_and_carnet.py -v -k doctor_name_and_treatments
+uv run python -m pytest tests/test_prescriptions_and_carnet.py -v -k doctor_name_and_treatments
 ```
 
 Expected: FAIL — `KeyError: 'doctor_name'`.
@@ -2199,11 +2199,11 @@ async def list_patient_prescriptions(db: AsyncSession, patient_id: int) -> list[
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_prescriptions_and_carnet.py -v
-uv run pytest -q
+uv run python -m pytest tests/test_prescriptions_and_carnet.py -v
+uv run python -m pytest -q
 ```
 
-Expected: full suite `36 passed`.
+Expected: full suite `46 passed`.
 
 - [ ] **Step 6: Commit**
 
@@ -2249,7 +2249,7 @@ async def test_completed_awaiting_prescription_excludes_already_prescribed(clien
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_appointments_flow.py -v -k awaiting_prescription
+uv run python -m pytest tests/test_appointments_flow.py -v -k awaiting_prescription
 ```
 
 Expected: FAIL — 404 (route doesn't exist).
@@ -2326,11 +2326,11 @@ async def list_completed_awaiting_prescription(
 
 ```bash
 cd Backend-API
-uv run pytest tests/test_appointments_flow.py -v
-uv run pytest -q
+uv run python -m pytest tests/test_appointments_flow.py -v
+uv run python -m pytest -q
 ```
 
-Expected: full suite `37 passed`.
+Expected: full suite `47 passed`.
 
 - [ ] **Step 7: Commit**
 
@@ -2902,10 +2902,10 @@ git commit -m "feat: wire doctor messaging page to the API"
 
 ```bash
 cd Backend-API
-uv run pytest -q
+uv run python -m pytest -q
 ```
 
-Expected: `37 passed` (27 original + 10 new across Tasks 4, 5, 6, 7, 14, 17, 18).
+Expected: `47 passed` (37 original + 10 new across Tasks 4, 5, 6, 7, 14, 17, 18).
 
 - [ ] **Update `README.md` / `docs/fonctionnement-application.md`**
 
