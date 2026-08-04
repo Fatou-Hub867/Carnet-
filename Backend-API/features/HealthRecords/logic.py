@@ -13,6 +13,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.storage import get_file_url
+from features.Appointments.models import Appointment, AppointmentStatus
 from features.Auth.models import Patient, PatientStatus
 from features.HealthRecords.models import (
     DocumentAddedBy,
@@ -280,3 +281,61 @@ async def delete_vaccination(
     vaccination = await _get_owned_vaccination(db, patient_id, vaccination_id)
     await db.delete(vaccination)
     await db.commit()
+
+
+async def _authorize_doctor_for_patient(
+    db: AsyncSession, doctor_id: int, patient_id: int
+) -> None:
+    """A doctor may read a patient's carnet once they have a confirmed or
+    completed appointment together (confirmed by brainstorming: the
+    relationship doesn't require the visit to have already happened, just to
+    be an accepted one) — 404 rather than 403 so an unauthorized doctor can't
+    even tell whether the patient_id exists."""
+    has_relationship = await db.scalar(
+        select(func.count())
+        .select_from(Appointment)
+        .where(
+            Appointment.doctor_id == doctor_id,
+            Appointment.patient_id == patient_id,
+            Appointment.status.in_(
+                [AppointmentStatus.CONFIRMED, AppointmentStatus.COMPLETED]
+            ),
+        )
+    )
+    if not has_relationship:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+
+
+async def get_patient_summary_for_doctor(
+    db: AsyncSession, doctor_id: int, patient_id: int
+) -> HealthRecordSummaryOut:
+    await _authorize_doctor_for_patient(db, doctor_id, patient_id)
+    return await get_health_record_summary(db, patient_id)
+
+
+async def list_patient_documents_for_doctor(
+    db: AsyncSession, doctor_id: int, patient_id: int
+) -> list[HealthRecordDocument]:
+    await _authorize_doctor_for_patient(db, doctor_id, patient_id)
+    return await list_documents(db, patient_id)
+
+
+async def get_patient_document_url_for_doctor(
+    db: AsyncSession, doctor_id: int, patient_id: int, document_id: int
+) -> str:
+    await _authorize_doctor_for_patient(db, doctor_id, patient_id)
+    return await get_document_url(db, patient_id, document_id)
+
+
+async def get_patient_vitals_for_doctor(
+    db: AsyncSession, doctor_id: int, patient_id: int
+) -> VitalsSummaryOut:
+    await _authorize_doctor_for_patient(db, doctor_id, patient_id)
+    return await get_vitals_summary(db, patient_id)
+
+
+async def list_patient_vaccinations_for_doctor(
+    db: AsyncSession, doctor_id: int, patient_id: int
+) -> list[Vaccination]:
+    await _authorize_doctor_for_patient(db, doctor_id, patient_id)
+    return await list_vaccinations(db, patient_id)

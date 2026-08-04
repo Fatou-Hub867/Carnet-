@@ -155,3 +155,58 @@ async def delete_my_vaccination(
     db: AsyncSession = Depends(get_db),
 ):
     await logic.delete_vaccination(db, current_patient.id, vaccination_id)
+
+
+@router.get("/patients/{patient_id}", response_model=HealthRecordSummaryOut)
+async def get_patient_health_record(
+    patient_id: int,
+    current_doctor: Doctor = Depends(get_current_doctor),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.get_patient_summary_for_doctor(db, current_doctor.id, patient_id)
+
+
+@router.get(
+    "/patients/{patient_id}/documents", response_model=list[HealthRecordDocumentOut]
+)
+async def list_patient_documents(
+    patient_id: int,
+    current_doctor: Doctor = Depends(get_current_doctor),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.list_patient_documents_for_doctor(
+        db, current_doctor.id, patient_id
+    )
+
+
+@router.get("/patients/{patient_id}/documents/{document_id}/download")
+async def download_patient_document(
+    patient_id: int,
+    document_id: int,
+    current_doctor: Doctor = Depends(get_current_doctor),
+    db: AsyncSession = Depends(get_db),
+):
+    url = await logic.get_patient_document_url_for_doctor(
+        db, current_doctor.id, patient_id, document_id
+    )
+    return {"download_url": url}
+
+
+@router.get("/patients/{patient_id}/vitals", response_model=VitalsSummaryOut)
+async def get_patient_vitals(
+    patient_id: int,
+    current_doctor: Doctor = Depends(get_current_doctor),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.get_patient_vitals_for_doctor(db, current_doctor.id, patient_id)
+
+
+@router.get("/patients/{patient_id}/vaccinations", response_model=list[VaccinationOut])
+async def list_patient_vaccinations(
+    patient_id: int,
+    current_doctor: Doctor = Depends(get_current_doctor),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.list_patient_vaccinations_for_doctor(
+        db, current_doctor.id, patient_id
+    )
