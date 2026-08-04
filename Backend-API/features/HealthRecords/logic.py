@@ -53,6 +53,7 @@ async def upload_document_from_patient(
 async def upload_document_from_doctor(
     db: AsyncSession, patient_id: int, doctor_id: int, file_key: str, filename: str
 ) -> HealthRecordDocument:
+    await _authorize_doctor_for_patient(db, doctor_id, patient_id)
     patient = await db.get(Patient, patient_id)
     if patient is None or patient.status != PatientStatus.ACTIVE:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")

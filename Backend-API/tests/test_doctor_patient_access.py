@@ -1,7 +1,8 @@
 """A doctor may read a patient's carnet (summary, documents, vitals,
 vaccinations) once they have a confirmed or completed appointment together —
 a merely pending appointment, or no relationship at all, must not grant
-access."""
+access. The same rule gates a doctor depositing a document into a patient's
+carnet (POST .../documents), previously ungated."""
 
 from datetime import date
 
@@ -164,6 +165,56 @@ async def test_document_download_also_requires_the_relationship(
 
     resp = await client.get(
         f"/health-records/patients/{patient['id']}/vitals",
+        headers=_auth(other_doctor_token),
+    )
+    assert resp.status_code == 404
+
+
+async def test_doctor_can_upload_a_document_for_a_patient_they_treat(
+    client, completed_appointment
+):
+    patient = completed_appointment["patient"]
+    doctor = completed_appointment["doctor"]
+
+    resp = await client.post(
+        f"/health-records/patients/{patient['id']}/documents",
+        files={"file": ("labs.pdf", b"%PDF-labs", "application/pdf")},
+        headers=_auth(doctor["token"]),
+    )
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["source_type"] == "doctor_upload"
+
+
+async def test_unrelated_doctor_cannot_upload_a_document_for_a_patient(
+    client, admin_token, completed_appointment
+):
+    """Previously ungated: any authenticated doctor could deposit a document
+    into any patient's carnet regardless of ever having treated them."""
+    from tests.conftest import _doctor_payload
+
+    patient = completed_appointment["patient"]
+
+    email = "no-relationship-doctor@example.com"
+    reg = await client.post("/auth/doctors/register", json=_doctor_payload(email))
+    other_doctor_id = reg.json()["id"]
+    login = await client.post(
+        "/auth/doctors/login", json={"email": email, "password": "diagnostics1"}
+    )
+    other_doctor_token = login.json()["access_token"]
+    await client.post(
+        "/auth/doctors/me/diploma",
+        files={"diploma_file": ("diploma.pdf", b"%PDF-fake", "application/pdf")},
+        headers=_auth(other_doctor_token),
+    )
+    await client.post(
+        f"/admin/doctors/{other_doctor_id}/validate",
+        json={"approve": True},
+        headers=_auth(admin_token),
+    )
+
+    resp = await client.post(
+        f"/health-records/patients/{patient['id']}/documents",
+        files={"file": ("labs.pdf", b"%PDF-labs", "application/pdf")},
         headers=_auth(other_doctor_token),
     )
     assert resp.status_code == 404
