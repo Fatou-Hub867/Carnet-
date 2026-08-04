@@ -181,6 +181,17 @@ async def list_complaints(db: AsyncSession) -> list[ComplaintOut]:
     ]
 
 
+async def get_doctor_diploma_url(db: AsyncSession, doctor_id: int) -> str:
+    """A fresh presigned URL, generated on demand rather than embedded in the
+    pending-doctors list — that list is fetched once on page load, and an
+    admin reviewing candidacies later (e.g. after an email notification) would
+    otherwise click a presigned URL that already expired."""
+    doctor = await db.get(Doctor, doctor_id)
+    if doctor is None or not doctor.diploma_file_key:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Diploma not found")
+    return get_file_url(doctor.diploma_file_key)
+
+
 async def _get_pending_doctor(db: AsyncSession, doctor_id: int) -> Doctor:
     doctor = await db.get(Doctor, doctor_id)
     if doctor is None:

@@ -34,6 +34,15 @@ async def list_pending_doctors(
     return await logic.list_pending_doctors(db)
 
 
+@router.get("/doctors/{doctor_id}/diploma/download")
+async def get_doctor_diploma_download_url(
+    doctor_id: int,
+    _admin: Admin = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    return {"download_url": await logic.get_doctor_diploma_url(db, doctor_id)}
+
+
 @router.get("/complaints", response_model=list[ComplaintOut])
 async def list_complaints(
     _admin: Admin = Depends(get_current_admin),

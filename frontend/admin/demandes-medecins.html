@@ -120,14 +120,20 @@
         row.appendChild(info);
 
         if (doctor.diploma_url) {
-          var diplomaLink = document.createElement('a');
-          diplomaLink.href = doctor.diploma_url;
-          diplomaLink.target = '_blank';
-          diplomaLink.rel = 'noopener';
-          diplomaLink.className = 'btn btn--soft btn--sm';
-          diplomaLink.textContent = 'Voir le diplôme';
-          diplomaLink.style.marginRight = '8px';
-          row.appendChild(diplomaLink);
+          var diplomaBtn = document.createElement('button');
+          diplomaBtn.type = 'button';
+          diplomaBtn.className = 'btn btn--soft btn--sm';
+          diplomaBtn.textContent = 'Voir les justificatifs';
+          diplomaBtn.style.marginRight = '8px';
+          diplomaBtn.addEventListener('click', async function () {
+            try {
+              var result = await apiGet('/admin/doctors/' + doctor.id + '/diploma/download');
+              window.open(result.download_url, '_blank', 'noopener,noreferrer');
+            } catch (err) {
+              window.alert('Impossible d\'ouvrir le justificatif, réessayez.');
+            }
+          });
+          row.appendChild(diplomaBtn);
         }
 
         var validateBtn = document.createElement('button');

@@ -207,6 +207,54 @@ async def test_validate_doctor_sends_email_with_login_link(
     assert "index.html" in captured["html"]
 
 
+async def test_admin_can_fetch_a_fresh_diploma_download_url(client, admin_token):
+    from tests.conftest import _auth, _doctor_payload
+
+    email = "diploma-download-doctor@example.com"
+    reg = await client.post("/auth/doctors/register", json=_doctor_payload(email))
+    assert reg.status_code == 201, reg.text
+    doctor_id = reg.json()["id"]
+
+    login = await client.post(
+        "/auth/doctors/login", json={"email": email, "password": "diagnostics1"}
+    )
+    token = login.json()["access_token"]
+
+    diploma = await client.post(
+        "/auth/doctors/me/diploma",
+        files={"diploma_file": ("diploma.pdf", b"%PDF-fake", "application/pdf")},
+        headers=_auth(token),
+    )
+    assert diploma.status_code == 200, diploma.text
+
+    # Two separate calls both succeed and return a usable URL — proving the
+    # link is generated fresh on demand rather than reused/stale.
+    first = await client.get(
+        f"/admin/doctors/{doctor_id}/diploma/download", headers=_auth(admin_token)
+    )
+    assert first.status_code == 200, first.text
+    assert first.json()["download_url"].startswith("https://fake-s3.local/")
+
+    second = await client.get(
+        f"/admin/doctors/{doctor_id}/diploma/download", headers=_auth(admin_token)
+    )
+    assert second.status_code == 200, second.text
+
+
+async def test_diploma_download_404s_without_a_diploma(client, admin_token):
+    from tests.conftest import _auth, _doctor_payload
+
+    email = "no-diploma-doctor@example.com"
+    reg = await client.post("/auth/doctors/register", json=_doctor_payload(email))
+    assert reg.status_code == 201, reg.text
+    doctor_id = reg.json()["id"]
+
+    resp = await client.get(
+        f"/admin/doctors/{doctor_id}/diploma/download", headers=_auth(admin_token)
+    )
+    assert resp.status_code == 404
+
+
 async def test_admin_lists_complaints_with_names_and_doctor_status(
     client, admin_token, patient, validated_doctor
 ):
