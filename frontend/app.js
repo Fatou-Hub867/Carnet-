@@ -161,6 +161,41 @@ function renumberMeds() {
   });
 }
 
+// --- Identité sidebar (nom/email) + salutation tableau de bord ---
+// Lit l'identité sauvegardée à la connexion (voir auth.js/index.html) et
+// remplace le nom/email codés en dur du mock dans le pied de la sidebar,
+// présent à l'identique sur toutes les pages authentifiées patient/médecin.
+// N'agit pas sur l'espace admin (aucune identité n'y est sauvegardée).
+(function () {
+  if (!window.CarnetAuth || typeof CarnetAuth.getIdentity !== 'function') return;
+  var identity = CarnetAuth.getIdentity();
+  if (!identity) return;
+
+  var fullName = (identity.firstName + ' ' + identity.lastName).trim();
+  var initials = ((identity.firstName || '').charAt(0) + (identity.lastName || '').charAt(0)).toUpperCase();
+
+  var nameEl = document.querySelector('.sidebar__foot .name');
+  var mailEl = document.querySelector('.sidebar__foot .mail');
+  var avatarEl = document.querySelector('.sidebar__foot .avatar');
+  if (nameEl) nameEl.textContent = fullName;
+  if (mailEl) mailEl.textContent = identity.email;
+  if (avatarEl) {
+    if (identity.photoUrl) {
+      renderAvatar(avatarEl, identity.photoUrl);
+    } else {
+      avatarEl.style.backgroundImage = '';
+      avatarEl.textContent = initials;
+    }
+  }
+
+  document.querySelectorAll('[data-greeting-name]').forEach(function (el) {
+    el.textContent = identity.firstName;
+  });
+  document.querySelectorAll('[data-greeting-fullname]').forEach(function (el) {
+    el.textContent = fullName;
+  });
+})();
+
 // --- Avatar : remplace le fond initiales par la vraie photo si elle existe ---
 // `el` est le div .avatar existant (initiales en texte + fond coloré inline).
 // Ne touche à rien si photoUrl est absent/null : les initiales restent affichées.

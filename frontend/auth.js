@@ -7,6 +7,7 @@
 var CarnetAuth = (function () {
   var TOKEN_KEY = 'cp_token';
   var ROLE_KEY = 'cp_role';
+  var IDENTITY_KEY = 'cp_identity';
 
   function saveSession(token, role) {
     localStorage.setItem(TOKEN_KEY, token);
@@ -21,9 +22,28 @@ var CarnetAuth = (function () {
     return localStorage.getItem(ROLE_KEY);
   }
 
+  // identity: { firstName, lastName, email, photoUrl }. Saved once at login
+  // (see index.html) so the sidebar footer and dashboard greeting can show
+  // the real logged-in user instead of the hardcoded mockup name — see
+  // app.js's sidebar-identity block for where this is read back.
+  function saveIdentity(identity) {
+    localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity));
+  }
+
+  function getIdentity() {
+    var raw = localStorage.getItem(IDENTITY_KEY);
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+  }
+
   function clearSession() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(ROLE_KEY);
+    localStorage.removeItem(IDENTITY_KEY);
   }
 
   function logout() {
@@ -43,6 +63,8 @@ var CarnetAuth = (function () {
     saveSession: saveSession,
     getToken: getToken,
     getRole: getRole,
+    saveIdentity: saveIdentity,
+    getIdentity: getIdentity,
     clearSession: clearSession,
     logout: logout,
     requireAuth: requireAuth,

@@ -134,6 +134,17 @@
         try {
           var data = await apiPost(path, { email: email, password: password });
           CarnetAuth.saveSession(data.access_token, selectedRole);
+          try {
+            var profile = await apiGet(selectedRole === 'patient' ? '/patients/me' : '/doctors/me');
+            CarnetAuth.saveIdentity({
+              firstName: profile.first_name,
+              lastName: profile.last_name,
+              email: profile.email,
+              photoUrl: profile.photo_url || null,
+            });
+          } catch (identityErr) {
+            // Non bloquant : la connexion reste valide même si ce second appel échoue.
+          }
           window.location.href = selectedRole === 'patient' ? 'patient/dashboard.html' : 'medecin/dashboard.html';
         } catch (err) {
           errorEl.textContent = err.status === 401
