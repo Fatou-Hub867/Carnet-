@@ -54,6 +54,64 @@ async def test_path_body_doctor_mismatch_rejected(client, completed_appointment)
     assert resp.status_code == 400
 
 
+async def test_pending_review_moves_to_my_reviews_after_submission(
+    client, completed_appointment
+):
+    patient = completed_appointment["patient"]
+    doctor = completed_appointment["doctor"]
+    patient_headers = _auth(patient["token"])
+
+    pending_before = await client.get(
+        "/patients/me/pending-reviews", headers=patient_headers
+    )
+    assert pending_before.status_code == 200
+    assert len(pending_before.json()) == 1
+    pending_item = pending_before.json()[0]
+    assert pending_item["appointment_id"] == completed_appointment["appointment_id"]
+    assert pending_item["doctor_name"] == "Gregory House"
+    assert pending_item["specialty"] == "Cardiology"
+
+    reviews_before = await client.get("/patients/me/reviews", headers=patient_headers)
+    assert reviews_before.json() == []
+
+    submit = await client.post(
+        f"/doctors/{doctor['id']}/reviews",
+        json={
+            "doctor_id": doctor["id"],
+            "appointment_id": completed_appointment["appointment_id"],
+            "rating": 5,
+            "comment": "Très bien",
+        },
+        headers=patient_headers,
+    )
+    assert submit.status_code == 201, submit.text
+
+    pending_after = await client.get(
+        "/patients/me/pending-reviews", headers=patient_headers
+    )
+    assert pending_after.json() == []
+
+    reviews_after = await client.get("/patients/me/reviews", headers=patient_headers)
+    assert reviews_after.status_code == 200
+    assert len(reviews_after.json()) == 1
+    published = reviews_after.json()[0]
+    assert published["doctor_name"] == "Gregory House"
+    assert published["specialty"] == "Cardiology"
+    assert published["rating"] == 5
+    assert published["comment"] == "Très bien"
+
+
+async def test_pending_and_my_reviews_are_scoped_per_patient(client, patient):
+    """A patient with no consultations at all sees empty lists, not an error."""
+    headers = _auth(patient["token"])
+    pending = await client.get("/patients/me/pending-reviews", headers=headers)
+    assert pending.status_code == 200
+    assert pending.json() == []
+    reviews = await client.get("/patients/me/reviews", headers=headers)
+    assert reviews.status_code == 200
+    assert reviews.json() == []
+
+
 async def test_fifth_complaint_suspends_doctor(client, patient, validated_doctor):
     doctor_id = validated_doctor["id"]
     payload = {"doctor_id": doctor_id, "reason": "late", "description": "always late"}

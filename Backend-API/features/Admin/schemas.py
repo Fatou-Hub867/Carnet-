@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -52,3 +52,26 @@ class ComplaintOut(BaseModel):
     description: str
     status: str
     created_at: datetime
+
+
+class MyReviewOut(BaseModel):
+    """A review the current patient has already published."""
+
+    id: int
+    doctor_id: int
+    doctor_name: str
+    specialty: str
+    rating: int
+    comment: str | None
+    created_at: datetime
+
+
+class PendingReviewOut(BaseModel):
+    """A completed consultation the current patient hasn't reviewed yet."""
+
+    appointment_id: int
+    doctor_id: int
+    doctor_name: str
+    specialty: str
+    consultation_date: date
+    reason: str | None

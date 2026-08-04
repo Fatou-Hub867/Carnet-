@@ -17,7 +17,9 @@ from features.Admin.schemas import (
     ComplaintCreateRequest,
     ComplaintOut,
     DoctorValidationDecision,
+    MyReviewOut,
     PendingDoctorOut,
+    PendingReviewOut,
     ReviewCreateRequest,
 )
 from features.Auth.models import Admin, Patient
@@ -78,6 +80,24 @@ async def delete_account(
     db: AsyncSession = Depends(get_db),
 ):
     await logic.delete_account(db, user_type, user_id)
+
+
+@public_router.get("/patients/me/reviews", response_model=list[MyReviewOut])
+async def list_my_reviews(
+    current_patient: Patient = Depends(get_current_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.list_my_reviews(db, current_patient.id)
+
+
+@public_router.get(
+    "/patients/me/pending-reviews", response_model=list[PendingReviewOut]
+)
+async def list_my_pending_reviews(
+    current_patient: Patient = Depends(get_current_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.list_pending_reviews(db, current_patient.id)
 
 
 @public_router.post("/doctors/{doctor_id}/reviews", status_code=status.HTTP_201_CREATED)

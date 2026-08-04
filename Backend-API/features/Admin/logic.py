@@ -23,10 +23,12 @@ from features.Admin.models import Complaint, ComplaintStatus, Review
 from features.Admin.schemas import (
     ComplaintCreateRequest,
     ComplaintOut,
+    MyReviewOut,
     PendingDoctorOut,
+    PendingReviewOut,
     ReviewCreateRequest,
 )
-from features.Appointments.models import Appointment, AppointmentStatus
+from features.Appointments.models import Appointment, AppointmentStatus, Availability
 from features.Auth.models import Doctor, DoctorStatus, Patient, PatientStatus
 from features.Notifications import logic as notifications
 
@@ -69,6 +71,66 @@ async def submit_review(
         )
     )
     await db.commit()
+
+
+async def list_my_reviews(db: AsyncSession, patient_id: int) -> list[MyReviewOut]:
+    rows = (
+        await db.execute(
+            select(Review, Doctor)
+            .join(Doctor, Review.doctor_id == Doctor.id)
+            .where(Review.patient_id == patient_id)
+            .order_by(Review.created_at.desc())
+        )
+    ).all()
+    return [
+        MyReviewOut(
+            id=review.id,
+            doctor_id=review.doctor_id,
+            doctor_name=f"{doctor.first_name} {doctor.last_name}",
+            specialty=doctor.specialty,
+            rating=review.rating,
+            comment=review.comment,
+            created_at=review.created_at,
+        )
+        for review, doctor in rows
+    ]
+
+
+async def list_pending_reviews(
+    db: AsyncSession, patient_id: int
+) -> list[PendingReviewOut]:
+    """Completed consultations this patient hasn't reviewed yet — the "à
+    évaluer" list. A patient can only ever review a doctor they were actually
+    consulted by (submit_review already enforces COMPLETED + ownership); this
+    just surfaces the candidates instead of the patient guessing appointment
+    ids."""
+    already_reviewed = select(Review.appointment_id).where(
+        Review.patient_id == patient_id
+    )
+    rows = (
+        await db.execute(
+            select(Appointment, Doctor, Availability)
+            .join(Doctor, Appointment.doctor_id == Doctor.id)
+            .join(Availability, Appointment.availability_id == Availability.id)
+            .where(
+                Appointment.patient_id == patient_id,
+                Appointment.status == AppointmentStatus.COMPLETED,
+                Appointment.id.not_in(already_reviewed),
+            )
+            .order_by(Availability.date.desc())
+        )
+    ).all()
+    return [
+        PendingReviewOut(
+            appointment_id=appointment.id,
+            doctor_id=appointment.doctor_id,
+            doctor_name=f"{doctor.first_name} {doctor.last_name}",
+            specialty=doctor.specialty,
+            consultation_date=availability.date,
+            reason=appointment.reason,
+        )
+        for appointment, doctor, availability in rows
+    ]
 
 
 async def submit_complaint(
