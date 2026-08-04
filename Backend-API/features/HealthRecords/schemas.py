@@ -17,6 +17,15 @@ class HealthRecordDocumentOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class DocumentUrlsOut(BaseModel):
+    """Two presigned URLs for the same stored object: `view_url` renders
+    inline for browser-supported types (PDF, images), `download_url` forces
+    a save-to-disk with the original filename via Content-Disposition."""
+
+    view_url: str
+    download_url: str
+
+
 class HealthRecordSummaryOut(BaseModel):
     first_name: str
     last_name: str

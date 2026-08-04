@@ -26,6 +26,7 @@ os.environ["EMAIL_FROM_ADDRESS"] = "noreply@example.com"
 os.environ["FRONTEND_BASE_URL"] = "http://localhost:3000"
 
 from datetime import date, timedelta  # noqa: E402
+from urllib.parse import quote  # noqa: E402
 
 import pytest  # noqa: E402
 import pytest_asyncio  # noqa: E402
@@ -50,7 +51,11 @@ class _FakeS3Client:
         return {}
 
     def generate_presigned_url(self, operation, Params, ExpiresIn):
-        return f"https://fake-s3.local/{Params['Key']}?expires={ExpiresIn}"
+        url = f"https://fake-s3.local/{Params['Key']}?expires={ExpiresIn}"
+        disposition = Params.get("ResponseContentDisposition")
+        if disposition:
+            url += "&response-content-disposition=" + quote(disposition, safe="")
+        return url
 
     def delete_object(self, **kwargs):
         return {}

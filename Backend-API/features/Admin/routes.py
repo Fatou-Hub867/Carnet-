@@ -23,6 +23,7 @@ from features.Admin.schemas import (
     ReviewCreateRequest,
 )
 from features.Auth.models import Admin, Patient
+from features.HealthRecords.schemas import DocumentUrlsOut
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 public_router = APIRouter(tags=["reviews-complaints"])
@@ -36,13 +37,13 @@ async def list_pending_doctors(
     return await logic.list_pending_doctors(db)
 
 
-@router.get("/doctors/{doctor_id}/diploma/download")
+@router.get("/doctors/{doctor_id}/diploma/download", response_model=DocumentUrlsOut)
 async def get_doctor_diploma_download_url(
     doctor_id: int,
     _admin: Admin = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    return {"download_url": await logic.get_doctor_diploma_url(db, doctor_id)}
+    return await logic.get_doctor_diploma_url(db, doctor_id)
 
 
 @router.get("/complaints", response_model=list[ComplaintOut])

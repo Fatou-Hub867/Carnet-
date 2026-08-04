@@ -18,7 +18,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
-from core.storage import get_file_url
+from core.storage import get_file_url, original_filename_from_key
 from features.Admin.models import Complaint, ComplaintStatus, Review
 from features.Admin.schemas import (
     ComplaintCreateRequest,
@@ -30,6 +30,7 @@ from features.Admin.schemas import (
 )
 from features.Appointments.models import Appointment, AppointmentStatus, Availability
 from features.Auth.models import Doctor, DoctorStatus, Patient, PatientStatus
+from features.HealthRecords.schemas import DocumentUrlsOut
 from features.Notifications import logic as notifications
 
 COMPLAINT_THRESHOLD_FOR_SUSPENSION = 5
@@ -243,15 +244,22 @@ async def list_complaints(db: AsyncSession) -> list[ComplaintOut]:
     ]
 
 
-async def get_doctor_diploma_url(db: AsyncSession, doctor_id: int) -> str:
-    """A fresh presigned URL, generated on demand rather than embedded in the
+async def get_doctor_diploma_url(db: AsyncSession, doctor_id: int) -> DocumentUrlsOut:
+    """Fresh presigned URLs, generated on demand rather than embedded in the
     pending-doctors list — that list is fetched once on page load, and an
     admin reviewing candidacies later (e.g. after an email notification) would
-    otherwise click a presigned URL that already expired."""
+    otherwise click a presigned URL that already expired. No original filename
+    is stored for the diploma, so it's recovered from the storage key."""
     doctor = await db.get(Doctor, doctor_id)
     if doctor is None or not doctor.diploma_file_key:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Diploma not found")
-    return get_file_url(doctor.diploma_file_key)
+    return DocumentUrlsOut(
+        view_url=get_file_url(doctor.diploma_file_key),
+        download_url=get_file_url(
+            doctor.diploma_file_key,
+            download_filename=original_filename_from_key(doctor.diploma_file_key),
+        ),
+    )
 
 
 async def _get_pending_doctor(db: AsyncSession, doctor_id: int) -> Doctor:

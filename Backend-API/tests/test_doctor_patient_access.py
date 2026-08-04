@@ -118,7 +118,14 @@ async def test_doctor_reads_documents_vitals_and_vaccinations(
         headers=doctor_headers,
     )
     assert download.status_code == 200
-    assert download.json()["download_url"].startswith("https://fake-s3.local/")
+    body = download.json()
+    assert body["view_url"].startswith("https://fake-s3.local/")
+    assert body["download_url"].startswith("https://fake-s3.local/")
+    # The download variant carries a forced-attachment disposition with the
+    # original filename; the view variant renders inline (no override).
+    assert "response-content-disposition" not in body["view_url"]
+    assert "attachment" in body["download_url"]
+    assert "scan.pdf" in body["download_url"]
 
     vitals = await client.get(
         f"/health-records/patients/{patient['id']}/vitals", headers=doctor_headers

@@ -120,20 +120,33 @@
         row.appendChild(info);
 
         if (doctor.diploma_url) {
-          var diplomaBtn = document.createElement('button');
-          diplomaBtn.type = 'button';
-          diplomaBtn.className = 'btn btn--soft btn--sm';
-          diplomaBtn.textContent = 'Voir les justificatifs';
-          diplomaBtn.style.marginRight = '8px';
-          diplomaBtn.addEventListener('click', async function () {
-            try {
-              var result = await apiGet('/admin/doctors/' + doctor.id + '/diploma/download');
-              window.open(result.download_url, '_blank', 'noopener,noreferrer');
-            } catch (err) {
-              window.alert('Impossible d\'ouvrir le justificatif, réessayez.');
-            }
-          });
-          row.appendChild(diplomaBtn);
+          var diplomaViewBtn = document.createElement('button');
+          diplomaViewBtn.type = 'button';
+          diplomaViewBtn.className = 'btn btn--soft btn--sm';
+          diplomaViewBtn.textContent = 'Voir les justificatifs';
+          diplomaViewBtn.style.marginRight = '8px';
+
+          var diplomaDownloadBtn = document.createElement('button');
+          diplomaDownloadBtn.type = 'button';
+          diplomaDownloadBtn.className = 'btn btn--soft btn--sm';
+          diplomaDownloadBtn.textContent = 'Télécharger';
+          diplomaDownloadBtn.style.marginRight = '8px';
+
+          function openDiploma(useDownloadUrl) {
+            return async function () {
+              try {
+                var result = await apiGet('/admin/doctors/' + doctor.id + '/diploma/download');
+                window.open(useDownloadUrl ? result.download_url : result.view_url, '_blank', 'noopener,noreferrer');
+              } catch (err) {
+                window.alert('Impossible d\'ouvrir le justificatif, réessayez.');
+              }
+            };
+          }
+          diplomaViewBtn.addEventListener('click', openDiploma(false));
+          diplomaDownloadBtn.addEventListener('click', openDiploma(true));
+
+          row.appendChild(diplomaViewBtn);
+          row.appendChild(diplomaDownloadBtn);
         }
 
         var validateBtn = document.createElement('button');

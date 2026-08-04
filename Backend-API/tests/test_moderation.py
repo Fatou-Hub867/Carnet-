@@ -291,7 +291,14 @@ async def test_admin_can_fetch_a_fresh_diploma_download_url(client, admin_token)
         f"/admin/doctors/{doctor_id}/diploma/download", headers=_auth(admin_token)
     )
     assert first.status_code == 200, first.text
-    assert first.json()["download_url"].startswith("https://fake-s3.local/")
+    body = first.json()
+    assert body["view_url"].startswith("https://fake-s3.local/")
+    assert body["download_url"].startswith("https://fake-s3.local/")
+    assert "response-content-disposition" not in body["view_url"]
+    assert "attachment" in body["download_url"]
+    # No original filename is stored for the diploma — it's recovered from
+    # the storage key (uuid4()-prefixed), so "diploma.pdf" must round-trip.
+    assert "diploma.pdf" in body["download_url"]
 
     second = await client.get(
         f"/admin/doctors/{doctor_id}/diploma/download", headers=_auth(admin_token)

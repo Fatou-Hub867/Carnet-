@@ -23,6 +23,7 @@ from features.HealthRecords.models import (
     VitalSignBilan,
 )
 from features.HealthRecords.schemas import (
+    DocumentUrlsOut,
     HealthRecordSummaryOut,
     NumericVitalValueOut,
     TensionValueOut,
@@ -105,11 +106,18 @@ async def list_documents(
     )
 
 
-async def get_document_url(db: AsyncSession, patient_id: int, document_id: int) -> str:
+async def get_document_url(
+    db: AsyncSession, patient_id: int, document_id: int
+) -> DocumentUrlsOut:
     document = await db.get(HealthRecordDocument, document_id)
     if document is None or document.patient_id != patient_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Document not found")
-    return get_file_url(document.file_key)
+    return DocumentUrlsOut(
+        view_url=get_file_url(document.file_key),
+        download_url=get_file_url(
+            document.file_key, download_filename=document.original_filename
+        ),
+    )
 
 
 async def _latest_bilan_with(
@@ -323,7 +331,7 @@ async def list_patient_documents_for_doctor(
 
 async def get_patient_document_url_for_doctor(
     db: AsyncSession, doctor_id: int, patient_id: int, document_id: int
-) -> str:
+) -> DocumentUrlsOut:
     await _authorize_doctor_for_patient(db, doctor_id, patient_id)
     return await get_document_url(db, patient_id, document_id)
 

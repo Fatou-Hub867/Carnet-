@@ -7,6 +7,7 @@ from core.storage import upload_file
 from features.Auth.models import Doctor, Patient
 from features.HealthRecords import logic
 from features.HealthRecords.schemas import (
+    DocumentUrlsOut,
     HealthRecordDocumentOut,
     HealthRecordSummaryOut,
     VaccinationCreateRequest,
@@ -52,14 +53,13 @@ async def upload_document(
     )
 
 
-@router.get("/me/documents/{document_id}/download")
+@router.get("/me/documents/{document_id}/download", response_model=DocumentUrlsOut)
 async def download_document(
     document_id: int,
     current_patient: Patient = Depends(get_current_patient),
     db: AsyncSession = Depends(get_db),
 ):
-    url = await logic.get_document_url(db, current_patient.id, document_id)
-    return {"download_url": url}
+    return await logic.get_document_url(db, current_patient.id, document_id)
 
 
 @router.post(
@@ -179,17 +179,19 @@ async def list_patient_documents(
     )
 
 
-@router.get("/patients/{patient_id}/documents/{document_id}/download")
+@router.get(
+    "/patients/{patient_id}/documents/{document_id}/download",
+    response_model=DocumentUrlsOut,
+)
 async def download_patient_document(
     patient_id: int,
     document_id: int,
     current_doctor: Doctor = Depends(get_current_doctor),
     db: AsyncSession = Depends(get_db),
 ):
-    url = await logic.get_patient_document_url_for_doctor(
+    return await logic.get_patient_document_url_for_doctor(
         db, current_doctor.id, patient_id, document_id
     )
-    return {"download_url": url}
 
 
 @router.get("/patients/{patient_id}/vitals", response_model=VitalsSummaryOut)

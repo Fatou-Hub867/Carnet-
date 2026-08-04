@@ -189,6 +189,30 @@ async def test_messages_marked_read_on_fetch(client, completed_appointment):
     assert again.json()[0]["read_at"] is not None
 
 
+async def test_patient_document_download_offers_view_and_download_urls(client, patient):
+    upload = await client.post(
+        "/health-records/me/documents",
+        files={"file": ("radio thorax.pdf", b"%PDF-radio", "application/pdf")},
+        headers=_auth(patient["token"]),
+    )
+    assert upload.status_code == 201, upload.text
+    document_id = upload.json()["id"]
+
+    resp = await client.get(
+        f"/health-records/me/documents/{document_id}/download",
+        headers=_auth(patient["token"]),
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["view_url"].startswith("https://fake-s3.local/")
+    assert body["download_url"].startswith("https://fake-s3.local/")
+    assert "response-content-disposition" not in body["view_url"]
+    assert "attachment" in body["download_url"]
+    # The original filename (with its space and accent-free content here)
+    # round-trips into the forced-download URL.
+    assert "radio" in body["download_url"]
+
+
 async def test_health_record_summary_includes_weight(client, patient):
     await client.patch(
         "/patients/me", json={"weight_kg": 72.0}, headers=_auth(patient["token"])

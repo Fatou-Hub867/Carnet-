@@ -1,4 +1,5 @@
 import uuid
+from urllib.parse import quote
 
 import boto3
 from botocore.exceptions import ClientError
@@ -27,12 +28,37 @@ def upload_file(file_bytes: bytes, filename: str, content_type: str) -> str:
     return key
 
 
-def get_file_url(key: str, expires_in: int = 3600) -> str:
-    return _s3_client.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": settings.s3_bucket_name, "Key": key},
-        ExpiresIn=expires_in,
+def _content_disposition(filename: str) -> str:
+    """RFC 6266: an ASCII fallback for old clients plus a UTF-8 filename* for
+    everyone else, so accented filenames (fréquent in this app) still work."""
+    filename = filename.replace("\r", "").replace("\n", "").replace('"', "")
+    ascii_fallback = filename.encode("ascii", "ignore").decode("ascii") or "document"
+    return (
+        f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{quote(filename)}"
     )
+
+
+def get_file_url(
+    key: str, expires_in: int = 3600, download_filename: str | None = None
+) -> str:
+    """A plain URL renders inline when the browser supports the content type
+    (PDF, images). Passing `download_filename` adds a presigned
+    Content-Disposition override so the same stored object can also be
+    fetched as a forced download with a human-readable name — no need to
+    store the file twice."""
+    params = {"Bucket": settings.s3_bucket_name, "Key": key}
+    if download_filename:
+        params["ResponseContentDisposition"] = _content_disposition(download_filename)
+    return _s3_client.generate_presigned_url(
+        "get_object", Params=params, ExpiresIn=expires_in
+    )
+
+
+def original_filename_from_key(key: str) -> str:
+    """upload_file() always prefixes with a 36-char uuid4() + '-' (fixed
+    width, RFC 4122), so the original filename is recoverable by position
+    even if the filename itself contains hyphens — unlike a naive split()."""
+    return key[37:]
 
 
 def delete_file(key: str) -> None:
