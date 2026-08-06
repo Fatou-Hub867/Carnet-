@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: medical_practice
+      POSTGRES_PASSWORD: medical_practice
+      POSTGRES_DB: medical_practice
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medical_practice"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "6002:9000"
+      - "6001:9001"
+    volumes:
+      - minio_data:/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Backend-API/Dockerfile
+    working_dir: /app/Backend-API
+    command: sh -c "alembic upgrade head && uvicorn app:app --host 0.0.0.0 --port 8010 --reload"
+    volumes:
+      - .:/app
+    ports:
+      - "8010:8010"
+    env_file:
+      - Backend-API/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://medical_practice:medical_practice@db:5432/medical_practice
+      S3_ENDPOINT_URL: http://minio:9000
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:
+  minio_data:
