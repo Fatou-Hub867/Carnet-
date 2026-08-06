@@ -42,6 +42,25 @@ Restent encore à brancher : le tableau de bord patient/médecin (traitements en
 
 ## Démarrage en local
 
+### Option A — tout en Docker (recommandé)
+
+Prérequis : Docker uniquement.
+
+```bash
+cp Backend-API/.env.example Backend-API/.env
+```
+Renseigner dans `Backend-API/.env` : les identifiants de connexion à la base (`DATABASE_URL`), les clés S3/MinIO, `JWT_SECRET_KEY`, et `RESEND_API_KEY` (une clé de test suffit pour démarrer — l'envoi d'email échouera silencieusement en tâche de fond sans clé valide, ça ne bloque pas le reste).
+
+```bash
+docker compose up -d --build
+```
+Démarre l'API (avec hot-reload et migrations automatiques), PostgreSQL sur `5432` et MinIO sur `6002` (API) / `6001` (console) — un seul `docker compose up` pour tout le stack, depuis la racine du repo.
+
+- **Frontend** : http://localhost:8010/index.html (page de connexion)
+- **API — documentation interactive (Swagger)** : http://localhost:8010/docs
+
+### Option B — en local (sans Docker pour l'API)
+
 ### Prérequis
 - [uv](https://docs.astral.sh/uv/) (gestion Python/dépendances)
 - Docker (pour PostgreSQL + MinIO)
@@ -54,11 +73,11 @@ cp .env.example .env
 ```
 Renseigner dans `.env` : les identifiants de connexion à la base (`DATABASE_URL`), les clés S3/MinIO, `JWT_SECRET_KEY`, et `RESEND_API_KEY` (une clé de test suffit pour démarrer — l'envoi d'email échouera silencieusement en tâche de fond sans clé valide, ça ne bloque pas le reste).
 
-### 2. Infrastructure (PostgreSQL + MinIO)
+### 2. Infrastructure (PostgreSQL + MinIO uniquement)
 ```bash
-docker compose up -d
+docker compose up -d db minio
 ```
-Démarre PostgreSQL sur `5432` et MinIO sur `6000` (API) / `6001` (console).
+Depuis la racine du repo. Démarre PostgreSQL sur `5432` et MinIO sur `6002` (API) / `6001` (console).
 
 ### 3. Dépendances
 ```bash

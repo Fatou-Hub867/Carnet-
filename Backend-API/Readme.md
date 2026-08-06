@@ -54,7 +54,7 @@ Backend-API/
 │   └── Notifications/         # Templates + envoi des emails
 ├── alembic/                   # Migrations (env.py, versions/)
 ├── tests/                     # Suite end-to-end (conftest + tests par domaine)
-├── docker-compose.yml         # PostgreSQL (5432) + MinIO (6000 API / 6001 console)
+├── Dockerfile                 # Image de l'API (voir docker-compose.yml à la racine du repo)
 ├── requirements.text          # Dépendances runtime
 ├── requirements-dev.txt       # Runtime + outils de test
 └── .env                       # Configuration locale (non versionné)
@@ -83,20 +83,42 @@ Backend-API/
 ## Commandes de base
 
 ### Prérequis
-- Python 3.12+ (validé sur 3.14), [uv](https://docs.astral.sh/uv/), Docker.
+- Docker (recommandé — fait tourner tout le stack), ou Python 3.12+ (validé sur 3.14) + [uv](https://docs.astral.sh/uv/) pour un run local.
+
+### Option A — tout en Docker (recommandé)
+
+Depuis la **racine du repo** (`docker-compose.yml` n'est plus dans `Backend-API/`) :
+```bash
+cp Backend-API/.env.example Backend-API/.env   # puis renseigner les valeurs (DB, S3, RESEND_API_KEY…)
+docker compose up -d --build                   # API + PostgreSQL:5432 + MinIO API:6002/console:6001
+```
+- Frontend : **http://localhost:8010/index.html**
+- Swagger : **http://localhost:8010/docs**
+- Health check : http://localhost:8010/health
+- Migrations Alembic appliquées automatiquement au démarrage du conteneur `api`.
+- Hot-reload : toute modification du code dans `Backend-API/` ou `frontend/` relance l'API.
+- Tests / lint dans le conteneur :
+  ```bash
+  docker compose exec api python -m pytest -q
+  docker compose exec api ruff check .
+  ```
+
+### Option B — en local (sans Docker pour l'API)
 
 ### 1. Configuration
 ```bash
+cd Backend-API
 cp .env.example .env          # puis renseigner les valeurs (DB, S3, RESEND_API_KEY…)
 ```
 
-### 2. Infrastructure (PostgreSQL + MinIO)
+### 2. Infrastructure (PostgreSQL + MinIO uniquement)
 ```bash
-docker compose up -d          # PostgreSQL:5432, MinIO API:6000, console:6001
+docker compose up -d db minio   # depuis la racine du repo — PostgreSQL:5432, MinIO API:6002, console:6001
 ```
 
 ### 3. Dépendances
 ```bash
+cd Backend-API
 uv venv
 uv pip install -r requirements-dev.txt   # runtime + outils de test
 # (prod uniquement : uv pip install -r requirements.text)

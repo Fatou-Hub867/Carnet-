@@ -16,13 +16,33 @@ CarnetPlus/
 
 ## Commands
 
-All backend commands run from `Backend-API/` (there is no root-level build/test tooling — this is a two-part repo with a Python backend and a static frontend served by it).
+### All-in-Docker (recommended)
+
+A single `docker compose up` at the repo root runs everything — API, frontend, Postgres, MinIO — with hot-reload and automatic Alembic migrations. Requires `Backend-API/.env` to exist first (see `Backend-API/.env.example`).
 
 ```bash
-cd Backend-API
+docker compose up -d --build
+# Frontend: http://localhost:8010/index.html
+# Swagger:  http://localhost:8010/docs
+# Health:   http://localhost:8010/health
 
-# Infra (Postgres :5432, MinIO API :6000 / console :6001)
-docker compose up -d
+# Tests / lint inside the running container
+docker compose exec api python -m pytest -q
+docker compose exec api ruff check .
+
+# New migration after changing models
+docker compose exec api alembic revision --autogenerate -m "message"
+```
+
+### Local (without Docker)
+
+All backend commands run from `Backend-API/`. `docker-compose.yml` now lives at the repo root and defines all three services (`db`, `minio`, `api`) — for this local path, only start `db`/`minio` and run the API yourself with `uv`.
+
+```bash
+# Infra (Postgres :5432, MinIO API :6002 / console :6001) — from the repo root
+docker compose up -d db minio
+
+cd Backend-API
 
 # Deps (uv-based project)
 uv venv
@@ -55,6 +75,11 @@ Dev-only admin seed (no UI creates the first admin account — it must exist in 
 uv run python scripts/seed_admin.py
 ```
 
+Dev-only data reset (wipes patients/doctors and everything derived from them, keeps admins — no "reset the database" API route by design):
+```bash
+uv run python scripts/reset_dev_data.py
+```
+
 ## Architecture (Backend-API/)
 
 **Feature-based** modules under `features/`, each a self-contained 4-layer slice: `models.py` (SQLAlchemy), `schemas.py` (Pydantic), `logic.py` (business logic, no FastAPI dependency besides `HTTPException`), `routes.py` (endpoints, wires auth + calls into `logic`). Modules: `Auth`, `Patients`, `Doctors`, `Appointments`, `Prescriptions`, `HealthRecords`, `Messaging`, `Admin`, `ChronicCare`, `Notifications`.
@@ -79,6 +104,7 @@ uv run python scripts/seed_admin.py
 - **Snapshotted price**: `Appointment.amount` is copied from `Doctor.consultation_fee` at confirmation time, not looked up live afterward — changing a doctor's fee must never retroactively change past/pending appointments.
 - **Anti double-booking**: appointment reservation takes a `SELECT ... FOR UPDATE` lock on the availability slot.
 - **Health record auto-fill**: prescriptions and doctor-sent message attachments are filed into the patient's health record automatically, written *inline by the producing feature* (e.g. `Prescriptions` writes its own `HealthRecordDocument`) rather than via a shared callback/hook from `HealthRecords`.
+- **Prescription without an appointment**: `POST /prescriptions` accepts either `appointment_id` (must be `COMPLETED`, the original flow) or `patient_id` alone — allowed as soon as the doctor already has a `Conversation` with that patient (messaging-initiated prescribing), 404 otherwise. `Prescription.appointment_id` is nullable to support this second path.
 - **Soft delete only**: deleting a patient or doctor account sets `status = deleted`; health data is never hard-deleted.
 - **Doctor suspension**: automatic at the 5th *active* complaint (`Complaint.status`, not a raw count — a resolved batch doesn't count toward the next suspension), 1-month suspension, automatic reactivation lazily triggered on next doctor login (`Auth/logic.authenticate_doctor`), no scheduler.
 - **Messaging**: REST + polling by design, not WebSocket, for V1.
