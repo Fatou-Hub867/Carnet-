@@ -21,3 +21,6 @@ httpx==0.28.1
 # Async SQLite driver: the tests run the app on an in-memory/file SQLite database
 # instead of Postgres, so no external services are required to run them.
 aiosqlite==0.22.1
+
+# Lint/format
+ruff
