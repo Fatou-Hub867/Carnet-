@@ -1,0 +1,9 @@
+.git
+**/__pycache__
+**/*.pyc
+Backend-API/.venv
+Backend-API/.pytest_cache
+Backend-API/htmlcov
+Backend-API/*.egg-info
+**/.env
+docs/superpowers
