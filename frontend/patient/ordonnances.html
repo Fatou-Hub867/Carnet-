@@ -98,6 +98,15 @@
       </div>
     </main>
   </div>
+  <div class="modal__backdrop" id="carnet-preview-modal" style="display:none;">
+    <div class="modal" style="max-width:900px;width:95vw;height:88vh;display:flex;flex-direction:column;padding:18px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:12px;flex:none;">
+        <div style="font-size:17px;font-weight:800;" id="carnet-preview-title">Document</div>
+        <button class="modal__close" data-close>✕</button>
+      </div>
+      <iframe id="carnet-preview-frame" style="flex:1;width:100%;border:none;border-radius:10px;background:#f1f5f7;" src="about:blank"></iframe>
+    </div>
+  </div>
   <script src="../auth.js"></script>
   <script src="../api.js"></script>
   <script src="../app.js"></script>
@@ -164,6 +173,13 @@
           var actionsRow = document.createElement('div');
           actionsRow.className = 'row';
           actionsRow.style.cssText = 'gap:10px;margin-top:14px;';
+          var viewBtn = document.createElement('button');
+          viewBtn.className = 'btn btn--ghost btn--sm';
+          viewBtn.style.cssText = 'padding:10px 16px;';
+          viewBtn.setAttribute('data-view', p.id);
+          viewBtn.setAttribute('data-filename', title);
+          viewBtn.textContent = 'Voir';
+          actionsRow.appendChild(viewBtn);
           var downloadBtn = document.createElement('button');
           downloadBtn.className = 'btn btn--ghost btn--sm';
           downloadBtn.style.cssText = 'padding:10px 16px;';
@@ -187,13 +203,29 @@
       load();
 
       document.addEventListener('click', async function (e) {
-        var btn = e.target.closest('[data-download]');
-        if (!btn) return;
+        var viewBtn = e.target.closest('[data-view]');
+        var downloadBtn = e.target.closest('[data-download]');
+        if (!viewBtn && !downloadBtn) return;
+        var prescriptionId = viewBtn
+          ? viewBtn.getAttribute('data-view')
+          : downloadBtn.getAttribute('data-download');
         try {
-          var result = await apiGet('/prescriptions/' + btn.getAttribute('data-download') + '/download');
-          window.open(result.download_url, '_blank', 'noopener,noreferrer');
+          var result = await apiGet('/prescriptions/' + prescriptionId + '/download');
+          if (viewBtn) {
+            document.getElementById('carnet-preview-title').textContent = viewBtn.getAttribute('data-filename') || 'Ordonnance';
+            document.getElementById('carnet-preview-frame').src = result.view_url;
+            document.getElementById('carnet-preview-modal').style.display = 'flex';
+          } else {
+            window.open(result.download_url, '_blank', 'noopener,noreferrer');
+          }
         } catch (err) {
-          window.alert('Impossible de télécharger ce document, réessayez.');
+          window.alert('Impossible d\'ouvrir ce document, réessayez.');
+        }
+      });
+
+      document.getElementById('carnet-preview-modal').addEventListener('click', function (e) {
+        if (e.target.closest('[data-close]') || e.target.id === 'carnet-preview-modal') {
+          document.getElementById('carnet-preview-frame').src = 'about:blank';
         }
       });
     })();

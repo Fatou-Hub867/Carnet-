@@ -83,10 +83,10 @@
   <div class="modal__backdrop hidden" id="delete-modal">
     <div class="modal" style="max-width:440px;">
       <div class="row" style="justify-content:space-between;margin-bottom:6px;">
-        <div style="font-size:19px;font-weight:800;">Supprimer ce compte médecin</div>
+        <div style="font-size:19px;font-weight:800;" id="delete-modal-title">Supprimer ce compte</div>
         <button class="modal__close" id="delete-modal-close" type="button">✕</button>
       </div>
-      <p style="color:var(--muted);font-size:13.5px;margin:0 0 16px;">Cette action supprime (désactive) le compte du médecin. Indiquez le motif.</p>
+      <p style="color:var(--muted);font-size:13.5px;margin:0 0 16px;" id="delete-modal-desc">Cette action supprime (désactive) le compte. Indiquez le motif.</p>
       <label class="label">MOTIF</label>
       <textarea class="input" id="delete-reason" style="min-height:80px;margin-bottom:16px;" required></textarea>
       <p class="form-error hidden" id="delete-modal-error"></p>
@@ -104,7 +104,7 @@
         CarnetAuth.logout();
       });
 
-      var pendingDeleteDoctorId = null;
+      var pendingDelete = null;
 
       function statusBadge(status) {
         var labels = { validated: 'Actif', suspended: 'Suspendu', pending_validation: 'En attente', rejected: 'Rejeté', deleted: 'Supprimé' };
@@ -119,6 +119,7 @@
         var row = document.createElement('div');
         row.className = 'list-row';
         row.dataset.doctorId = complaint.doctor_id;
+        row.dataset.patientId = complaint.patient_id;
 
         var info = document.createElement('div');
         info.style.flex = '1';
@@ -144,21 +145,37 @@
         row.appendChild(info);
         row.appendChild(statusBadge(complaint.doctor_status));
 
-        var deleteBtn = document.createElement('button');
-        deleteBtn.className = 'btn btn--ghost btn--sm';
-        deleteBtn.style.marginLeft = '8px';
-        deleteBtn.textContent = 'Supprimer ce compte médecin';
-        deleteBtn.addEventListener('click', function () {
-          pendingDeleteDoctorId = complaint.doctor_id;
-          document.getElementById('delete-reason').value = '';
-          document.getElementById('delete-modal-error').classList.add('hidden');
-          var modal = document.getElementById('delete-modal');
-          modal.style.display = '';
-          modal.classList.remove('hidden');
+        var deleteDoctorBtn = document.createElement('button');
+        deleteDoctorBtn.className = 'btn btn--ghost btn--sm';
+        deleteDoctorBtn.style.marginLeft = '8px';
+        deleteDoctorBtn.textContent = 'Supprimer ce compte médecin';
+        deleteDoctorBtn.addEventListener('click', function () {
+          openDeleteModal('doctor', complaint.doctor_id, 'Supprimer ce compte médecin');
         });
-        row.appendChild(deleteBtn);
+        row.appendChild(deleteDoctorBtn);
+
+        var deletePatientBtn = document.createElement('button');
+        deletePatientBtn.className = 'btn btn--ghost btn--sm';
+        deletePatientBtn.style.marginLeft = '8px';
+        deletePatientBtn.textContent = 'Supprimer ce compte patient';
+        deletePatientBtn.addEventListener('click', function () {
+          openDeleteModal('patient', complaint.patient_id, 'Supprimer ce compte patient');
+        });
+        row.appendChild(deletePatientBtn);
 
         return row;
+      }
+
+      function openDeleteModal(userType, userId, title) {
+        pendingDelete = { userType: userType, userId: userId };
+        document.getElementById('delete-modal-title').textContent = title;
+        document.getElementById('delete-modal-desc').textContent =
+          'Cette action supprime (désactive) le compte ' + (userType === 'doctor' ? 'du médecin' : 'du patient') + '. Indiquez le motif.';
+        document.getElementById('delete-reason').value = '';
+        document.getElementById('delete-modal-error').classList.add('hidden');
+        var modal = document.getElementById('delete-modal');
+        modal.style.display = '';
+        modal.classList.remove('hidden');
       }
 
       document.getElementById('delete-modal-close').addEventListener('click', function () {
@@ -174,37 +191,43 @@
           return;
         }
         try {
-          await apiRequest('DELETE', '/admin/doctor/' + pendingDeleteDoctorId, { json: { reason: reason } });
+          await apiRequest(
+            'DELETE',
+            '/admin/' + pendingDelete.userType + '/' + pendingDelete.userId,
+            { json: { reason: reason } }
+          );
           document.getElementById('delete-modal').classList.add('hidden');
-          var rows = document.querySelectorAll('[data-doctor-id="' + pendingDeleteDoctorId + '"]');
-          rows.forEach(function (row) {
-            row.remove();
-          });
-          var list = document.getElementById('complaints-list');
-          if (!list.children.length) {
-            document.getElementById('complaints-empty').classList.remove('hidden');
-          }
+          await loadComplaints();
         } catch (err) {
           errorEl.textContent = 'Une erreur est survenue, réessayez.';
           errorEl.classList.remove('hidden');
         }
       });
 
-      apiGet('/admin/complaints')
-        .then(function (complaints) {
-          var list = document.getElementById('complaints-list');
-          if (!complaints.length) {
-            document.getElementById('complaints-empty').classList.remove('hidden');
-            return;
-          }
-          complaints.forEach(function (complaint) {
-            list.appendChild(renderRow(complaint));
+      function loadComplaints() {
+        var list = document.getElementById('complaints-list');
+        var empty = document.getElementById('complaints-empty');
+        var errorEl = document.getElementById('complaints-error');
+        return apiGet('/admin/complaints')
+          .then(function (complaints) {
+            list.innerHTML = '';
+            errorEl.classList.add('hidden');
+            if (!complaints.length) {
+              empty.classList.remove('hidden');
+              return;
+            }
+            empty.classList.add('hidden');
+            complaints.forEach(function (complaint) {
+              list.appendChild(renderRow(complaint));
+            });
+          })
+          .catch(function () {
+            errorEl.textContent = 'Impossible de charger les réclamations.';
+            errorEl.classList.remove('hidden');
           });
-        })
-        .catch(function () {
-          document.getElementById('complaints-error').textContent = 'Impossible de charger les réclamations.';
-          document.getElementById('complaints-error').classList.remove('hidden');
-        });
+      }
+
+      loadComplaints();
     })();
   </script>
 </body>

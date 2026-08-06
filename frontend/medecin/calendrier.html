@@ -96,12 +96,24 @@
             </svg>Ajouter une disponibilité
           </button>
         </div>
-        <div class="card card--pad" style="border-radius:18px;">
+        <div class="card card--pad" style="border-radius:18px;" id="day-view-card">
           <div class="row" style="justify-content:space-between;margin-bottom:16px;">
-            <div class="section-title">Consultations du jour</div>
-            <input type="date" class="input" id="calendar-day-picker" style="width:auto;">
+            <div class="section-title">Consultations et créneaux du jour</div>
+            <div class="row" style="gap:10px;">
+              <input type="date" class="input" id="calendar-day-picker" style="width:auto;">
+              <button class="btn btn--ghost btn--sm" id="show-confirmed-btn" type="button">Tous mes RDV confirmés →</button>
+            </div>
           </div>
           <div class="col" style="gap:9px;" id="calendar-day-list"></div>
+          <div class="empty hidden" id="calendar-day-empty">Aucune consultation ni créneau publié pour cette date.</div>
+        </div>
+        <div class="card card--pad hidden" style="border-radius:18px;" id="confirmed-view-card">
+          <div class="row" style="justify-content:space-between;margin-bottom:16px;">
+            <div class="section-title">Tous mes RDV confirmés à venir</div>
+            <button class="btn btn--ghost btn--sm" id="back-to-day-btn" type="button">← Retour au jour</button>
+          </div>
+          <div class="col" style="gap:9px;" id="confirmed-list"></div>
+          <div class="empty hidden" id="confirmed-empty">Aucun RDV confirmé à venir.</div>
         </div>
       </div>
     </main>
@@ -129,6 +141,10 @@
     (function () {
       CarnetAuth.requireAuth('doctor');
 
+      // Empêche de choisir une date passée dans le sélecteur plutôt que de
+      // laisser l'utilisateur le découvrir via l'erreur 400 du backend.
+      document.getElementById('avail-date').min = new Date().toISOString().slice(0, 10);
+
       document.getElementById('avail-submit').addEventListener('click', async function () {
         var errorEl = document.getElementById('avail-error');
         errorEl.classList.add('hidden');
@@ -150,67 +166,143 @@
           document.getElementById('avail-date').value = '';
           document.getElementById('avail-start').value = '';
           document.getElementById('avail-end').value = '';
+          dayPicker.value = date;
+          await loadDay(date);
         } catch (err) {
-          if (err.status === 409) {
-            errorEl.textContent = 'Ce créneau chevauche une disponibilité existante.';
-          } else if (err.status === 400) {
-            errorEl.textContent = err.detail;
-          } else {
-            errorEl.textContent = 'Une erreur est survenue, réessayez.';
-          }
+          errorEl.textContent = translateApiError(err);
           errorEl.classList.remove('hidden');
         }
       });
+
+      var myDoctorId = null;
+
+      async function loadMyDoctorId() {
+        try {
+          var me = await apiGet('/doctors/me');
+          myDoctorId = me.id;
+        } catch (err) {
+          // Non bloquant : sans l'id on affiche quand même les consultations confirmées,
+          // seuls les créneaux publiés et pas encore réservés ne s'afficheront pas.
+        }
+      }
 
       function todayIso() {
         return new Date().toISOString().slice(0, 10);
       }
 
-      function renderDayEntries(entries) {
+      var STATUS_BADGES = {
+        pending: { label: 'En attente', cls: 'badge--amber' },
+        confirmed: { label: 'Confirmé', cls: 'badge--blue' },
+        refused: { label: 'Refusé', cls: 'badge--muted' },
+        completed: { label: 'Terminé', cls: 'badge--green' },
+      };
+
+      function appointmentRow(entry, today) {
+        var row = document.createElement('div');
+        row.className = 'row';
+        row.style.cssText = 'gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;';
+
+        var timeDiv = document.createElement('div');
+        timeDiv.style.cssText = 'font-weight:800;font-size:14px;color:var(--green-text);width:46px;flex:none;';
+        timeDiv.textContent = entry.start_time.slice(0, 5);
+        row.appendChild(timeDiv);
+
+        var nameWrap = document.createElement('div');
+        nameWrap.style.cssText = 'flex:1;min-width:0;';
+        var nameDiv = document.createElement('div');
+        nameDiv.style.cssText = 'font-weight:700;font-size:14px;';
+        nameDiv.textContent = entry.patient_name;
+        nameWrap.appendChild(nameDiv);
+        row.appendChild(nameWrap);
+
+        var chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.style.cssText = 'font-size:11.5px;padding:4px 9px;border-radius:14px;';
+        chip.textContent = entry.mode === 'message' ? 'Message' : 'Présentiel';
+        row.appendChild(chip);
+
+        var statusBadge = STATUS_BADGES[entry.status];
+        if (statusBadge) {
+          var badge = document.createElement('span');
+          badge.className = 'badge ' + statusBadge.cls;
+          badge.style.marginLeft = '8px';
+          badge.textContent = statusBadge.label;
+          row.appendChild(badge);
+        }
+
+        var canComplete = entry.status === 'confirmed' && entry.date <= today;
+        if (canComplete) {
+          var completeBtn = document.createElement('button');
+          completeBtn.className = 'btn btn--primary btn--sm';
+          completeBtn.style.marginLeft = '8px';
+          completeBtn.setAttribute('data-complete', entry.appointment_id);
+          completeBtn.textContent = 'Terminer';
+          row.appendChild(completeBtn);
+        }
+
+        return row;
+      }
+
+      function freeSlotRow(slot) {
+        var row = document.createElement('div');
+        row.className = 'row';
+        row.style.cssText = 'gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;';
+
+        var timeDiv = document.createElement('div');
+        timeDiv.style.cssText = 'font-weight:800;font-size:14px;color:var(--muted-2);width:46px;flex:none;';
+        timeDiv.textContent = slot.start_time.slice(0, 5);
+        row.appendChild(timeDiv);
+
+        var nameWrap = document.createElement('div');
+        nameWrap.style.cssText = 'flex:1;min-width:0;color:var(--muted);font-size:14px;';
+        nameWrap.textContent = 'Créneau publié, pas encore réservé (jusqu\'à ' + slot.end_time.slice(0, 5) + ')';
+        row.appendChild(nameWrap);
+
+        var chip = document.createElement('span');
+        chip.className = 'badge badge--muted';
+        chip.textContent = 'Libre';
+        row.appendChild(chip);
+
+        var deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn btn--ghost btn--sm';
+        deleteBtn.style.marginLeft = '8px';
+        deleteBtn.setAttribute('data-delete-slot', slot.id);
+        deleteBtn.textContent = 'Retirer';
+        row.appendChild(deleteBtn);
+
+        return row;
+      }
+
+      function renderDayEntries(confirmedEntries, freeSlots) {
         var list = document.getElementById('calendar-day-list');
+        var empty = document.getElementById('calendar-day-empty');
         list.innerHTML = '';
         var today = todayIso();
-        entries.forEach(function (entry) {
-          var row = document.createElement('div');
-          row.className = 'row';
-          row.style.cssText = 'gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;';
 
-          var timeDiv = document.createElement('div');
-          timeDiv.style.cssText = 'font-weight:800;font-size:14px;color:var(--green-text);width:46px;flex:none;';
-          timeDiv.textContent = entry.start_time.slice(0, 5);
-          row.appendChild(timeDiv);
+        if (!confirmedEntries.length && !freeSlots.length) {
+          empty.classList.remove('hidden');
+          return;
+        }
+        empty.classList.add('hidden');
 
-          var nameWrap = document.createElement('div');
-          nameWrap.style.cssText = 'flex:1;min-width:0;';
-          var nameDiv = document.createElement('div');
-          nameDiv.style.cssText = 'font-weight:700;font-size:14px;';
-          nameDiv.textContent = entry.patient_name;
-          nameWrap.appendChild(nameDiv);
-          row.appendChild(nameWrap);
+        var merged = confirmedEntries.map(function (e) { return { kind: 'confirmed', start_time: e.start_time, data: e }; })
+          .concat(freeSlots.map(function (s) { return { kind: 'free', start_time: s.start_time, data: s }; }));
+        merged.sort(function (a, b) { return a.start_time < b.start_time ? -1 : a.start_time > b.start_time ? 1 : 0; });
 
-          var chip = document.createElement('span');
-          chip.className = 'chip';
-          chip.style.cssText = 'font-size:11.5px;padding:4px 9px;border-radius:14px;';
-          chip.textContent = entry.mode === 'message' ? 'Message' : 'Présentiel';
-          row.appendChild(chip);
-
-          var canComplete = entry.status === 'confirmed' && entry.date <= today;
-          if (canComplete) {
-            var completeBtn = document.createElement('button');
-            completeBtn.className = 'btn btn--primary btn--sm';
-            completeBtn.setAttribute('data-complete', entry.appointment_id);
-            completeBtn.textContent = 'Terminer';
-            row.appendChild(completeBtn);
-          }
-
-          list.appendChild(row);
+        merged.forEach(function (item) {
+          list.appendChild(item.kind === 'confirmed' ? appointmentRow(item.data, today) : freeSlotRow(item.data));
         });
       }
 
       async function loadDay(day) {
         try {
           var entries = await apiGet('/appointments/calendar?day=' + day);
-          renderDayEntries(entries);
+          var freeSlots = [];
+          if (myDoctorId) {
+            var slots = await apiGet('/appointments/doctors/' + myDoctorId + '/availabilities?from_date=' + day);
+            freeSlots = slots.filter(function (s) { return s.date === day; });
+          }
+          renderDayEntries(entries, freeSlots);
         } catch (err) {
           document.getElementById('calendar-day-list').textContent = 'Impossible de charger le calendrier.';
         }
@@ -219,18 +311,87 @@
       var dayPicker = document.getElementById('calendar-day-picker');
       dayPicker.value = todayIso();
       dayPicker.addEventListener('change', function () { loadDay(dayPicker.value); });
-      loadDay(dayPicker.value);
+      loadMyDoctorId().then(function () { loadDay(dayPicker.value); });
+
+      function confirmedGlobalRow(entry) {
+        var row = document.createElement('div');
+        row.className = 'row';
+        row.style.cssText = 'gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;';
+
+        var dateDiv = document.createElement('div');
+        dateDiv.style.cssText = 'font-weight:800;font-size:13px;color:var(--green-text);width:100px;flex:none;';
+        dateDiv.textContent = new Date(entry.date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) +
+          ' · ' + entry.start_time.slice(0, 5);
+        row.appendChild(dateDiv);
+
+        var nameDiv = document.createElement('div');
+        nameDiv.style.cssText = 'flex:1;min-width:0;font-weight:700;font-size:14px;';
+        nameDiv.textContent = entry.patient_name;
+        row.appendChild(nameDiv);
+
+        var chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.style.cssText = 'font-size:11.5px;padding:4px 9px;border-radius:14px;';
+        chip.textContent = entry.mode === 'message' ? 'Message' : 'Présentiel';
+        row.appendChild(chip);
+
+        return row;
+      }
+
+      async function loadConfirmed() {
+        var list = document.getElementById('confirmed-list');
+        var empty = document.getElementById('confirmed-empty');
+        list.innerHTML = '';
+        try {
+          var entries = await apiGet('/appointments/confirmed');
+          if (!entries.length) {
+            empty.classList.remove('hidden');
+            return;
+          }
+          empty.classList.add('hidden');
+          entries.forEach(function (entry) {
+            list.appendChild(confirmedGlobalRow(entry));
+          });
+        } catch (err) {
+          list.textContent = 'Impossible de charger vos RDV confirmés.';
+        }
+      }
+
+      document.getElementById('show-confirmed-btn').addEventListener('click', function () {
+        document.getElementById('day-view-card').classList.add('hidden');
+        document.getElementById('confirmed-view-card').classList.remove('hidden');
+        loadConfirmed();
+      });
+      document.getElementById('back-to-day-btn').addEventListener('click', function () {
+        document.getElementById('confirmed-view-card').classList.add('hidden');
+        document.getElementById('day-view-card').classList.remove('hidden');
+      });
 
       document.addEventListener('click', async function (e) {
         var completeBtn = e.target.closest('[data-complete]');
-        if (!completeBtn) return;
-        completeBtn.disabled = true;
-        try {
-          await apiPost('/appointments/' + completeBtn.getAttribute('data-complete') + '/complete', {});
-          await loadDay(dayPicker.value);
-        } catch (err) {
-          window.alert('Une erreur est survenue, réessayez.');
-          completeBtn.disabled = false;
+        if (completeBtn) {
+          completeBtn.disabled = true;
+          try {
+            await apiPost('/appointments/' + completeBtn.getAttribute('data-complete') + '/complete', {});
+            await loadDay(dayPicker.value);
+          } catch (err) {
+            window.alert('Une erreur est survenue, réessayez.');
+            completeBtn.disabled = false;
+          }
+          return;
+        }
+
+        var deleteBtn = e.target.closest('[data-delete-slot]');
+        if (deleteBtn) {
+          if (!window.confirm('Retirer ce créneau ? Cette action est définitive.')) return;
+          deleteBtn.disabled = true;
+          try {
+            await apiRequest('DELETE', '/appointments/availabilities/' + deleteBtn.getAttribute('data-delete-slot'));
+            await loadDay(dayPicker.value);
+          } catch (err) {
+            window.alert(translateApiError(err));
+            deleteBtn.disabled = false;
+          }
         }
       });
     })();

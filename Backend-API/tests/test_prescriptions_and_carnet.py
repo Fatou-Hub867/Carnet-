@@ -189,6 +189,50 @@ async def test_messages_marked_read_on_fetch(client, completed_appointment):
     assert again.json()[0]["read_at"] is not None
 
 
+async def test_conversation_unread_count(client, completed_appointment):
+    patient = completed_appointment["patient"]
+    doctor = completed_appointment["doctor"]
+    convo = await client.post(
+        "/messaging/conversations",
+        json={"doctor_id": doctor["id"]},
+        headers=_auth(patient["token"]),
+    )
+    conversation_id = convo.json()["id"]
+    assert convo.json()["unread_count"] == 0
+
+    await client.post(
+        f"/messaging/conversations/{conversation_id}/messages",
+        data={"content": "hello doctor"},
+        headers=_auth(patient["token"]),
+    )
+    await client.post(
+        f"/messaging/conversations/{conversation_id}/messages",
+        data={"content": "still there?"},
+        headers=_auth(patient["token"]),
+    )
+
+    doctor_list = await client.get(
+        "/messaging/conversations", headers=_auth(doctor["token"])
+    )
+    assert doctor_list.json()[0]["unread_count"] == 2
+
+    # The patient's own view must not count their own unread-by-doctor messages.
+    patient_list = await client.get(
+        "/messaging/conversations", headers=_auth(patient["token"])
+    )
+    assert patient_list.json()[0]["unread_count"] == 0
+
+    # Fetching the thread marks those messages read -> count drops to 0.
+    await client.get(
+        f"/messaging/conversations/{conversation_id}/messages",
+        headers=_auth(doctor["token"]),
+    )
+    doctor_list_after = await client.get(
+        "/messaging/conversations", headers=_auth(doctor["token"])
+    )
+    assert doctor_list_after.json()[0]["unread_count"] == 0
+
+
 async def test_patient_document_download_offers_view_and_download_urls(client, patient):
     upload = await client.post(
         "/health-records/me/documents",
@@ -275,6 +319,53 @@ async def test_get_or_create_conversation_is_idempotent(client, completed_appoin
     assert second_body["id"] == first_body["id"]
     assert second_body["patient_name"] == "Ada Lovelace"
     assert second_body["doctor_name"] == "Gregory House"
+
+
+async def test_prescription_from_conversation_without_appointment(
+    client, patient, validated_doctor
+):
+    doctor = validated_doctor
+    convo = await client.post(
+        "/messaging/conversations",
+        json={"doctor_id": doctor["id"]},
+        headers=_auth(patient["token"]),
+    )
+    assert convo.status_code == 201, convo.text
+
+    resp = await client.post(
+        "/prescriptions",
+        json={
+            "patient_id": patient["id"],
+            "notes": None,
+            "treatments": [
+                {
+                    "medication_name": "Paracetamol",
+                    "dosage": "1000mg",
+                    "start_date": date.today().isoformat(),
+                    "end_date": (date.today() + timedelta(days=3)).isoformat(),
+                    "intake_times": ["08:00:00"],
+                }
+            ],
+        },
+        headers=_auth(doctor["token"]),
+    )
+    assert resp.status_code == 201, resp.text
+    assert resp.json()["appointment_id"] is None
+
+    listing = await client.get("/prescriptions", headers=_auth(patient["token"]))
+    assert len(listing.json()) == 1
+    assert listing.json()[0]["appointment_id"] is None
+
+
+async def test_prescription_without_appointment_or_conversation_404s(
+    client, patient, validated_doctor
+):
+    resp = await client.post(
+        "/prescriptions",
+        json={"patient_id": patient["id"], "notes": None, "treatments": []},
+        headers=_auth(validated_doctor["token"]),
+    )
+    assert resp.status_code == 404
 
 
 async def test_prescription_out_includes_doctor_name_and_treatments(

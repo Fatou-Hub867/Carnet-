@@ -17,6 +17,8 @@ from features.HealthRecords.models import (
     DocumentSourceType,
     HealthRecordDocument,
 )
+from features.HealthRecords.schemas import DocumentUrlsOut
+from features.Messaging.models import Conversation
 from features.Prescriptions.models import (
     Prescription,
     Treatment,
@@ -104,17 +106,37 @@ def _build_prescription_pdf(
 async def create_prescription(
     db: AsyncSession, doctor_id: int, data: PrescriptionCreateRequest
 ) -> PrescriptionOut:
-    """Only allowed if the appointment status is completed. Generates the PDF
-    with fpdf2, uploads it via core.storage, then creates the Treatment and
+    """Two ways in: an appointment_id (must be COMPLETED — the original flow),
+    or a patient_id with no appointment at all, allowed as soon as the doctor
+    already has a conversation with that patient. Generates the PDF with
+    fpdf2, uploads it via core.storage, then creates the Treatment and
     TreatmentSchedule rows from the submitted treatment lines."""
-    appointment = await db.get(Appointment, data.appointment_id)
-    if appointment is None or appointment.doctor_id != doctor_id:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "Appointment not found")
-    if appointment.status != AppointmentStatus.COMPLETED:
-        raise HTTPException(
-            status.HTTP_409_CONFLICT,
-            "The consultation must be completed before prescribing",
+    appointment: Appointment | None = None
+    if data.appointment_id is not None:
+        appointment = await db.get(Appointment, data.appointment_id)
+        if appointment is None or appointment.doctor_id != doctor_id:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Appointment not found")
+        if appointment.status != AppointmentStatus.COMPLETED:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                "The consultation must be completed before prescribing",
+            )
+        patient_id = appointment.patient_id
+    else:
+        if data.patient_id is None:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                "patient_id is required when appointment_id is not given",
+            )
+        conversation_id = await db.scalar(
+            select(Conversation.id).where(
+                Conversation.doctor_id == doctor_id,
+                Conversation.patient_id == data.patient_id,
+            )
         )
+        if conversation_id is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
+        patient_id = data.patient_id
 
     for line in data.treatments:
         if line.end_date < line.start_date:
@@ -129,7 +151,7 @@ async def create_prescription(
             )
 
     doctor = await db.get(Doctor, doctor_id)
-    patient = await db.get(Patient, appointment.patient_id)
+    patient = await db.get(Patient, patient_id)
 
     # boto3 is synchronous; called inline here as elsewhere in the codebase
     # (see the diploma upload in Auth/routes.py).
@@ -142,7 +164,7 @@ async def create_prescription(
     prescription = Prescription(
         patient_id=patient.id,
         doctor_id=doctor_id,
-        appointment_id=appointment.id,
+        appointment_id=appointment.id if appointment else None,
         notes=data.notes,
         pdf_file_key=pdf_key,
     )
@@ -237,11 +259,17 @@ async def list_patient_prescriptions(
 
 async def get_prescription_pdf_url(
     db: AsyncSession, patient_id: int, prescription_id: int
-) -> str:
+) -> DocumentUrlsOut:
     prescription = await db.get(Prescription, prescription_id)
     if prescription is None or prescription.patient_id != patient_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Prescription not found")
-    return get_file_url(prescription.pdf_file_key)
+    return DocumentUrlsOut(
+        view_url=get_file_url(prescription.pdf_file_key),
+        download_url=get_file_url(
+            prescription.pdf_file_key,
+            download_filename=f"ordonnance-{prescription.id}.pdf",
+        ),
+    )
 
 
 async def confirm_treatment_intake(

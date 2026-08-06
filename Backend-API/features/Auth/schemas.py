@@ -103,3 +103,15 @@ class ResetPasswordRequest(BaseModel):
 
 class ConfirmEmailRequest(BaseModel):
     token: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=10)
+    new_password_confirmation: str
+
+    @model_validator(mode="after")
+    def passwords_match(self) -> "ChangePasswordRequest":
+        if self.new_password != self.new_password_confirmation:
+            raise ValueError("new_password and new_password_confirmation must match")
+        return self

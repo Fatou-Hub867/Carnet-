@@ -22,22 +22,29 @@ async def test_follow_up_and_dashboard(client, patient, validated_doctor):
     resp = await _create_follow_up(client, validated_doctor, patient["id"])
     assert resp.status_code == 201
 
-    dashboard = await client.get("/chronic-care/dashboard", headers=_auth(validated_doctor["token"]))
+    dashboard = await client.get(
+        "/chronic-care/dashboard", headers=_auth(validated_doctor["token"])
+    )
     assert dashboard.status_code == 200
     body = dashboard.json()
     assert body["followed_patients"] == 1
     assert body["patients_in_alert"] == 0
     assert body["active_care_plans"] == 0
 
-    patients = await client.get("/chronic-care/patients", headers=_auth(validated_doctor["token"]))
+    patients = await client.get(
+        "/chronic-care/patients", headers=_auth(validated_doctor["token"])
+    )
     assert len(patients.json()) == 1
     item = patients.json()[0]
     assert item["patient_id"] == patient["id"]
     assert item["is_in_alert"] is False
+    assert item["manual_alert"] is False
     assert item["care_plan_active"] is False
 
 
-async def test_manual_alert_flows_into_list_and_dashboard(client, patient, validated_doctor):
+async def test_manual_alert_flows_into_list_and_dashboard(
+    client, patient, validated_doctor
+):
     follow_up = await _create_follow_up(client, validated_doctor, patient["id"])
     follow_up_id = follow_up.json()["id"]
 
@@ -48,10 +55,15 @@ async def test_manual_alert_flows_into_list_and_dashboard(client, patient, valid
     )
     assert alert.status_code == 200
 
-    patients = await client.get("/chronic-care/patients", headers=_auth(validated_doctor["token"]))
+    patients = await client.get(
+        "/chronic-care/patients", headers=_auth(validated_doctor["token"])
+    )
     assert patients.json()[0]["is_in_alert"] is True
+    assert patients.json()[0]["manual_alert"] is True
 
-    dashboard = await client.get("/chronic-care/dashboard", headers=_auth(validated_doctor["token"]))
+    dashboard = await client.get(
+        "/chronic-care/dashboard", headers=_auth(validated_doctor["token"])
+    )
     assert dashboard.json()["patients_in_alert"] == 1
 
 
@@ -110,6 +122,10 @@ async def test_missed_doses_trigger_automatic_alert(client, completed_appointmen
 
     await _create_follow_up(client, doctor, patient["id"], condition="Diabetes")
 
-    patients = await client.get("/chronic-care/patients", headers=_auth(doctor["token"]))
+    patients = await client.get(
+        "/chronic-care/patients", headers=_auth(doctor["token"])
+    )
     # 6 expected doses over the window, 0 confirmed -> above the 3-miss threshold.
     assert patients.json()[0]["is_in_alert"] is True
+    # ...but no manual flag was ever set — "Lever l'alerte" would be a no-op here.
+    assert patients.json()[0]["manual_alert"] is False

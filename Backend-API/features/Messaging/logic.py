@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.storage import get_file_url
@@ -35,7 +35,7 @@ async def authorize_conversation(
 
 
 def _build_conversation_out(
-    conversation: Conversation, patient: Patient, doctor: Doctor
+    conversation: Conversation, patient: Patient, doctor: Doctor, unread_count: int
 ) -> ConversationOut:
     return ConversationOut(
         id=conversation.id,
@@ -50,6 +50,26 @@ def _build_conversation_out(
             get_file_url(doctor.photo_file_key) if doctor.photo_file_key else None
         ),
         created_at=conversation.created_at,
+        unread_count=unread_count,
+    )
+
+
+async def _count_unread(
+    db: AsyncSession, conversation_id: int, from_sender: SenderType
+) -> int:
+    """Unread messages sent by `from_sender` in this conversation — i.e. what
+    the *other* party still has to read."""
+    return (
+        await db.scalar(
+            select(func.count())
+            .select_from(Message)
+            .where(
+                Message.conversation_id == conversation_id,
+                Message.sender_type == from_sender,
+                Message.read_at.is_(None),
+            )
+        )
+        or 0
     )
 
 
@@ -71,14 +91,17 @@ async def get_or_create_conversation(
             )
         )
     ).first()
+    # Only a patient reaches this route (see routes.py), so unread is always
+    # counted from their point of view: messages the doctor sent them.
     if existing is not None:
-        return _build_conversation_out(existing, patient, doctor)
+        unread = await _count_unread(db, existing.id, SenderType.DOCTOR)
+        return _build_conversation_out(existing, patient, doctor, unread)
 
     conversation = Conversation(patient_id=patient_id, doctor_id=doctor_id)
     db.add(conversation)
     await db.commit()
     await db.refresh(conversation)
-    return _build_conversation_out(conversation, patient, doctor)
+    return _build_conversation_out(conversation, patient, doctor, 0)
 
 
 async def list_my_conversations(
@@ -87,6 +110,7 @@ async def list_my_conversations(
     column = (
         Conversation.patient_id if user_type == "patient" else Conversation.doctor_id
     )
+    other_sender = SenderType.DOCTOR if user_type == "patient" else SenderType.PATIENT
     rows = (
         await db.execute(
             select(Conversation, Patient, Doctor)
@@ -96,10 +120,13 @@ async def list_my_conversations(
             .order_by(Conversation.created_at.desc())
         )
     ).all()
-    return [
-        _build_conversation_out(conversation, patient, doctor)
-        for conversation, patient, doctor in rows
-    ]
+    # N+1 over the user's conversations (a bounded list); same tradeoff as
+    # ChronicCare.list_chronic_patients, fine for the V1.
+    result = []
+    for conversation, patient, doctor in rows:
+        unread = await _count_unread(db, conversation.id, other_sender)
+        result.append(_build_conversation_out(conversation, patient, doctor, unread))
+    return result
 
 
 async def send_message(

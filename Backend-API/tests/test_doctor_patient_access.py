@@ -225,3 +225,64 @@ async def test_unrelated_doctor_cannot_upload_a_document_for_a_patient(
         headers=_auth(other_doctor_token),
     )
     assert resp.status_code == 404
+
+
+async def test_my_patients_lists_confirmed_relationship_without_a_conversation(
+    client, patient, validated_doctor
+):
+    """GET /doctors/me/patients must not require a messaging conversation —
+    it's used to populate pickers (e.g. chronic-care follow-up creation) for
+    any patient the doctor has an accepted appointment with."""
+    doctor_headers = _auth(validated_doctor["token"])
+    patient_headers = _auth(patient["token"])
+
+    slot = await client.post(
+        "/appointments/availabilities",
+        json={
+            "date": date.today().isoformat(),
+            "start_time": "10:00:00",
+            "end_time": "10:30:00",
+        },
+        headers=doctor_headers,
+    )
+    booking = await client.post(
+        "/appointments",
+        json={"availability_id": slot.json()["id"], "mode": "in_person"},
+        headers=patient_headers,
+    )
+    confirm = await client.post(
+        f"/appointments/{booking.json()['id']}/decision",
+        json={"approve": True},
+        headers=doctor_headers,
+    )
+    assert confirm.status_code == 200, confirm.text
+
+    resp = await client.get("/doctors/me/patients", headers=doctor_headers)
+    assert resp.status_code == 200, resp.text
+    assert resp.json() == [
+        {"patient_id": patient["id"], "patient_name": "Ada Lovelace"}
+    ]
+
+
+async def test_my_patients_excludes_pending_only_relationship(
+    client, patient, validated_doctor
+):
+    doctor_headers = _auth(validated_doctor["token"])
+    slot = await client.post(
+        "/appointments/availabilities",
+        json={
+            "date": date.today().isoformat(),
+            "start_time": "11:00:00",
+            "end_time": "11:30:00",
+        },
+        headers=doctor_headers,
+    )
+    await client.post(
+        "/appointments",
+        json={"availability_id": slot.json()["id"], "mode": "in_person"},
+        headers=_auth(patient["token"]),
+    )
+
+    resp = await client.get("/doctors/me/patients", headers=doctor_headers)
+    assert resp.status_code == 200, resp.text
+    assert resp.json() == []

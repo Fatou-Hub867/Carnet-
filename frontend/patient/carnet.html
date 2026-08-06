@@ -159,6 +159,15 @@
       <button class="btn btn--primary btn--block" id="carnet-upload-submit">Téléverser</button>
     </div>
   </div>
+  <div class="modal__backdrop" id="carnet-preview-modal" style="display:none;">
+    <div class="modal" style="max-width:900px;width:95vw;height:88vh;display:flex;flex-direction:column;padding:18px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:12px;flex:none;">
+        <div style="font-size:17px;font-weight:800;" id="carnet-preview-title">Document</div>
+        <button class="modal__close" data-close>✕</button>
+      </div>
+      <iframe id="carnet-preview-frame" style="flex:1;width:100%;border:none;border-radius:10px;background:#f1f5f7;" src="about:blank"></iframe>
+    </div>
+  </div>
   <script src="../auth.js"></script>
   <script src="../api.js"></script>
   <script src="../app.js"></script>
@@ -209,6 +218,7 @@
           viewBtn.className = 'btn btn--ghost btn--sm';
           viewBtn.style.cssText = 'flex:1;';
           viewBtn.setAttribute('data-view', doc.id);
+          viewBtn.setAttribute('data-filename', doc.original_filename);
           viewBtn.textContent = 'Voir';
           actionsRow.appendChild(viewBtn);
 
@@ -290,9 +300,21 @@
           : downloadBtn.getAttribute('data-download');
         try {
           var result = await apiGet('/health-records/me/documents/' + documentId + '/download');
-          window.open(viewBtn ? result.view_url : result.download_url, '_blank', 'noopener,noreferrer');
+          if (viewBtn) {
+            document.getElementById('carnet-preview-title').textContent = viewBtn.getAttribute('data-filename') || 'Document';
+            document.getElementById('carnet-preview-frame').src = result.view_url;
+            document.getElementById('carnet-preview-modal').style.display = 'flex';
+          } else {
+            window.open(result.download_url, '_blank', 'noopener,noreferrer');
+          }
         } catch (err) {
           window.alert('Impossible d\'ouvrir ce document, réessayez.');
+        }
+      });
+
+      document.getElementById('carnet-preview-modal').addEventListener('click', function (e) {
+        if (e.target.closest('[data-close]') || e.target.id === 'carnet-preview-modal') {
+          document.getElementById('carnet-preview-frame').src = 'about:blank';
         }
       });
     })();

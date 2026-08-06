@@ -14,7 +14,10 @@ class TreatmentLineRequest(BaseModel):
 
 
 class PrescriptionCreateRequest(BaseModel):
-    appointment_id: int
+    # Either appointment_id (must be COMPLETED) or patient_id (requires an
+    # existing conversation with that patient) — see create_prescription.
+    appointment_id: int | None = None
+    patient_id: int | None = None
     notes: str | None = None
     treatments: list[TreatmentLineRequest]
 
@@ -31,7 +34,7 @@ class PrescriptionOut(BaseModel):
     patient_id: int
     doctor_id: int
     doctor_name: str
-    appointment_id: int
+    appointment_id: int | None
     notes: str | None
     created_at: datetime
     treatments: list[TreatmentLineOut]

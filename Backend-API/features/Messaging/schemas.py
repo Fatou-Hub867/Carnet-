@@ -20,6 +20,7 @@ class ConversationOut(BaseModel):
     doctor_name: str
     doctor_photo_url: str | None
     created_at: datetime
+    unread_count: int
 
     model_config = {"from_attributes": True}
 

@@ -235,6 +235,23 @@ async def reset_password(db: AsyncSession, token: str, new_password: str) -> Non
     await db.commit()
 
 
+async def change_password(
+    db: AsyncSession,
+    user: Patient | Doctor,
+    current_password: str,
+    new_password: str,
+) -> None:
+    """Used by an already-authenticated patient/doctor to change their own
+    password — the only in-app path today is the logged-out 'forgot
+    password' email flow, which isn't usable once you're already signed in."""
+    if not verify_password(current_password, user.password_hash):
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED, "Current password is incorrect"
+        )
+    user.password_hash = hash_password(new_password)
+    await db.commit()
+
+
 async def confirm_patient_email(db: AsyncSession, token: str) -> None:
     verification_token = (
         await db.scalars(

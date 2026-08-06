@@ -22,6 +22,7 @@ class CarePlanUpsertRequest(BaseModel):
 
 
 class ChronicPatientListItemOut(BaseModel):
+    follow_up_id: int
     patient_id: int
     first_name: str
     last_name: str
@@ -29,6 +30,7 @@ class ChronicPatientListItemOut(BaseModel):
     next_appointment: date | None
     care_plan_active: bool
     is_in_alert: bool
+    manual_alert: bool
 
 
 class ChronicCareDashboardOut(BaseModel):

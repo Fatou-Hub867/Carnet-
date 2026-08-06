@@ -143,6 +143,7 @@ input:focus, select:focus, textarea:focus {
 .badge--green { background: var(--green-soft); color: var(--green-text); }
 .badge--amber { background: var(--amber-bg); color: var(--amber-ink-2); }
 .badge--muted { background: #f1f5f7; color: var(--slate); font-weight: 600; }
+.badge--blue  { background: #eef2ff; color: var(--blue); }
 .badge--soon  { background: #f1f5f7; color: var(--muted-2); font-weight: 700; font-size: 11px; padding: 4px 10px; }
 .chip { background: #f1f5f7; color: var(--slate); font-weight: 600; font-size: 12px; padding: 5px 11px; border-radius: 20px; }
 

@@ -97,11 +97,11 @@ document.addEventListener('click', function (e) {
 });
 
 // --- Interrupteur "Disponible / Indisponible" (dashboard médecin) ---
-document.addEventListener('click', function (e) {
-  var t = e.target.closest('[data-avail-toggle]');
-  if (!t) return;
-  var on = t.getAttribute('data-on') !== 'false'; // disponible par défaut
-  on = !on;
+// Persiste sur PATCH /doctors/me : un patient ne peut plus réserver un
+// nouveau créneau tant que le médecin est "Indisponible" (voir
+// Appointments.book_appointment côté backend). L'état visuel ne change
+// qu'après confirmation de l'API (pas de mise à jour optimiste).
+function setAvailabilityToggleState(t, on) {
   t.setAttribute('data-on', on ? 'true' : 'false');
   var label = t.querySelector('.avail-label');
   var track = t.querySelector('.avail-track');
@@ -109,6 +109,25 @@ document.addEventListener('click', function (e) {
   if (label) label.textContent = on ? 'Disponible' : 'Indisponible';
   if (track) track.style.background = on ? '#10b981' : '#cbd5e1';
   if (knob) knob.style.left = on ? '21px' : '3px';
+}
+
+document.addEventListener('click', function (e) {
+  var t = e.target.closest('[data-avail-toggle]');
+  if (!t) return;
+  var on = t.getAttribute('data-on') !== 'false'; // disponible par défaut
+  on = !on;
+  var errorEl = document.getElementById('avail-toggle-error');
+  if (errorEl) errorEl.classList.add('hidden');
+  apiRequest('PATCH', '/doctors/me', { json: { is_available: on } })
+    .then(function () {
+      setAvailabilityToggleState(t, on);
+    })
+    .catch(function (err) {
+      if (errorEl) {
+        errorEl.textContent = err.message || 'Impossible de mettre à jour votre disponibilité.';
+        errorEl.classList.remove('hidden');
+      }
+    });
 });
 
 // --- Pop-up de confirmation "Accepter" (demandes en attente) ---
@@ -193,6 +212,28 @@ function renumberMeds() {
   });
   document.querySelectorAll('[data-greeting-fullname]').forEach(function (el) {
     el.textContent = fullName;
+  });
+})();
+
+// --- Garde d'accès médecin : un compte pending_validation ou suspended peut
+// s'authentifier (voir DOCTOR_LOGIN_ALLOWED_STATUSES côté backend) mais ne doit
+// pas rester sur une page médecin déjà ouverte (onglet laissé ouvert, lien
+// direct, session plus ancienne). requireAuth() ne vérifie que la présence
+// d'un token, jamais le statut — ce bloc referme ce trou en re-vérifiant à
+// chaque chargement de page. Non bloquant si l'appel échoue : la page gère
+// alors l'erreur normalement (ex. token expiré -> 401 déjà géré par api.js).
+(function () {
+  if (!window.CarnetAuth || typeof apiGet !== 'function') return;
+  if (CarnetAuth.getRole() !== 'doctor' || !CarnetAuth.getToken()) return;
+  apiGet('/doctors/me').then(function (profile) {
+    if (profile.status === 'pending_validation') {
+      window.location.href = '/en-attente.html';
+    } else if (profile.status === 'suspended') {
+      window.location.href = '/compte-suspendu.html' +
+        (profile.suspended_until ? '?until=' + encodeURIComponent(profile.suspended_until) : '');
+    }
+  }).catch(function () {
+    // Ignoré volontairement : voir commentaire ci-dessus.
   });
 })();
 

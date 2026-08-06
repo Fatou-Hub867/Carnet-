@@ -41,6 +41,17 @@ async def list_doctor_availabilities(
     return await logic.list_doctor_availabilities(db, doctor_id, from_date)
 
 
+@router.delete(
+    "/availabilities/{availability_id}", status_code=status.HTTP_204_NO_CONTENT
+)
+async def delete_availability(
+    availability_id: int,
+    current_doctor: Doctor = Depends(get_current_doctor),
+    db: AsyncSession = Depends(get_db),
+):
+    await logic.delete_availability(db, current_doctor.id, availability_id)
+
+
 @router.post("", response_model=AppointmentOut, status_code=status.HTTP_201_CREATED)
 async def book_appointment(
     data: AppointmentCreateRequest,
@@ -96,3 +107,11 @@ async def get_doctor_calendar(
     db: AsyncSession = Depends(get_db),
 ):
     return await logic.get_doctor_calendar(db, current_doctor.id, day)
+
+
+@router.get("/confirmed", response_model=list[DoctorCalendarEntryOut])
+async def list_confirmed_appointments(
+    current_doctor: Doctor = Depends(get_current_doctor),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.list_confirmed_appointments(db, current_doctor.id)

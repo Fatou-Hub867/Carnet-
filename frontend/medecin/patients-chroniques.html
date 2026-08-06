@@ -137,18 +137,66 @@
             </div>
           </div>
         </div>
-        <div class="input-group mb-16" style="border-color:var(--border);border-radius:13px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa7b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
-          <input id="chronic-search-input" placeholder="Rechercher un patient…" style="padding:14px 0;">
+        <div class="row" style="gap:12px;margin-bottom:16px;">
+          <div class="input-group" style="border-color:var(--border);border-radius:13px;flex:1;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa7b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input id="chronic-search-input" placeholder="Rechercher un patient…" style="padding:14px 0;">
+          </div>
+          <button class="btn btn--primary" id="new-followup-btn" style="flex:none;">+ Nouveau suivi</button>
         </div>
         <p class="form-error hidden" id="chronic-error"></p>
         <div class="card card--flush" id="chronic-patients-list"></div>
         <div class="empty hidden" id="chronic-empty">Aucun patient chronique suivi.</div>
       </div>
     </main>
+  </div>
+  <div class="modal__backdrop" id="new-followup-modal" style="display:none;">
+    <div class="modal" style="max-width:440px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:18px;">
+        <div style="font-size:19px;font-weight:800;">Nouveau suivi chronique</div>
+        <button class="modal__close" data-close>✕</button>
+      </div>
+      <label class="label">PATIENT</label>
+      <select class="input" id="followup-patient-select" style="margin-bottom:16px;"></select>
+      <label class="label">PATHOLOGIE</label>
+      <input class="input" id="followup-condition-input" placeholder="Ex. Diabète type 2" style="margin-bottom:16px;">
+      <label class="label">DATE DE DÉBUT</label>
+      <input class="input" id="followup-start-input" type="date" style="margin-bottom:16px;">
+      <p class="form-error hidden" id="followup-modal-error"></p>
+      <button class="btn btn--primary btn--block" id="followup-submit-btn">Créer le suivi</button>
+    </div>
+  </div>
+  <div class="modal__backdrop" id="care-plan-modal" style="display:none;">
+    <div class="modal" style="max-width:440px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:18px;">
+        <div style="font-size:19px;font-weight:800;">Plan de soins</div>
+        <button class="modal__close" data-close>✕</button>
+      </div>
+      <label class="label">DESCRIPTION</label>
+      <textarea class="input" id="care-plan-description" style="min-height:100px;margin-bottom:16px;"></textarea>
+      <label class="label">STATUT</label>
+      <select class="input" id="care-plan-status" style="margin-bottom:16px;">
+        <option value="active">Actif</option>
+        <option value="inactive">Inactif</option>
+      </select>
+      <p class="form-error hidden" id="care-plan-modal-error"></p>
+      <button class="btn btn--primary btn--block" id="care-plan-submit-btn">Enregistrer</button>
+    </div>
+  </div>
+  <div class="modal__backdrop" id="set-alert-modal" style="display:none;">
+    <div class="modal" style="max-width:440px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:18px;">
+        <div style="font-size:19px;font-weight:800;">Signaler une alerte</div>
+        <button class="modal__close" data-close>✕</button>
+      </div>
+      <label class="label">MOTIF (OPTIONNEL)</label>
+      <textarea class="input" id="set-alert-reason" style="min-height:90px;margin-bottom:16px;" placeholder="Ex. Constantes préoccupantes lors du dernier échange"></textarea>
+      <p class="form-error hidden" id="set-alert-modal-error"></p>
+      <button class="btn btn--primary btn--block" id="set-alert-submit-btn">Signaler</button>
+    </div>
   </div>
   <script src="../auth.js"></script>
   <script src="../api.js"></script>
@@ -219,9 +267,41 @@
           carnetLink.style.marginLeft = '8px';
           row.appendChild(carnetLink);
 
+          var carePlanBtn = document.createElement('button');
+          carePlanBtn.className = 'btn btn--ghost btn--sm';
+          carePlanBtn.style.marginLeft = '8px';
+          carePlanBtn.textContent = 'Plan de soins';
+          carePlanBtn.setAttribute('data-careplan', p.follow_up_id);
+          row.appendChild(carePlanBtn);
+
+          // "Lever l'alerte" ne touche que le flag manuel côté backend — si
+          // l'alerte vient uniquement de facteurs automatiques (doses/RDV
+          // manqués), le bouton n'a rien à lever. On n'affiche donc jamais les
+          // deux boutons en même temps : "Lever" seulement si un flag manuel
+          // est actif, "Signaler" seulement si ce n'est pas déjà le cas (mais
+          // reste possible même pendant une alerte automatique, pour ajouter
+          // un motif propre au médecin).
+          if (p.manual_alert) {
+            var clearAlertBtn = document.createElement('button');
+            clearAlertBtn.className = 'btn btn--ghost btn--sm';
+            clearAlertBtn.style.marginLeft = '8px';
+            clearAlertBtn.textContent = 'Lever l\'alerte';
+            clearAlertBtn.setAttribute('data-clearalert', p.follow_up_id);
+            row.appendChild(clearAlertBtn);
+          } else {
+            var alertBtn = document.createElement('button');
+            alertBtn.className = 'btn btn--ghost btn--sm';
+            alertBtn.style.marginLeft = '8px';
+            alertBtn.textContent = 'Signaler une alerte';
+            alertBtn.setAttribute('data-setalert', p.follow_up_id);
+            row.appendChild(alertBtn);
+          }
+
           if (p.is_in_alert) {
             var alertEl = document.createElement('span');
-            alertEl.title = 'Alerte';
+            alertEl.title = p.manual_alert
+              ? 'Alerte signalée par vous'
+              : 'Alerte automatique (doses ou RDV de suivi manqués)';
             alertEl.style.cssText = 'flex:none;color:#f59e0b;';
             alertEl.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01" /><path d="M10.3 3.9 2 18a2 2 0 0 0 1.7 3h16.6A2 2 0 0 0 22 18L13.7 3.9a2 2 0 0 0-3.4 0Z" /></svg>';
             row.appendChild(alertEl);
@@ -264,6 +344,141 @@
         searchTimer = setTimeout(function () {
           loadPatients(value);
         }, 300);
+      });
+
+      async function refreshAll() {
+        await loadDashboard();
+        await loadPatients(document.getElementById('chronic-search-input').value);
+      }
+
+      document.getElementById('new-followup-btn').addEventListener('click', async function () {
+        var select = document.getElementById('followup-patient-select');
+        var errorEl = document.getElementById('followup-modal-error');
+        errorEl.classList.add('hidden');
+        document.getElementById('followup-condition-input').value = '';
+        document.getElementById('followup-start-input').value = new Date().toISOString().slice(0, 10);
+        select.innerHTML = '<option>Chargement…</option>';
+        document.getElementById('new-followup-modal').style.display = 'flex';
+        try {
+          var myPatients = await apiGet('/doctors/me/patients');
+          select.innerHTML = '';
+          if (!myPatients.length) {
+            select.innerHTML = '<option value="">Aucun patient avec un rendez-vous confirmé ou terminé</option>';
+            return;
+          }
+          myPatients.forEach(function (p) {
+            var opt = document.createElement('option');
+            opt.value = p.patient_id;
+            opt.textContent = p.patient_name;
+            select.appendChild(opt);
+          });
+        } catch (err) {
+          select.innerHTML = '<option value="">Impossible de charger vos patients</option>';
+        }
+      });
+
+      document.getElementById('followup-submit-btn').addEventListener('click', async function () {
+        var errorEl = document.getElementById('followup-modal-error');
+        errorEl.classList.add('hidden');
+        var patientId = document.getElementById('followup-patient-select').value;
+        var condition = document.getElementById('followup-condition-input').value.trim();
+        var startDate = document.getElementById('followup-start-input').value;
+        if (!patientId || !condition || !startDate) {
+          errorEl.textContent = 'Tous les champs sont obligatoires.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        try {
+          await apiPost('/chronic-care/follow-ups', {
+            patient_id: parseInt(patientId, 10),
+            condition_name: condition,
+            start_date: startDate,
+          });
+          document.getElementById('new-followup-modal').style.display = 'none';
+          await refreshAll();
+        } catch (err) {
+          errorEl.textContent = translateApiError(err);
+          errorEl.classList.remove('hidden');
+        }
+      });
+
+      var pendingCarePlanFollowUpId = null;
+      document.getElementById('care-plan-submit-btn').addEventListener('click', async function () {
+        var errorEl = document.getElementById('care-plan-modal-error');
+        errorEl.classList.add('hidden');
+        var description = document.getElementById('care-plan-description').value.trim();
+        if (!description) {
+          errorEl.textContent = 'La description est obligatoire.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        try {
+          await apiRequest('PUT', '/chronic-care/follow-ups/' + pendingCarePlanFollowUpId + '/care-plan', {
+            json: {
+              description: description,
+              status: document.getElementById('care-plan-status').value,
+            },
+          });
+          document.getElementById('care-plan-modal').style.display = 'none';
+          await refreshAll();
+        } catch (err) {
+          errorEl.textContent = 'Une erreur est survenue, réessayez.';
+          errorEl.classList.remove('hidden');
+        }
+      });
+
+      var pendingSetAlertFollowUpId = null;
+      document.getElementById('set-alert-submit-btn').addEventListener('click', async function () {
+        var errorEl = document.getElementById('set-alert-modal-error');
+        errorEl.classList.add('hidden');
+        var btn = document.getElementById('set-alert-submit-btn');
+        btn.disabled = true;
+        try {
+          await apiPost('/chronic-care/follow-ups/' + pendingSetAlertFollowUpId + '/alert', {
+            alert: true,
+            reason: document.getElementById('set-alert-reason').value.trim() || null,
+          });
+          document.getElementById('set-alert-modal').style.display = 'none';
+          await refreshAll();
+        } catch (err) {
+          errorEl.textContent = translateApiError(err);
+          errorEl.classList.remove('hidden');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      document.addEventListener('click', async function (e) {
+        var carePlanBtn = e.target.closest('[data-careplan]');
+        if (carePlanBtn) {
+          pendingCarePlanFollowUpId = carePlanBtn.getAttribute('data-careplan');
+          document.getElementById('care-plan-description').value = '';
+          document.getElementById('care-plan-status').value = 'active';
+          document.getElementById('care-plan-modal-error').classList.add('hidden');
+          document.getElementById('care-plan-modal').style.display = 'flex';
+          return;
+        }
+
+        var setAlertBtn = e.target.closest('[data-setalert]');
+        if (setAlertBtn) {
+          pendingSetAlertFollowUpId = setAlertBtn.getAttribute('data-setalert');
+          document.getElementById('set-alert-reason').value = '';
+          document.getElementById('set-alert-modal-error').classList.add('hidden');
+          document.getElementById('set-alert-modal').style.display = 'flex';
+          return;
+        }
+
+        var clearAlertBtn = e.target.closest('[data-clearalert]');
+        if (clearAlertBtn) {
+          try {
+            await apiPost('/chronic-care/follow-ups/' + clearAlertBtn.getAttribute('data-clearalert') + '/alert', {
+              alert: false,
+            });
+            await refreshAll();
+          } catch (err) {
+            window.alert('Une erreur est survenue, réessayez.');
+          }
+        }
       });
     })();
   </script>

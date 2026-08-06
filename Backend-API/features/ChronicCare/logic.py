@@ -17,7 +17,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from features.Appointments.models import Appointment, AppointmentStatus, Availability
 from features.Auth.models import Patient, PatientStatus
-from features.ChronicCare.models import CarePlan, CarePlanStatus, ChronicFollowUp, FollowUpStatus
+from features.ChronicCare.models import (
+    CarePlan,
+    CarePlanStatus,
+    ChronicFollowUp,
+    FollowUpStatus,
+)
 from features.ChronicCare.schemas import (
     CarePlanUpsertRequest,
     ChronicCareDashboardOut,
@@ -37,14 +42,18 @@ MISSED_DOSES_ALERT_THRESHOLD = 3
 MISSED_DOSES_WINDOW_DAYS = 7
 
 
-async def _get_owned_follow_up(db: AsyncSession, doctor_id: int, follow_up_id: int) -> ChronicFollowUp:
+async def _get_owned_follow_up(
+    db: AsyncSession, doctor_id: int, follow_up_id: int
+) -> ChronicFollowUp:
     follow_up = await db.get(ChronicFollowUp, follow_up_id)
     if follow_up is None or follow_up.doctor_id != doctor_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Follow-up not found")
     return follow_up
 
 
-async def _has_missed_follow_up(db: AsyncSession, patient_id: int, doctor_id: int) -> bool:
+async def _has_missed_follow_up(
+    db: AsyncSession, patient_id: int, doctor_id: int
+) -> bool:
     """A confirmed appointment whose slot date has passed but was never completed
     reads as a missed follow-up visit."""
     count = await db.scalar(
@@ -88,7 +97,9 @@ async def _count_missed_doses(db: AsyncSession, patient_id: int) -> int:
         overlap_start = max(window_start, t_start)
         overlap_end = min(window_end, t_end)
         if overlap_end >= overlap_start:
-            expected += (overlap_end - overlap_start).days + 1  # one dose per day per schedule
+            expected += (
+                overlap_end - overlap_start
+            ).days + 1  # one dose per day per schedule
     if expected == 0:
         return 0
 
@@ -110,10 +121,15 @@ async def _compute_alert(db: AsyncSession, follow_up: ChronicFollowUp) -> bool:
         return True
     if await _has_missed_follow_up(db, follow_up.patient_id, follow_up.doctor_id):
         return True
-    return await _count_missed_doses(db, follow_up.patient_id) >= MISSED_DOSES_ALERT_THRESHOLD
+    return (
+        await _count_missed_doses(db, follow_up.patient_id)
+        >= MISSED_DOSES_ALERT_THRESHOLD
+    )
 
 
-async def create_follow_up(db: AsyncSession, doctor_id: int, data: ChronicFollowUpCreateRequest) -> ChronicFollowUp:
+async def create_follow_up(
+    db: AsyncSession, doctor_id: int, data: ChronicFollowUpCreateRequest
+) -> ChronicFollowUp:
     patient = await db.get(Patient, data.patient_id)
     if patient is None or patient.status != PatientStatus.ACTIVE:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Patient not found")
@@ -156,15 +172,21 @@ async def upsert_care_plan(
     try:
         plan_status = CarePlanStatus(data.status)
     except ValueError as exc:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "status must be 'active' or 'inactive'") from exc
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "status must be 'active' or 'inactive'"
+        ) from exc
 
     # One care plan per follow-up: update it in place if it already exists.
     care_plan = (
-        await db.scalars(select(CarePlan).where(CarePlan.chronic_follow_up_id == follow_up_id))
+        await db.scalars(
+            select(CarePlan).where(CarePlan.chronic_follow_up_id == follow_up_id)
+        )
     ).first()
     if care_plan is None:
         care_plan = CarePlan(
-            chronic_follow_up_id=follow_up_id, description=data.description, status=plan_status
+            chronic_follow_up_id=follow_up_id,
+            description=data.description,
+            status=plan_status,
         )
         db.add(care_plan)
     else:
@@ -175,7 +197,9 @@ async def upsert_care_plan(
     return care_plan
 
 
-async def _next_appointment_date(db: AsyncSession, patient_id: int, doctor_id: int) -> date | None:
+async def _next_appointment_date(
+    db: AsyncSession, patient_id: int, doctor_id: int
+) -> date | None:
     return await db.scalar(
         select(func.min(Availability.date))
         .select_from(Appointment)
@@ -193,7 +217,10 @@ async def _has_active_care_plan(db: AsyncSession, follow_up_id: int) -> bool:
     count = await db.scalar(
         select(func.count())
         .select_from(CarePlan)
-        .where(CarePlan.chronic_follow_up_id == follow_up_id, CarePlan.status == CarePlanStatus.ACTIVE)
+        .where(
+            CarePlan.chronic_follow_up_id == follow_up_id,
+            CarePlan.status == CarePlanStatus.ACTIVE,
+        )
     )
     return (count or 0) > 0
 
@@ -204,7 +231,10 @@ async def list_chronic_patients(
     query = (
         select(ChronicFollowUp, Patient)
         .join(Patient, ChronicFollowUp.patient_id == Patient.id)
-        .where(ChronicFollowUp.doctor_id == doctor_id, ChronicFollowUp.status == FollowUpStatus.ACTIVE)
+        .where(
+            ChronicFollowUp.doctor_id == doctor_id,
+            ChronicFollowUp.status == FollowUpStatus.ACTIVE,
+        )
     )
     if search:
         like = f"%{search}%"
@@ -215,26 +245,34 @@ async def list_chronic_patients(
                 ChronicFollowUp.condition_name.ilike(like),
             )
         )
-    rows = (await db.execute(query.order_by(Patient.last_name, Patient.first_name))).all()
+    rows = (
+        await db.execute(query.order_by(Patient.last_name, Patient.first_name))
+    ).all()
 
     # N+1 over the doctor's chronic patients (a bounded list); fine for the V1.
     items = []
     for follow_up, patient in rows:
         items.append(
             ChronicPatientListItemOut(
+                follow_up_id=follow_up.id,
                 patient_id=follow_up.patient_id,
                 first_name=patient.first_name,
                 last_name=patient.last_name,
                 condition_name=follow_up.condition_name,
-                next_appointment=await _next_appointment_date(db, follow_up.patient_id, doctor_id),
+                next_appointment=await _next_appointment_date(
+                    db, follow_up.patient_id, doctor_id
+                ),
                 care_plan_active=await _has_active_care_plan(db, follow_up.id),
                 is_in_alert=await _compute_alert(db, follow_up),
+                manual_alert=follow_up.manual_alert,
             )
         )
     return items
 
 
-async def get_chronic_care_dashboard(db: AsyncSession, doctor_id: int) -> ChronicCareDashboardOut:
+async def get_chronic_care_dashboard(
+    db: AsyncSession, doctor_id: int
+) -> ChronicCareDashboardOut:
     follow_ups = list(
         (
             await db.scalars(
@@ -246,14 +284,19 @@ async def get_chronic_care_dashboard(db: AsyncSession, doctor_id: int) -> Chroni
         ).all()
     )
 
-    alert_patient_ids = {fu.patient_id for fu in follow_ups if await _compute_alert(db, fu)}
+    alert_patient_ids = {
+        fu.patient_id for fu in follow_ups if await _compute_alert(db, fu)
+    }
     chronic_patient_ids = {fu.patient_id for fu in follow_ups}
 
     active_care_plans = await db.scalar(
         select(func.count())
         .select_from(CarePlan)
         .join(ChronicFollowUp, CarePlan.chronic_follow_up_id == ChronicFollowUp.id)
-        .where(ChronicFollowUp.doctor_id == doctor_id, CarePlan.status == CarePlanStatus.ACTIVE)
+        .where(
+            ChronicFollowUp.doctor_id == doctor_id,
+            CarePlan.status == CarePlanStatus.ACTIVE,
+        )
     )
 
     today = date.today()

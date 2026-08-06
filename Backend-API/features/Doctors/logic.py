@@ -8,16 +8,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.storage import get_file_url
 from features.Appointments.models import Appointment, AppointmentStatus, Availability
-from features.Auth.models import Doctor, DoctorStatus
+from features.Auth.models import Doctor, DoctorStatus, Patient
 from features.Doctors.schemas import (
     DoctorDashboardOut,
+    DoctorPatientOut,
     DoctorProfileOut,
     DoctorProfileUpdateRequest,
     DoctorPublicOut,
 )
 
 # Appointments that actually count as consultations (a pending or refused/cancelled
-# one is neither billable nor a real visit).
+# one is neither billable nor a real visit). Also the relationship rule used
+# to decide which patients a doctor "knows" — same criterion as
+# HealthRecords._authorize_doctor_for_patient.
 _ACTIVE_STATUSES = (AppointmentStatus.CONFIRMED, AppointmentStatus.COMPLETED)
 
 
@@ -33,6 +36,7 @@ def build_public_out(doctor: Doctor) -> DoctorPublicOut:
         photo_url=get_file_url(doctor.photo_file_key)
         if doctor.photo_file_key
         else None,
+        is_available=doctor.is_available,
     )
 
 
@@ -46,6 +50,9 @@ def build_profile_out(doctor: Doctor) -> DoctorProfileOut:
         country_of_residence=doctor.country_of_residence,
         gender=doctor.gender,
         license_number=doctor.license_number,
+        status=doctor.status,
+        suspended_until=doctor.suspended_until,
+        has_diploma=doctor.diploma_file_key is not None,
     )
 
 
@@ -134,3 +141,26 @@ async def get_doctor_dashboard(db: AsyncSession, doctor_id: int) -> DoctorDashbo
         consultations_this_month=consultations_this_month or 0,
         revenue_this_month=float(revenue_this_month or 0),
     )
+
+
+async def list_my_patients(db: AsyncSession, doctor_id: int) -> list[DoctorPatientOut]:
+    """Distinct patients this doctor has an accepted relationship with, so
+    frontend patient pickers (e.g. starting a chronic-care follow-up) aren't
+    limited to patients the doctor already has a messaging conversation
+    with — a presentiel-only patient is just as legitimate."""
+    rows = (
+        await db.execute(
+            select(Patient.id, Patient.first_name, Patient.last_name)
+            .join(Appointment, Appointment.patient_id == Patient.id)
+            .where(
+                Appointment.doctor_id == doctor_id,
+                Appointment.status.in_(_ACTIVE_STATUSES),
+            )
+            .distinct()
+            .order_by(Patient.last_name, Patient.first_name)
+        )
+    ).all()
+    return [
+        DoctorPatientOut(patient_id=pid, patient_name=f"{first} {last}")
+        for pid, first, last in rows
+    ]

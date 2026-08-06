@@ -8,6 +8,7 @@ from features.Auth.models import Doctor
 from features.Doctors import logic
 from features.Doctors.schemas import (
     DoctorDashboardOut,
+    DoctorPatientOut,
     DoctorProfileOut,
     DoctorProfileUpdateRequest,
     DoctorPublicOut,
@@ -55,6 +56,14 @@ async def get_my_dashboard(
     db: AsyncSession = Depends(get_db),
 ):
     return await logic.get_doctor_dashboard(db, current_doctor.id)
+
+
+@router.get("/me/patients", response_model=list[DoctorPatientOut])
+async def get_my_patients(
+    current_doctor: Doctor = Depends(get_current_doctor),
+    db: AsyncSession = Depends(get_db),
+):
+    return await logic.list_my_patients(db, current_doctor.id)
 
 
 # Kept last: a literal path like /me must be matched before this catch-all,

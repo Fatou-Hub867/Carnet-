@@ -4,7 +4,7 @@ import enum
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Date, DateTime, Enum, Numeric, String, false, func
+from sqlalchemy import Date, DateTime, Enum, Numeric, String, false, func, true
 from sqlalchemy.orm import Mapped, mapped_column
 
 from core.database import Base
@@ -92,6 +92,7 @@ class Doctor(Base):
     diploma_file_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     photo_file_key: Mapped[str | None] = mapped_column(String(500), nullable=True)
     consultation_fee: Mapped[Decimal] = mapped_column(Numeric(10, 2))
+    is_available: Mapped[bool] = mapped_column(default=True, server_default=true())
     status: Mapped[DoctorStatus] = mapped_column(
         Enum(DoctorStatus), default=DoctorStatus.PENDING_VALIDATION
     )

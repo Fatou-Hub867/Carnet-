@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Connexion — Carnet+</title>
+  <title>Connexion Carnet+</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -30,7 +30,7 @@
           <span class="brand-accent">connectée</span> et
           <br>simplifiée.
         </h1>
-        <p>Téléconsultation, ordonnances, carnet de santé et suivi médical — tout le cabinet en un seul endroit.</p>
+        <p>Téléconsultation, ordonnances, carnet de santé et suivi médical tout le cabinet en un seul endroit.</p>
         <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:34px;max-width:480px;">
           <div class="auth__pill">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -134,8 +134,9 @@
         try {
           var data = await apiPost(path, { email: email, password: password });
           CarnetAuth.saveSession(data.access_token, selectedRole);
+          var profile = null;
           try {
-            var profile = await apiGet(selectedRole === 'patient' ? '/patients/me' : '/doctors/me');
+            profile = await apiGet(selectedRole === 'patient' ? '/patients/me' : '/doctors/me');
             CarnetAuth.saveIdentity({
               firstName: profile.first_name,
               lastName: profile.last_name,
@@ -145,12 +146,26 @@
           } catch (identityErr) {
             // Non bloquant : la connexion reste valide même si ce second appel échoue.
           }
+          // Un médecin peut se connecter avant validation admin (pending_validation)
+          // ou pendant une suspension (signalements) — voir DOCTOR_LOGIN_ALLOWED_STATUSES
+          // côté backend. Dans ces deux cas, pas d'accès au dashboard complet.
+          if (selectedRole === 'doctor' && profile && profile.status === 'pending_validation') {
+            window.location.href = 'en-attente.html';
+            return;
+          }
+          if (selectedRole === 'doctor' && profile && profile.status === 'suspended') {
+            window.location.href = 'compte-suspendu.html' +
+              (profile.suspended_until ? '?until=' + encodeURIComponent(profile.suspended_until) : '');
+            return;
+          }
           window.location.href = selectedRole === 'patient' ? 'patient/dashboard.html' : 'medecin/dashboard.html';
         } catch (err) {
           errorEl.textContent = err.status === 401
             ? 'Email ou mot de passe incorrect.'
             : err.status === 403 && selectedRole === 'patient'
             ? 'Veuillez confirmer votre adresse email avant de vous connecter.'
+            : err.status === 403 && selectedRole === 'doctor'
+            ? 'Ce compte ne peut pas se connecter pour le moment.'
             : 'Une erreur est survenue, réessayez.';
           errorEl.classList.remove('hidden');
         }

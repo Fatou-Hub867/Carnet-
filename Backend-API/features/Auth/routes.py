@@ -11,12 +11,13 @@ from fastapi import APIRouter, BackgroundTasks, Depends, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.deps import get_current_doctor
+from core.deps import get_current_doctor, get_current_patient
 from core.security import create_access_token
 from core.storage import upload_file
 from features.Auth import logic
-from features.Auth.models import Doctor
+from features.Auth.models import Doctor, Patient
 from features.Auth.schemas import (
+    ChangePasswordRequest,
     ConfirmEmailRequest,
     DoctorRegisterRequest,
     DoctorRegisterResponse,
@@ -110,3 +111,27 @@ async def confirm_patient_email(
 ):
     await logic.confirm_patient_email(db, data.token)
     return {"status": "email confirmed"}
+
+
+@router.post("/patients/change-password")
+async def change_patient_password(
+    data: ChangePasswordRequest,
+    current_patient: Patient = Depends(get_current_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    await logic.change_password(
+        db, current_patient, data.current_password, data.new_password
+    )
+    return {"status": "password updated"}
+
+
+@router.post("/doctors/change-password")
+async def change_doctor_password(
+    data: ChangePasswordRequest,
+    current_doctor: Doctor = Depends(get_current_doctor),
+    db: AsyncSession = Depends(get_db),
+):
+    await logic.change_password(
+        db, current_doctor, data.current_password, data.new_password
+    )
+    return {"status": "password updated"}

@@ -53,6 +53,15 @@ async function apiRequest(method, path, options) {
   }
 
   if (!response.ok) {
+    if (
+      (response.status === 401 || response.status === 403) &&
+      window.CarnetAuth && CarnetAuth.sessionMismatch && CarnetAuth.sessionMismatch()
+    ) {
+      CarnetAuth.clearSession();
+      window.alert('Votre session a changé (connexion depuis un autre onglet ?). Merci de vous reconnecter.');
+      window.location.href = '/index.html';
+      return new Promise(function () {}); // navigation is already underway, nothing left to do here
+    }
     var detail = body && body.detail ? body.detail : response.statusText;
     throw new ApiError(response.status, detail);
   }
@@ -68,4 +77,32 @@ function apiPost(path, json) {
 }
 function apiPostForm(path, formData, tokenOverride) {
   return apiRequest('POST', path, { form: formData, token: tokenOverride });
+}
+
+// Le backend lève ses erreurs (HTTPException) en anglais par convention du
+// projet (voir Backend-API/CLAUDE.md). Plutôt que de traduire le backend
+// lui-même (romprait avec Swagger/les tests), cette table traduit les
+// messages connus pour l'affichage ; tout message non répertorié retombe sur
+// un texte français générique plutôt que de fuiter tel quel.
+var API_ERROR_TRANSLATIONS = {
+  'Cannot open a slot in the past': "Impossible de publier un créneau dans le passé.",
+  'This slot overlaps an existing availability': 'Ce créneau chevauche une disponibilité existante.',
+  'end_time must be after start_time': "L'heure de fin doit être après l'heure de début.",
+  'This slot is no longer available': "Ce créneau n'est plus disponible.",
+  'This slot is in the past': 'Ce créneau est déjà passé.',
+  'This doctor is not accepting new appointments right now': "Ce médecin n'accepte pas de nouveaux rendez-vous pour le moment.",
+  'Availability not found': 'Créneau introuvable.',
+  'This slot has already been booked and cannot be removed': 'Ce créneau a déjà été réservé, il ne peut plus être supprimé.',
+  'Appointment not found': 'Rendez-vous introuvable.',
+  'Patient not found': 'Patient introuvable.',
+  'Follow-up not found': 'Suivi introuvable.',
+  'The consultation must be completed before prescribing': 'La consultation doit être terminée avant de pouvoir prescrire.',
+  "A treatment's end_date is before its start_date": 'La date de fin d’un traitement ne peut pas précéder sa date de début.',
+  'Each treatment needs at least one intake time': 'Chaque traitement doit avoir au moins un horaire de prise.',
+  'Current password is incorrect': 'Le mot de passe actuel est incorrect.',
+};
+
+function translateApiError(err) {
+  var detail = err && typeof err.detail === 'string' ? err.detail : null;
+  return (detail && API_ERROR_TRANSLATIONS[detail]) || 'Une erreur est survenue, réessayez.';
 }

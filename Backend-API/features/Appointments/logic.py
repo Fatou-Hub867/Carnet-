@@ -83,6 +83,24 @@ async def list_doctor_availabilities(
     )
 
 
+async def delete_availability(
+    db: AsyncSession, doctor_id: int, availability_id: int
+) -> None:
+    """Removes a slot the doctor published by mistake. Only a still-FREE slot
+    can be removed — once booked, the Appointment referencing it must go
+    through the normal decision/cancellation flow instead."""
+    availability = await db.get(Availability, availability_id)
+    if availability is None or availability.doctor_id != doctor_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Availability not found")
+    if availability.status != AvailabilityStatus.FREE:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "This slot has already been booked and cannot be removed",
+        )
+    await db.delete(availability)
+    await db.commit()
+
+
 async def book_appointment(
     db: AsyncSession, patient_id: int, data: AppointmentCreateRequest
 ) -> Appointment:
@@ -104,6 +122,13 @@ async def book_appointment(
         )
     if availability.date < date.today():
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "This slot is in the past")
+
+    doctor = await db.get(Doctor, availability.doctor_id)
+    if doctor is not None and not doctor.is_available:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "This doctor is not accepting new appointments right now",
+        )
 
     availability.status = AvailabilityStatus.BOOKED
     appointment = Appointment(
@@ -207,7 +232,53 @@ async def list_pending_appointments(
 async def get_doctor_calendar(
     db: AsyncSession, doctor_id: int, day: date
 ) -> list[DoctorCalendarEntryOut]:
-    """Confirmed consultations for a given day, with slot time and patient name."""
+    """The day's full record — pending, confirmed, refused and completed alike
+    — with slot time and patient name, so a doctor browsing a day (past or
+    present) sees everything that was scheduled, not just what's still
+    upcoming."""
+    rows = (
+        await db.execute(
+            select(
+                Appointment.id,
+                Patient.first_name,
+                Patient.last_name,
+                Availability.date,
+                Availability.start_time,
+                Appointment.mode,
+                Appointment.status,
+            )
+            .join(Availability, Appointment.availability_id == Availability.id)
+            .join(Patient, Appointment.patient_id == Patient.id)
+            .where(
+                and_(
+                    Appointment.doctor_id == doctor_id,
+                    Appointment.status != AppointmentStatus.CANCELLED,
+                    Availability.date == day,
+                )
+            )
+            .order_by(Availability.start_time)
+        )
+    ).all()
+
+    return [
+        DoctorCalendarEntryOut(
+            appointment_id=appt_id,
+            patient_name=f"{first_name} {last_name}",
+            date=appt_date,
+            start_time=start_time,
+            mode=mode,
+            status=appt_status,
+        )
+        for appt_id, first_name, last_name, appt_date, start_time, mode, appt_status in rows
+    ]
+
+
+async def list_confirmed_appointments(
+    db: AsyncSession, doctor_id: int
+) -> list[DoctorCalendarEntryOut]:
+    """All confirmed (accepted, not yet completed) consultations across every
+    day — the day-by-day calendar only shows one date at a time, this is the
+    doctor's full upcoming active caseload."""
     rows = (
         await db.execute(
             select(
@@ -225,10 +296,9 @@ async def get_doctor_calendar(
                 and_(
                     Appointment.doctor_id == doctor_id,
                     Appointment.status == AppointmentStatus.CONFIRMED,
-                    Availability.date == day,
                 )
             )
-            .order_by(Availability.start_time)
+            .order_by(Availability.date, Availability.start_time)
         )
     ).all()
 

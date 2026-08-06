@@ -120,6 +120,9 @@
             <a class="tab" href="#" data-tab="vaccins">Vaccinations</a>
           </div>
           <div id="tab-documents" class="tab-panel">
+            <div class="row" style="justify-content:flex-end;margin-bottom:14px;">
+              <button class="btn btn--primary btn--sm" data-open="carnet-upload-modal">Ajouter un document</button>
+            </div>
             <div class="grid-3" id="carnet-doc-grid"></div>
             <div class="empty hidden" id="carnet-doc-empty">Aucun document.</div>
           </div>
@@ -154,6 +157,26 @@
         </div>
       </div>
     </main>
+  </div>
+  <div class="modal__backdrop" id="carnet-upload-modal" style="display:none;">
+    <div class="modal" style="max-width:400px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:18px;">
+        <div style="font-size:19px;font-weight:800;">Ajouter un document</div>
+        <button class="modal__close" data-close>✕</button>
+      </div>
+      <input type="file" id="carnet-upload-input" style="margin-bottom:16px;">
+      <p class="form-error hidden" id="carnet-upload-error"></p>
+      <button class="btn btn--primary btn--block" id="carnet-upload-submit">Téléverser</button>
+    </div>
+  </div>
+  <div class="modal__backdrop" id="carnet-preview-modal" style="display:none;">
+    <div class="modal" style="max-width:900px;width:95vw;height:88vh;display:flex;flex-direction:column;padding:18px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:12px;flex:none;">
+        <div style="font-size:17px;font-weight:800;" id="carnet-preview-title">Document</div>
+        <button class="modal__close" data-close>✕</button>
+      </div>
+      <iframe id="carnet-preview-frame" style="flex:1;width:100%;border:none;border-radius:10px;background:#f1f5f7;" src="about:blank"></iframe>
+    </div>
   </div>
   <script src="../auth.js"></script>
   <script src="../api.js"></script>
@@ -233,6 +256,7 @@
           viewBtn.className = 'btn btn--ghost btn--sm';
           viewBtn.style.cssText = 'flex:1;';
           viewBtn.setAttribute('data-view', doc.id);
+          viewBtn.setAttribute('data-filename', doc.original_filename);
           viewBtn.textContent = 'Voir';
           actionsRow.appendChild(viewBtn);
 
@@ -355,6 +379,29 @@
         });
       });
 
+      document.getElementById('carnet-upload-submit').addEventListener('click', async function () {
+        var input = document.getElementById('carnet-upload-input');
+        var errorEl = document.getElementById('carnet-upload-error');
+        errorEl.classList.add('hidden');
+        var file = input.files[0];
+        if (!file) {
+          errorEl.textContent = 'Choisissez un fichier.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        try {
+          var formData = new FormData();
+          formData.append('file', file);
+          await apiPostForm('/health-records/patients/' + patientId + '/documents', formData);
+          document.getElementById('carnet-upload-modal').style.display = 'none';
+          input.value = '';
+          await loadAll();
+        } catch (err) {
+          errorEl.textContent = 'Une erreur est survenue, réessayez.';
+          errorEl.classList.remove('hidden');
+        }
+      });
+
       document.addEventListener('click', async function (e) {
         var viewBtn = e.target.closest('[data-view]');
         var downloadBtn = e.target.closest('[data-download]');
@@ -364,9 +411,21 @@
           : downloadBtn.getAttribute('data-download');
         try {
           var result = await apiGet('/health-records/patients/' + patientId + '/documents/' + documentId + '/download');
-          window.open(viewBtn ? result.view_url : result.download_url, '_blank', 'noopener,noreferrer');
+          if (viewBtn) {
+            document.getElementById('carnet-preview-title').textContent = viewBtn.getAttribute('data-filename') || 'Document';
+            document.getElementById('carnet-preview-frame').src = result.view_url;
+            document.getElementById('carnet-preview-modal').style.display = 'flex';
+          } else {
+            window.open(result.download_url, '_blank', 'noopener,noreferrer');
+          }
         } catch (err) {
           window.alert('Impossible d\'ouvrir ce document, réessayez.');
+        }
+      });
+
+      document.getElementById('carnet-preview-modal').addEventListener('click', function (e) {
+        if (e.target.closest('[data-close]') || e.target.id === 'carnet-preview-modal') {
+          document.getElementById('carnet-preview-frame').src = 'about:blank';
         }
       });
     })();

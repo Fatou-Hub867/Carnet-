@@ -80,6 +80,15 @@
       </div>
     </main>
   </div>
+  <div class="modal__backdrop" id="carnet-preview-modal" style="display:none;">
+    <div class="modal" style="max-width:900px;width:95vw;height:88vh;display:flex;flex-direction:column;padding:18px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:12px;flex:none;">
+        <div style="font-size:17px;font-weight:800;" id="carnet-preview-title">Document</div>
+        <button class="modal__close" data-close>✕</button>
+      </div>
+      <iframe id="carnet-preview-frame" style="flex:1;width:100%;border:none;border-radius:10px;background:#f1f5f7;" src="about:blank"></iframe>
+    </div>
+  </div>
   <script src="../auth.js"></script>
   <script src="../api.js"></script>
   <script src="../app.js"></script>
@@ -136,7 +145,14 @@
             return async function () {
               try {
                 var result = await apiGet('/admin/doctors/' + doctor.id + '/diploma/download');
-                window.open(useDownloadUrl ? result.download_url : result.view_url, '_blank', 'noopener,noreferrer');
+                if (useDownloadUrl) {
+                  window.open(result.download_url, '_blank', 'noopener,noreferrer');
+                } else {
+                  document.getElementById('carnet-preview-title').textContent =
+                    'Justificatif — ' + doctor.first_name + ' ' + doctor.last_name;
+                  document.getElementById('carnet-preview-frame').src = result.view_url;
+                  document.getElementById('carnet-preview-modal').style.display = 'flex';
+                }
               } catch (err) {
                 window.alert('Impossible d\'ouvrir le justificatif, réessayez.');
               }
@@ -203,6 +219,12 @@
           document.getElementById('doctors-error').textContent = 'Impossible de charger les demandes.';
           document.getElementById('doctors-error').classList.remove('hidden');
         });
+
+      document.getElementById('carnet-preview-modal').addEventListener('click', function (e) {
+        if (e.target.closest('[data-close]') || e.target.id === 'carnet-preview-modal') {
+          document.getElementById('carnet-preview-frame').src = 'about:blank';
+        }
+      });
     })();
   </script>
 </body>

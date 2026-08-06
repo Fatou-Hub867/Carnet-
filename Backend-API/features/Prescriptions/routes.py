@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db
 from core.deps import get_current_doctor, get_current_patient
 from features.Auth.models import Doctor, Patient
+from features.HealthRecords.schemas import DocumentUrlsOut
 from features.Prescriptions import logic
 from features.Prescriptions.schemas import (
     PrescriptionCreateRequest,
@@ -31,14 +32,13 @@ async def list_my_prescriptions(
     return await logic.list_patient_prescriptions(db, current_patient.id)
 
 
-@router.get("/{prescription_id}/download")
+@router.get("/{prescription_id}/download", response_model=DocumentUrlsOut)
 async def download_prescription(
     prescription_id: int,
     current_patient: Patient = Depends(get_current_patient),
     db: AsyncSession = Depends(get_db),
 ):
-    url = await logic.get_prescription_pdf_url(db, current_patient.id, prescription_id)
-    return {"download_url": url}
+    return await logic.get_prescription_pdf_url(db, current_patient.id, prescription_id)
 
 
 @router.post("/treatment-intakes/confirm", status_code=status.HTTP_204_NO_CONTENT)
@@ -47,4 +47,6 @@ async def confirm_treatment_intake(
     current_patient: Patient = Depends(get_current_patient),
     db: AsyncSession = Depends(get_db),
 ):
-    await logic.confirm_treatment_intake(db, current_patient.id, data.treatment_schedule_id, data.date)
+    await logic.confirm_treatment_intake(
+        db, current_patient.id, data.treatment_schedule_id, data.date
+    )

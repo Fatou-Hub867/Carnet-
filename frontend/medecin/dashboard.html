@@ -92,16 +92,19 @@
             <h1 class="h1">Dr. <span data-greeting-fullname>Fatou Malta</span></h1>
             <p class="subtitle" style="margin:0;">Bienvenue sur votre espace de gestion médicale.</p>
           </div>
-          <div class="row" style="gap:14px;">
-            <div class="row" data-avail-toggle style="gap:9px;font-weight:700;font-size:14px;cursor:pointer;user-select:none;">
-              <span class="avail-label">Disponible</span>
-              <span class="avail-track" style="width:42px;height:24px;border-radius:20px;background:#10b981;position:relative;display:inline-block;transition:background .2s;">
-                <span class="avail-knob" style="position:absolute;top:3px;left:21px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;"></span>
-              </span>
+          <div class="col" style="gap:4px;align-items:flex-end;">
+            <div class="row" style="gap:14px;">
+              <div class="row" data-avail-toggle style="gap:9px;font-weight:700;font-size:14px;cursor:pointer;user-select:none;">
+                <span class="avail-label">Disponible</span>
+                <span class="avail-track" style="width:42px;height:24px;border-radius:20px;background:#10b981;position:relative;display:inline-block;transition:background .2s;">
+                  <span class="avail-knob" style="position:absolute;top:3px;left:21px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;"></span>
+                </span>
+              </div>
             </div>
+            <p class="form-error hidden" id="avail-toggle-error" style="margin:0;font-size:12px;"></p>
           </div>
         </div>
-        <div class="grid-3 mb-22">
+        <div class="grid-4 mb-22">
           <div class="stat">
             <div class="avatar avatar-46" style="width:46px;height:46px;border-radius:13px;background:#5b6ef5;">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -110,7 +113,7 @@
               </svg>
             </div>
             <div>
-              <div class="num">4</div>
+              <div class="num" id="stat-today">—</div>
               <div class="lbl">Consultations aujourd'hui</div>
             </div>
           </div>
@@ -122,7 +125,7 @@
               </svg>
             </div>
             <div>
-              <div class="num">2</div>
+              <div class="num" id="stat-pending">—</div>
               <div class="lbl">En attente</div>
             </div>
           </div>
@@ -133,8 +136,19 @@
               </svg>
             </div>
             <div>
-              <div class="num">38</div>
+              <div class="num" id="stat-month">—</div>
               <div class="lbl">Ce mois-ci</div>
+            </div>
+          </div>
+          <div class="stat">
+            <div class="avatar avatar-46" style="width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,#ec4899,#f97316);">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+            </div>
+            <div>
+              <div class="num" id="stat-revenue">—</div>
+              <div class="lbl">Revenus du mois</div>
             </div>
           </div>
         </div>
@@ -155,40 +169,8 @@
               <div class="section-title">Aujourd'hui</div>
               <a href="calendrier.html" style="font-size:13.5px;font-weight:600;">Voir tout →</a>
             </div>
-            <div class="col" style="gap:9px;">
-              <div class="row" style="gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;">
-                <div style="font-weight:800;font-size:14px;color:var(--green-text);width:46px;flex:none;">09:00</div>
-                <div style="flex:1;min-width:0;">
-                  <div style="font-weight:700;font-size:14px;">Samuel Obi</div>
-                  <div style="color:var(--muted);font-size:12.5px;">Suivi asthme</div>
-                </div>
-                <span class="chip" style="font-size:11.5px;padding:4px 9px;border-radius:14px;">Présentiel</span>
-              </div>
-              <div class="row" style="gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;">
-                <div style="font-weight:800;font-size:14px;color:var(--green-text);width:46px;flex:none;">11:30</div>
-                <div style="flex:1;min-width:0;">
-                  <div style="font-weight:700;font-size:14px;">Grace Mbemba</div>
-                  <div style="color:var(--muted);font-size:12.5px;">Contrôle tension</div>
-                </div>
-                <span class="chip" style="font-size:11.5px;padding:4px 9px;border-radius:14px;">Présentiel</span>
-              </div>
-              <div class="row" style="gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;">
-                <div style="font-weight:800;font-size:14px;color:var(--green-text);width:46px;flex:none;">14:00</div>
-                <div style="flex:1;min-width:0;">
-                  <div style="font-weight:700;font-size:14px;">Josué Bantsimba</div>
-                  <div style="color:var(--muted);font-size:12.5px;">Résultats analyses</div>
-                </div>
-                <span class="chip" style="font-size:11.5px;padding:4px 9px;border-radius:14px;">Présentiel</span>
-              </div>
-              <div class="row" style="gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;">
-                <div style="font-weight:800;font-size:14px;color:var(--green-text);width:46px;flex:none;">16:15</div>
-                <div style="flex:1;min-width:0;">
-                  <div style="font-weight:700;font-size:14px;">Amadou Koné</div>
-                  <div style="color:var(--muted);font-size:12.5px;">Douleurs thoraciques</div>
-                </div>
-                <span class="chip" style="font-size:11.5px;padding:4px 9px;border-radius:14px;">Présentiel</span>
-              </div>
-            </div>
+            <div class="col" style="gap:9px;" id="today-list"></div>
+            <div class="empty hidden" id="today-empty">Aucune consultation confirmée aujourd'hui.</div>
           </div>
         </div>
         <div class="card card--pad" style="border-radius:18px;">
@@ -302,6 +284,83 @@
         }
       }
       loadPending();
+
+      async function loadStats() {
+        try {
+          var data = await apiGet('/doctors/me/dashboard');
+          document.getElementById('stat-today').textContent = data.consultations_today;
+          document.getElementById('stat-pending').textContent = data.pending_appointments;
+          document.getElementById('stat-month').textContent = data.consultations_this_month;
+          document.getElementById('stat-revenue').textContent = data.revenue_this_month + ' FCFA';
+        } catch (err) {
+          ['stat-today', 'stat-pending', 'stat-month', 'stat-revenue'].forEach(function (id) {
+            document.getElementById(id).textContent = '—';
+          });
+        }
+      }
+      loadStats();
+
+      async function loadAvailabilityToggle() {
+        try {
+          var me = await apiGet('/doctors/me');
+          var toggle = document.querySelector('[data-avail-toggle]');
+          if (toggle) setAvailabilityToggleState(toggle, me.is_available);
+        } catch (err) {
+          // Non bloquant : le reste du dashboard reste utilisable, l'interrupteur
+          // garde son état visuel par défaut ("Disponible").
+        }
+      }
+      loadAvailabilityToggle();
+
+      function todayIso() {
+        return new Date().toISOString().slice(0, 10);
+      }
+
+      function renderToday(entries) {
+        var list = document.getElementById('today-list');
+        var empty = document.getElementById('today-empty');
+        list.innerHTML = '';
+        if (!entries.length) {
+          empty.classList.remove('hidden');
+          return;
+        }
+        empty.classList.add('hidden');
+        entries.forEach(function (entry) {
+          var row = document.createElement('div');
+          row.className = 'row';
+          row.style.cssText = 'gap:12px;padding:9px 0;border-bottom:1px solid #f4f6f7;';
+
+          var timeDiv = document.createElement('div');
+          timeDiv.style.cssText = 'font-weight:800;font-size:14px;color:var(--green-text);width:46px;flex:none;';
+          timeDiv.textContent = entry.start_time.slice(0, 5);
+          row.appendChild(timeDiv);
+
+          var nameDiv = document.createElement('div');
+          nameDiv.style.cssText = 'flex:1;min-width:0;font-weight:700;font-size:14px;';
+          nameDiv.textContent = entry.patient_name;
+          row.appendChild(nameDiv);
+
+          var chip = document.createElement('span');
+          chip.className = 'chip';
+          chip.style.cssText = 'font-size:11.5px;padding:4px 9px;border-radius:14px;';
+          chip.textContent = entry.mode === 'message' ? 'Message' : 'Présentiel';
+          row.appendChild(chip);
+
+          list.appendChild(row);
+        });
+      }
+
+      async function loadToday() {
+        try {
+          var entries = await apiGet('/appointments/calendar?day=' + todayIso());
+          // Aperçu volontairement limité au confirmé/terminé — les demandes en
+          // attente ont déjà leur propre bloc juste à côté.
+          renderToday(entries.filter(function (e) { return e.status === 'confirmed' || e.status === 'completed'; }));
+        } catch (err) {
+          document.getElementById('today-list').textContent = 'Impossible de charger le planning du jour.';
+        }
+      }
+      loadToday();
 
       document.addEventListener('click', async function (e) {
         var acceptBtn = e.target.closest('[data-accept]');

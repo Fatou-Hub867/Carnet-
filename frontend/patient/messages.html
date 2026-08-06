@@ -117,6 +117,10 @@
             <div id="thread-active" style="display:none;flex-direction:column;flex:1;min-height:0;">
               <div class="row" id="thread-header" style="gap:12px;padding:16px;border-bottom:1px solid #f4f6f7;"></div>
               <div id="thread-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;"></div>
+              <div id="thread-file-chip" class="row hidden" style="gap:8px;padding:0 16px;align-items:center;font-size:13px;color:var(--muted);">
+                📎 <span id="thread-file-chip-name" style="flex:1;"></span>
+                <button type="button" class="icon-btn" id="thread-file-remove" title="Retirer la pièce jointe">✕</button>
+              </div>
               <form id="thread-send-form" class="row" style="gap:8px;padding:12px 16px;border-top:1px solid #f4f6f7;">
                 <input class="input" id="thread-content" placeholder="Écrire un message…" style="flex:1;">
                 <input type="file" id="thread-file" style="display:none;">
@@ -162,6 +166,7 @@
           conversations.forEach(function (c) {
             var item = document.createElement('div');
             item.className = 'conv-item';
+            item.classList.toggle('active', c.id === activeConversationId);
             item.setAttribute('data-id', c.id);
 
             var avatar = document.createElement('div');
@@ -177,6 +182,13 @@
             nameDiv.textContent = 'Dr. ' + c.doctor_name;
             nameWrap.appendChild(nameDiv);
             item.appendChild(nameWrap);
+
+            if (c.unread_count > 0 && c.id !== activeConversationId) {
+              var unreadEl = document.createElement('span');
+              unreadEl.className = 'unread';
+              unreadEl.textContent = c.unread_count > 9 ? '9+' : String(c.unread_count);
+              item.appendChild(unreadEl);
+            }
 
             renderAvatar(avatar, c.doctor_photo_url);
             item.addEventListener('click', function () { openThread(c); });
@@ -220,10 +232,14 @@
           var container = document.getElementById('thread-messages');
           container.innerHTML = '';
           messages.forEach(function (m) {
-            var bubble = document.createElement('div');
             var mine = m.sender_type === 'patient';
-            bubble.style.cssText = 'max-width:70%;padding:10px 14px;border-radius:14px;' +
-              (mine ? 'align-self:flex-end;background:var(--green-soft);' : 'align-self:flex-start;background:var(--field);');
+            var wrap = document.createElement('div');
+            wrap.style.cssText = 'display:flex;flex-direction:column;max-width:70%;' +
+              (mine ? 'align-self:flex-end;align-items:flex-end;' : 'align-self:flex-start;align-items:flex-start;');
+
+            var bubble = document.createElement('div');
+            bubble.style.cssText = 'padding:10px 14px;border-radius:14px;' +
+              (mine ? 'background:var(--green-soft);' : 'background:var(--field);');
             bubble.textContent = m.content || '(pièce jointe)';
             if (m.file_key) {
               var link = document.createElement('a');
@@ -240,7 +256,16 @@
               });
               bubble.appendChild(link);
             }
-            container.appendChild(bubble);
+            wrap.appendChild(bubble);
+
+            var timeDiv = document.createElement('div');
+            timeDiv.style.cssText = 'color:var(--muted-2);font-size:11.5px;margin-top:3px;padding:0 4px;';
+            var sentAt = new Date(m.sent_at);
+            timeDiv.textContent = sentAt.toLocaleDateString('fr-FR') + ' ' +
+              sentAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            wrap.appendChild(timeDiv);
+
+            container.appendChild(wrap);
           });
           container.scrollTop = container.scrollHeight;
         } catch (err) {
@@ -251,6 +276,23 @@
 
       document.getElementById('thread-attach').addEventListener('click', function () {
         document.getElementById('thread-file').click();
+      });
+
+      function updateFileChip() {
+        var fileInput = document.getElementById('thread-file');
+        var chip = document.getElementById('thread-file-chip');
+        var file = fileInput.files[0];
+        if (file) {
+          document.getElementById('thread-file-chip-name').textContent = file.name;
+          chip.classList.remove('hidden');
+        } else {
+          chip.classList.add('hidden');
+        }
+      }
+      document.getElementById('thread-file').addEventListener('change', updateFileChip);
+      document.getElementById('thread-file-remove').addEventListener('click', function () {
+        document.getElementById('thread-file').value = '';
+        updateFileChip();
       });
 
       document.getElementById('thread-send-form').addEventListener('submit', async function (e) {
@@ -266,6 +308,7 @@
           await apiPostForm('/messaging/conversations/' + activeConversationId + '/messages', formData);
           contentInput.value = '';
           fileInput.value = '';
+          updateFileChip();
           await refreshMessages();
         } catch (err) {
           window.alert('Une erreur est survenue, réessayez.');
@@ -333,6 +376,10 @@
       document.getElementById('new-conversation-btn').addEventListener('click', loadDoctorsForNewConversation);
 
       loadConversations();
+      // Voir la note équivalente côté médecin (medecin/messages.html) : sans
+      // ceci, un nouveau message sur un fil non ouvert n'apparaît qu'au
+      // rechargement complet de la page.
+      setInterval(loadConversations, 8000);
     })();
   </script>
 </body>

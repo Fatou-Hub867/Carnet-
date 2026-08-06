@@ -89,8 +89,12 @@
       <div class="fade container-sm">
         <h1 class="h1">Créer une ordonnance</h1>
         <p class="subtitle">Prescrivez des médicaments à vos patients en consultation.</p>
-        <div class="section-title" style="margin-bottom:13px;">1 · Sélectionner une consultation</div>
-        <div class="col" style="gap:10px;margin-bottom:26px;" id="awaiting-list"></div>
+        <div class="empty hidden" id="ordonnance-direct-banner" style="margin-bottom:20px;">Ordonnance pour <strong id="ordonnance-direct-name"></strong>, sans rendez-vous associé (créée depuis la messagerie).</div>
+        <div id="ordonnance-step1">
+          <div class="section-title" style="margin-bottom:13px;">1 · Sélectionner une consultation</div>
+          <div class="col" style="gap:10px;margin-bottom:26px;" id="awaiting-list"></div>
+          <div class="empty hidden" id="awaiting-empty">Aucune consultation terminée en attente de prescription. Une fois un rendez-vous accepté, clôturez-le depuis le <a href="calendrier.html">calendrier</a> pour pouvoir y rédiger une ordonnance.</div>
+        </div>
         <div class="fade" id="ordonnance-step2" style="display:none;">
           <div class="section-title" style="margin-bottom:13px;">2 · Médicaments prescrits</div>
           <div class="card">
@@ -108,6 +112,10 @@
                 <div style="flex:1;">
                   <label class="med-label">DURÉE</label>
                   <input class="med-input" value="" placeholder="7 jours">
+                </div>
+                <div style="flex:1.4;">
+                  <label class="med-label">HORAIRES DE PRISE</label>
+                  <input class="med-input" value="" placeholder="08:00, 14:00, 20:00">
                 </div>
                 <button class="trash" data-removemed>
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -134,20 +142,43 @@
     (function () {
       CarnetAuth.requireAuth('doctor');
       var selectedAppointmentId = null;
+      var selectedPatientId = null;
 
       function initialsFromName(name) {
         var parts = name.split(' ');
         return (parts[0][0] || '') + (parts[parts.length - 1][0] || '');
       }
 
+      // "08:00, 14:00, 20:00" -> ['08:00:00', '14:00:00', '20:00:00'], ou null
+      // si le champ est vide ou contient un horaire mal formé.
+      function parseIntakeTimes(raw) {
+        if (!raw || !raw.trim()) return null;
+        var parts = raw.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+        var times = [];
+        for (var i = 0; i < parts.length; i++) {
+          var m = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(parts[i]);
+          if (!m) return null;
+          var hh = m[1].length === 1 ? '0' + m[1] : m[1];
+          times.push(hh + ':' + m[2] + ':00');
+        }
+        return times.length ? times : null;
+      }
+
       function renderAwaiting(list) {
         var container = document.getElementById('awaiting-list');
+        var empty = document.getElementById('awaiting-empty');
         container.innerHTML = '';
+        if (!list.length) {
+          empty.classList.remove('hidden');
+          return;
+        }
+        empty.classList.add('hidden');
         list.forEach(function (item) {
           var row = document.createElement('div');
           row.className = 'select-row';
           row.setAttribute('data-selectord', '');
           row.setAttribute('data-appointment-id', item.appointment_id);
+          row.setAttribute('data-patient-id', item.patient_id);
 
           var avatar = document.createElement('div');
           avatar.className = 'avatar avatar-44';
@@ -183,26 +214,50 @@
           document.getElementById('awaiting-list').textContent = 'Impossible de charger la liste.';
         }
       }
-      loadAwaiting();
+
+      // Arrivée depuis une conversation (medecin/messages.html) : on connaît déjà
+      // le patient, pas de rendez-vous à choisir -> on saute l'étape 1.
+      var directPatientId = new URLSearchParams(window.location.search).get('patient_id');
+      if (directPatientId) {
+        selectedPatientId = parseInt(directPatientId, 10);
+        selectedAppointmentId = null;
+        document.getElementById('ordonnance-step1').style.display = 'none';
+        var banner = document.getElementById('ordonnance-direct-banner');
+        banner.classList.remove('hidden');
+        document.getElementById('ordonnance-direct-name').textContent =
+          new URLSearchParams(window.location.search).get('patient_name') || 'ce patient';
+        document.getElementById('ordonnance-step2').style.display = '';
+      } else {
+        loadAwaiting();
+      }
 
       // app.js's existing [data-selectord] handler shows step 2 and highlights the
       // row; this listener (registered after it, same click) just remembers which
-      // appointment was picked.
+      // appointment/patient was picked.
       document.addEventListener('click', function (e) {
         var row = e.target.closest('[data-selectord]');
-        if (row) selectedAppointmentId = parseInt(row.getAttribute('data-appointment-id'), 10);
+        if (row) {
+          selectedAppointmentId = parseInt(row.getAttribute('data-appointment-id'), 10);
+          selectedPatientId = parseInt(row.getAttribute('data-patient-id'), 10);
+        }
       });
 
       document.getElementById('generate-prescription-btn').addEventListener('click', async function () {
-        if (!selectedAppointmentId) return;
+        if (!selectedPatientId) return;
         var btn = document.getElementById('generate-prescription-btn');
         var rows = document.querySelectorAll('#med-list .med-row');
         var treatments = [];
-        rows.forEach(function (row) {
+        var invalidRowNumbers = [];
+        rows.forEach(function (row, index) {
           var inputs = row.querySelectorAll('.med-input');
           var name = inputs[0].value;
           var dosage = inputs[1].value;
           if (!name) return;
+          var intakeTimes = parseIntakeTimes(inputs[3].value);
+          if (!intakeTimes) {
+            invalidRowNumbers.push(index + 1);
+            return;
+          }
           var today = new Date().toISOString().slice(0, 10);
           var durationDays = parseInt(inputs[2].value, 10) || 7;
           var end = new Date();
@@ -212,9 +267,16 @@
             dosage: dosage,
             start_date: today,
             end_date: end.toISOString().slice(0, 10),
-            intake_times: ['08:00:00'],
+            intake_times: intakeTimes,
           });
         });
+        if (invalidRowNumbers.length) {
+          window.alert(
+            'Horaires de prise invalides pour le médicament n°' + invalidRowNumbers.join(', n°') +
+            ' — format attendu : 08:00, 14:00, 20:00'
+          );
+          return;
+        }
         if (treatments.length === 0) {
           window.alert("Ajoutez au moins un médicament avant de générer l'ordonnance.");
           return;
@@ -223,10 +285,17 @@
         try {
           await apiPost('/prescriptions', {
             appointment_id: selectedAppointmentId,
+            patient_id: selectedPatientId,
             notes: null,
             treatments: treatments,
           });
+          if (directPatientId) {
+            window.alert('Ordonnance créée avec succès.');
+            window.location.href = 'messages.html';
+            return;
+          }
           selectedAppointmentId = null;
+          selectedPatientId = null;
           document.getElementById('ordonnance-step2').style.display = 'none';
           document.querySelectorAll('[data-selectord]').forEach(function (r) { r.classList.remove('sel'); });
           var medList = document.getElementById('med-list');

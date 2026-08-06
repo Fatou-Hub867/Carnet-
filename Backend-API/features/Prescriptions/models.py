@@ -24,10 +24,16 @@ class Prescription(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     patient_id: Mapped[int] = mapped_column(ForeignKey("patients.id"))
     doctor_id: Mapped[int] = mapped_column(ForeignKey("doctors.id"))
-    appointment_id: Mapped[int] = mapped_column(ForeignKey("appointments.id"))
+    # Null when the prescription was created straight from a conversation,
+    # with no underlying appointment (see create_prescription).
+    appointment_id: Mapped[int | None] = mapped_column(
+        ForeignKey("appointments.id"), nullable=True
+    )
     notes: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     pdf_file_key: Mapped[str] = mapped_column(String(500))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
 
 class Treatment(Base):
@@ -60,7 +66,9 @@ class TreatmentIntake(Base):
     __tablename__ = "treatment_intakes"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    treatment_schedule_id: Mapped[int] = mapped_column(ForeignKey("treatment_schedules.id"))
+    treatment_schedule_id: Mapped[int] = mapped_column(
+        ForeignKey("treatment_schedules.id")
+    )
     date: Mapped[date] = mapped_column(Date)
     status: Mapped[TreatmentIntakeStatus] = mapped_column(
         Enum(TreatmentIntakeStatus), default=TreatmentIntakeStatus.SCHEDULED

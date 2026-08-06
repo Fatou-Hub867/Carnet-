@@ -181,7 +181,12 @@
         } catch (err) {
           submitBtn.disabled = false;
           errorEl.textContent = err.status === 409
-            ? 'Cet email est déjà utilisé.'
+            // Peut vouloir dire "déjà pris par quelqu'un d'autre", mais aussi
+            // "votre propre inscription a déjà été enregistrée lors d'un essai
+            // précédent" (ex. l'envoi du diplôme avait échoué) — dans les deux
+            // cas, se connecter est la bonne action : un compte en attente
+            // peut se connecter et y retéléverser son diplôme si besoin.
+            ? "Un compte existe déjà avec cet email. Si c'est le vôtre (un essai d'inscription précédent), connectez-vous pour continuer."
             : 'Une erreur est survenue, réessayez.';
           errorEl.classList.remove('hidden');
         }

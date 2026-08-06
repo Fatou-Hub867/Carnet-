@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fiche médecin — Carnet+</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar__head">
+        <button class="hamburger" data-action="toggle-sidebar" title="Réduire le menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M3 12h18M3 18h18" />
+          </svg>
+        </button>
+        <a href="dashboard.html" style="display:inline-flex;text-decoration:none;">
+          <div class="logo-mark" style="width:40px;height:40px;background:linear-gradient(135deg,#13b98a,#0d9488);">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+              <path d="M2 21c0-3 1.85-5.36 5.08-6" />
+            </svg>
+          </div>
+        </a>
+        <div class="sidebar__logo">Carnet<span style="color:var(--green-2);">+</span>
+        </div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-link" href="dashboard.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10.5 12 3l9 7.5" />
+            <path d="M5 9.5V21h14V9.5" />
+          </svg>Tableau de bord
+        </a>
+        <a class="nav-link active" href="consultations.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="17" rx="2" />
+            <path d="M3 9h18M8 2v4M16 2v4" />
+          </svg>Consultations
+        </a>
+        <a class="nav-link" href="messages.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z" />
+          </svg>Messages
+        </a>
+        <a class="nav-link" href="carnet.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12h4l2-7 4 14 2-7h6" />
+          </svg>Carnet de santé
+        </a>
+        <a class="nav-link" href="ordonnances.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+            <path d="M14 2v6h6M9 13h6M9 17h6" />
+          </svg>Ordonnances
+        </a>
+        <a class="nav-link" href="evaluations.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 18.6l-5.9 3.1 1.2-6.6L2.5 9.5l6.6-.9Z" />
+          </svg>Mes évaluations
+        </a>
+        <a class="nav-link" href="profil.html">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" />
+          </svg>Mon profil
+        </a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-row">
+          <div class="avatar avatar-round" style="width:38px;height:38px;background:linear-gradient(135deg,#f59e0b,#f97316);font-size:14px;">FD</div>
+          <div style="flex:1;min-width:0;">
+            <div class="name">Fanta Diallo</div>
+            <div class="mail">fanta.diallo@email.cg</div>
+          </div>
+          <a class="icon-btn" href="../index.html" title="Se déconnecter">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </aside>
+    <button class="hamburger--float" data-action="toggle-sidebar" title="Ouvrir le menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 6h18M3 12h18M3 18h18" />
+      </svg>
+    </button>
+    <main class="main">
+      <div class="fade container-sm">
+        <p class="form-error hidden" id="detail-error"></p>
+        <div class="card card--pad hidden" id="detail-content">
+          <div class="row" style="gap:16px;margin-bottom:18px;">
+            <div class="avatar" id="detail-avatar" style="width:64px;height:64px;border-radius:16px;background:#10b981;font-size:22px;"></div>
+            <div>
+              <div style="font-weight:800;font-size:19px;" id="detail-name"></div>
+              <div style="color:var(--green-text);font-weight:600;font-size:14px;" id="detail-specialty"></div>
+            </div>
+          </div>
+          <div class="col" style="gap:10px;margin-bottom:22px;">
+            <div style="color:var(--muted);font-size:14px;">Cabinet : <strong style="color:var(--slate);" id="detail-practice"></strong></div>
+            <div style="color:var(--muted);font-size:14px;">Ville : <strong style="color:var(--slate);" id="detail-city"></strong></div>
+            <div style="color:var(--muted);font-size:14px;">Tarif de consultation : <strong style="color:var(--slate);" id="detail-fee"></strong></div>
+          </div>
+          <div class="col" style="gap:10px;">
+            <div class="row" style="gap:10px;">
+              <a class="btn btn--primary" href="consultations.html" id="detail-book-link">Prendre RDV</a>
+              <button class="btn btn--ghost" id="report-btn" type="button">Signaler ce médecin</button>
+            </div>
+            <p class="hidden" id="detail-book-unavailable" style="margin:0;color:var(--muted);font-size:13.5px;">Ce médecin n'accepte pas de nouveaux rendez-vous pour le moment.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div class="modal__backdrop" id="report-modal" style="display:none;">
+    <div class="modal" style="max-width:440px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:18px;">
+        <div style="font-size:19px;font-weight:800;">Signaler ce médecin</div>
+        <button class="modal__close" data-close>✕</button>
+      </div>
+      <label class="label">MOTIF</label>
+      <input class="input" id="report-reason" placeholder="Ex. Comportement inapproprié" style="margin-bottom:16px;">
+      <label class="label">DESCRIPTION</label>
+      <textarea class="input" id="report-description" style="min-height:100px;margin-bottom:16px;"></textarea>
+      <p class="form-error hidden" id="report-modal-error"></p>
+      <p class="hidden" id="report-modal-success" style="color:var(--green-text);font-weight:600;font-size:13.5px;margin-bottom:12px;">Signalement envoyé.</p>
+      <button class="btn btn--primary btn--block" id="report-submit-btn">Envoyer le signalement</button>
+    </div>
+  </div>
+  <script src="../auth.js"></script>
+  <script src="../api.js"></script>
+  <script src="../app.js"></script>
+  <script>
+    (function () {
+      CarnetAuth.requireAuth('patient');
+
+      var doctorId = new URLSearchParams(window.location.search).get('doctor_id');
+      if (!doctorId) {
+        document.getElementById('detail-error').textContent = 'Aucun médecin sélectionné.';
+        document.getElementById('detail-error').classList.remove('hidden');
+      } else {
+        apiGet('/doctors/' + doctorId)
+          .then(function (d) {
+            document.getElementById('detail-name').textContent = 'Dr. ' + d.first_name + ' ' + d.last_name;
+            document.getElementById('detail-specialty').textContent = d.specialty;
+            document.getElementById('detail-practice').textContent = d.practice_name;
+            document.getElementById('detail-city').textContent = d.city;
+            document.getElementById('detail-fee').textContent = d.consultation_fee + ' FCFA';
+            var avatar = document.getElementById('detail-avatar');
+            avatar.textContent = (d.first_name.charAt(0) + d.last_name.charAt(0)).toUpperCase();
+            renderAvatar(avatar, d.photo_url);
+            if (!d.is_available) {
+              var bookLink = document.getElementById('detail-book-link');
+              bookLink.removeAttribute('href');
+              bookLink.setAttribute('aria-disabled', 'true');
+              bookLink.style.cssText = 'opacity:.5;pointer-events:none;cursor:not-allowed;';
+              document.getElementById('detail-book-unavailable').classList.remove('hidden');
+            }
+            document.getElementById('detail-content').classList.remove('hidden');
+          })
+          .catch(function () {
+            document.getElementById('detail-error').textContent = 'Impossible de charger ce médecin.';
+            document.getElementById('detail-error').classList.remove('hidden');
+          });
+      }
+
+      document.getElementById('report-btn').addEventListener('click', function () {
+        document.getElementById('report-reason').value = '';
+        document.getElementById('report-description').value = '';
+        document.getElementById('report-modal-error').classList.add('hidden');
+        document.getElementById('report-modal-success').classList.add('hidden');
+        document.getElementById('report-submit-btn').classList.remove('hidden');
+        document.getElementById('report-modal').style.display = 'flex';
+      });
+
+      document.getElementById('report-submit-btn').addEventListener('click', async function () {
+        var errorEl = document.getElementById('report-modal-error');
+        errorEl.classList.add('hidden');
+        var reason = document.getElementById('report-reason').value.trim();
+        var description = document.getElementById('report-description').value.trim();
+        if (!reason || !description) {
+          errorEl.textContent = 'Le motif et la description sont obligatoires.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        var btn = document.getElementById('report-submit-btn');
+        btn.disabled = true;
+        try {
+          await apiPost('/doctors/' + doctorId + '/complaints', {
+            doctor_id: parseInt(doctorId, 10),
+            reason: reason,
+            description: description,
+          });
+          document.getElementById('report-modal-success').classList.remove('hidden');
+          btn.classList.add('hidden');
+        } catch (err) {
+          errorEl.textContent = err.message || 'Une erreur est survenue, réessayez.';
+          errorEl.classList.remove('hidden');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
