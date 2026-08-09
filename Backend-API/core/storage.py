@@ -1,5 +1,5 @@
 import uuid
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit, urlunsplit
 
 import boto3
 from botocore.exceptions import ClientError
@@ -49,9 +49,25 @@ def get_file_url(
     params = {"Bucket": settings.s3_bucket_name, "Key": key}
     if download_filename:
         params["ResponseContentDisposition"] = _content_disposition(download_filename)
-    return _s3_client.generate_presigned_url(
+    url = _s3_client.generate_presigned_url(
         "get_object", Params=params, ExpiresIn=expires_in
     )
+    return _rewrite_to_public_host(url)
+
+
+def _rewrite_to_public_host(url: str) -> str:
+    """Swaps the scheme+host of a presigned URL for the public-facing one
+    when it differs from the endpoint the API itself talks to (e.g. the
+    internal docker network hostname) — the signature stays valid because it
+    only covers path/query, and the reverse proxy on the public host forwards
+    to S3/MinIO with the original Host header so signature validation on
+    that end still matches what was signed."""
+    public_base = settings.s3_public_endpoint_url
+    if not public_base or public_base == settings.s3_endpoint_url:
+        return url
+    public = urlsplit(public_base)
+    signed = urlsplit(url)
+    return urlunsplit((public.scheme, public.netloc, signed.path, signed.query, ""))
 
 
 def original_filename_from_key(key: str) -> str:

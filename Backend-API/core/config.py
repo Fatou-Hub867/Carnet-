@@ -19,6 +19,12 @@ class Settings(BaseSettings):
     s3_secret_key: str
     s3_bucket_name: str
     s3_region: str = "us-east-1"
+    # Host the API itself uses to talk to S3/MinIO (e.g. the internal docker
+    # network hostname) can differ from the host a browser can reach for the
+    # presigned URLs handed back to clients — set this when they diverge
+    # (reverse-proxied MinIO behind a public domain). Defaults to
+    # s3_endpoint_url when unset, i.e. no rewrite.
+    s3_public_endpoint_url: str | None = None
 
     resend_api_key: str
     email_from_address: str

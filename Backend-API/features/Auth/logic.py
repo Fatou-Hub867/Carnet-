@@ -206,7 +206,7 @@ async def request_password_reset(
     )
     await db.commit()
 
-    reset_link = f"{settings.frontend_base_url}/reset-password?token={token}"
+    reset_link = f"{settings.frontend_base_url}/reinitialiser-mot-de-passe.html?token={token}"
     background_tasks.add_task(
         notifications.notify_password_reset, target_email, reset_link
     )
